@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universo Mágico</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <!-- INICIO -->
+  <section id="home" class="home">
+    <div class="logo">
+      <div class="logo-symbol">✦</div>
+      <h1>UNIVERSO<br>MÁGICO</h1>
+      <p>Un mundo donde tu magia cobra vida</p>
+    </div>
+
+    <div class="menu">
+      <button id="play">⚡ ENTRAR AL UNIVERSO</button>
+      <button id="how">✦ CÓMO JUGAR</button>
+    </div>
+
+    <div class="version">UNIVERSO MÁGICO • ONLINE</div>
+  </section>
+
+
+  <!-- JUEGO -->
+  <section id="game" class="game" style="display:none">
+
+    <div id="scene"></div>
+
+    <!-- HUD -->
+    <div class="hud">
+
+      <div class="player-card">
+        <strong>✨ MAGO</strong>
+        <span>Jugador</span>
+      </div>
+
+      <div class="stats">
+        <div>❤️ <span id="hp">100</span></div>
+        <div>⚡ <span id="energy">6</span></div>
+        <div>🌙 Ronda <span id="round">1</span></div>
+      </div>
+
+    </div>
+
+
+    <!-- ACCIONES -->
+    <div class="actions">
+      <button data-e="fire">🔥 Fuego</button>
+      <button data-e="water">💧 Curación</button>
+      <button data-e="magic">✨ Magia</button>
+      <button id="end">⏭️ Terminar ronda</button>
+    </div>
+
+
+    <!-- CHAT -->
+    <div class="chat">
+
+      <div class="chat-title">
+        💬 Chat del Universo
+      </div>
+
+      <div id="msgs" class="messages">
+        <div class="msg system">
+          ✨ Bienvenido al Universo Mágico
+        </div>
+      </div>
+
+      <form id="form" class="chat-form">
+        <input
+          id="input"
+          type="text"
+          maxlength="200"
+          placeholder="Escribí un mensaje..."
+          autocomplete="off"
+        >
+        <button type="submit">➤</button>
+      </form>
+
+    </div>
+
+  </section>
+
+
+  <!-- VENTANA CÓMO JUGAR -->
+  <div id="modal" class="modal">
+
+    <div class="modal-box">
+
+      <button id="close" class="close">×</button>
+
+      <h2>✨ Cómo jugar</h2>
+
+      <p>
+        Explorá el Universo Mágico, descubrí lugares,
+        interactuá con otros jugadores y utilizá tus poderes.
+      </p>
+
+      <p>
+        🔥 Fuego — ataque mágico<br>
+        💧 Curación — recupera vida<br>
+        ✨ Magia — habilidad especial
+      </p>
+
+      <button id="ok">ENTENDIDO</button>
+
+    </div>
+
+  </div>
+
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Juego -->
+  <script type="module" src="/game.js"></script>
+
+</body>
+</html>
