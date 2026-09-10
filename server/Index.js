@@ -1,20 +1,19 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
-});
+const io = new Server(server);
 
-app.use(express.static("public"));
+const publicPath = path.join(__dirname, "..", "public");
+
+app.use(express.static(publicPath));
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.sendFile(path.join(publicPath, "index.html"));
 });
 
 io.on("connection", (socket) => {
@@ -27,11 +26,11 @@ io.on("connection", (socket) => {
 
   socket.broadcast.emit(
     "system",
-    "🌟 Un nuevo jugador entró al mundo"
+    "🌟 Un nuevo jugador entró al reino"
   );
 
   socket.on("chat", (message) => {
-    if (!message || typeof message !== "string") return;
+    if (typeof message !== "string") return;
 
     const cleanMessage = message
       .trim()
@@ -47,7 +46,7 @@ io.on("connection", (socket) => {
 
     socket.broadcast.emit(
       "system",
-      "👋 Un jugador salió del mundo"
+      "👋 Un jugador salió del reino"
     );
   });
 });
@@ -55,5 +54,7 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 10000;
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`✨ Universo Mágico funcionando en puerto ${PORT}`);
+  console.log(
+    `✨ Universo Mágico funcionando en el puerto ${PORT}`
+  );
 });
