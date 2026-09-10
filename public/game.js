@@ -3523,3 +3523,466 @@ setInterval(
   },
   1000
 );
+/* =========================================
+   FINALIZAR CREACIÓN DEL PERSONAJE
+========================================= */
+
+$("finishCharacter")?.addEventListener(
+  "click",
+  async () => {
+
+    const race =
+      state.race || "Humano";
+
+    state.race = race;
+
+    state.character = {
+      race: race,
+      appearance: {
+        hair: "default",
+        clothes: "default",
+        accessory: "none"
+      }
+    };
+
+    /* Aplicar inmediatamente la raza */
+
+    applyRaceAppearance(
+      race
+    );
+
+    updateRaceUI();
+
+    /* Guardar personaje */
+
+    try {
+
+      await fetch(
+        "/api/character",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            username:
+              state.username,
+
+            character:
+              state.character
+          })
+        }
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "No se pudo guardar el personaje",
+        error
+      );
+
+    }
+
+    /* Cerrar creador */
+
+    const creator =
+      $("characterCreator");
+
+    if (creator) {
+
+      creator.hidden =
+        true;
+
+    }
+
+    toast(
+      `✨ ${race}: tu aventura comienza`
+    );
+
+  }
+);
+
+
+/* =========================================
+   SELECCIÓN VISUAL DE RAZA
+========================================= */
+
+function refreshRaceSelection() {
+
+  document
+    .querySelectorAll(
+      "[data-race]"
+    )
+    .forEach(
+      button => {
+
+        button.classList.toggle(
+          "selected",
+          button.dataset.race ===
+          state.race
+        );
+
+      }
+    );
+
+}
+
+
+/* Reemplazamos el comportamiento
+   de los botones de raza */
+
+document
+  .querySelectorAll(
+    "[data-race]"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          state.race =
+            button.dataset.race;
+
+          refreshRaceSelection();
+
+          updateRaceUI();
+
+          applyRaceAppearance(
+            state.race
+          );
+
+          toast(
+            `✨ Raza elegida: ${state.race}`
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+/* =========================================
+   OPCIONES DE APARIENCIA
+========================================= */
+
+document
+  .querySelectorAll(
+    "[data-appearance]"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          openAppearanceMenu(
+            button.dataset.appearance
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+/* =========================================
+   MENÚ DE APARIENCIA
+========================================= */
+
+function openAppearanceMenu(
+  type
+) {
+
+  let menu =
+    $("appearanceMenu");
+
+
+  if (menu) {
+
+    menu.remove();
+
+  }
+
+
+  menu =
+    document.createElement(
+      "div"
+    );
+
+  menu.id =
+    "appearanceMenu";
+
+  menu.className =
+    "appearance-menu";
+
+
+  let title =
+    "APARIENCIA";
+
+
+  if (type === "cabello") {
+
+    title =
+      "💇 ELEGÍ TU CABELLO";
+
+  }
+
+  if (type === "ropa") {
+
+    title =
+      "👕 ELEGÍ TU ROPA";
+
+  }
+
+  if (type === "accesorios") {
+
+    title =
+      "💎 ELEGÍ TU ACCESORIO";
+
+  }
+
+
+  menu.innerHTML = `
+
+    <div class="appearance-menu-card">
+
+      <button
+        class="appearance-close"
+        id="closeAppearance"
+        type="button"
+      >
+        ×
+      </button>
+
+      <h2>
+        ${title}
+      </h2>
+
+      <div
+        class="appearance-choice-grid"
+      >
+
+        ${
+          type === "cabello"
+          ? `
+            <button
+              type="button"
+              data-choice="corto"
+            >
+              💇
+              <span>Corto</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="largo"
+            >
+              🧑
+              <span>Largo</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="oscuro"
+            >
+              🖤
+              <span>Oscuro</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="claro"
+            >
+              🌟
+              <span>Claro</span>
+            </button>
+          `
+          : ""
+        }
+
+        ${
+          type === "ropa"
+          ? `
+            <button
+              type="button"
+              data-choice="aventurero"
+            >
+              🛡️
+              <span>Aventurero</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="mago"
+            >
+              🧙
+              <span>Mago</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="guerrero"
+            >
+              ⚔️
+              <span>Guerrero</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="noble"
+            >
+              👑
+              <span>Noble</span>
+            </button>
+          `
+          : ""
+        }
+
+        ${
+          type === "accesorios"
+          ? `
+            <button
+              type="button"
+              data-choice="ninguno"
+            >
+              🚫
+              <span>Ninguno</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="collar"
+            >
+              📿
+              <span>Collar</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="capa"
+            >
+              🧥
+              <span>Capa</span>
+            </button>
+
+            <button
+              type="button"
+              data-choice="corona"
+            >
+              👑
+              <span>Corona</span>
+            </button>
+          `
+          : ""
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    menu
+  );
+
+
+  $("closeAppearance")?.addEventListener(
+    "click",
+    () => menu.remove()
+  );
+
+
+  menu
+    .querySelectorAll(
+      "[data-choice]"
+    )
+    .forEach(
+      choice => {
+
+        choice.addEventListener(
+          "click",
+          () => {
+
+            const selected =
+              choice.dataset.choice;
+
+
+            if (
+              type === "cabello"
+            ) {
+
+              state.character =
+                state.character || {};
+
+              state.character.appearance =
+                state.character.appearance || {};
+
+              state.character.appearance.hair =
+                selected;
+
+              toast(
+                `💇 Cabello: ${selected}`
+              );
+
+            }
+
+
+            if (
+              type === "ropa"
+            ) {
+
+              state.character =
+                state.character || {};
+
+              state.character.appearance =
+                state.character.appearance || {};
+
+              state.character.appearance.clothes =
+                selected;
+
+              toast(
+                `👕 Ropa: ${selected}`
+              );
+
+            }
+
+
+            if (
+              type === "accesorios"
+            ) {
+
+              state.character =
+                state.character || {};
+
+              state.character.appearance =
+                state.character.appearance || {};
+
+              state.character.appearance.accessory =
+                selected;
+
+              toast(
+                `💎 Accesorio: ${selected}`
+              );
+
+            }
+
+
+            menu.remove();
+
+          }
+        );
+
+      }
+    );
+
+}
