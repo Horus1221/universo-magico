@@ -2,329 +2,403 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,
-                 maximum-scale=1.0,user-scalable=no">
-  <meta name="theme-color" content="#050713">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Universo Mágico — El Trono Caído</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
 
-<!-- =====================================================
-     PANTALLA PRINCIPAL
-===================================================== -->
+  <!-- ==================== INICIO ==================== -->
+  <section id="home">
 
-<section id="home">
+    <div class="magic-bg"></div>
+    <div class="stars"></div>
+    <div class="fog fog-a"></div>
+    <div class="fog fog-b"></div>
 
-  <!-- ESCENARIO FANTÁSTICO -->
-  <div class="magic-bg">
-
-    <!-- Fondo -->
-    <div class="fantasy-scene"></div>
-
-    <!-- Capa oscura para que el menú se lea -->
-    <div class="scene-overlay"></div>
-
-    <!-- Luna / iluminación -->
-    <div class="magic-light"></div>
-
-    <!-- Niebla -->
-    <div class="fog fog-one"></div>
-    <div class="fog fog-two"></div>
-    <div class="fog fog-three"></div>
-
-    <!-- Partículas -->
-    <div class="particles">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+    <div class="title-wrap">
+      <div class="title-small">UNIVERSO</div>
+      <div class="title-main">MÁGICO</div>
+      <div class="title-sub">EL TRONO CAÍDO</div>
     </div>
-
-    <!-- Brillos mágicos -->
-    <div class="magic-orb orb-one"></div>
-    <div class="magic-orb orb-two"></div>
-    <div class="magic-orb orb-three"></div>
-
-  </div>
-
-
-  <!-- =================================================
-       LOGO
-  ================================================== -->
-
-  <div class="home-content">
-
-    <div class="logo">
-
-      <div class="logo-small">
-        UNIVERSO
-      </div>
-
-      <h1>MÁGICO</h1>
-
-      <div class="logo-subtitle">
-        EL TRONO CAÍDO
-      </div>
-
-    </div>
-
-
-    <!-- =================================================
-         ACCESO
-    ================================================== -->
 
     <div class="auth-card">
 
-      <div class="auth-tabs">
-
-        <button
-          id="tabLogin"
-          class="auth-tab active"
-          type="button">
-          INICIAR SESIÓN
+      <div class="tabs">
+        <button id="tabLogin" class="active" type="button">
+          ENTRAR
         </button>
 
-        <button
-          id="tabRegister"
-          class="auth-tab"
-          type="button">
+        <button id="tabRegister" type="button">
           CREAR CUENTA
         </button>
-
       </div>
 
+      <h2 id="authTitle">Bienvenido, viajero</h2>
 
-      <div class="auth-heading">
-
-        <h2 id="authTitle">
-          Bienvenido al Reino
-        </h2>
-
-        <p id="authDescription">
-          Tu historia comienza aquí
-        </p>
-
-      </div>
-
+      <p id="authDescription">
+        Entrá al mundo donde la magia despierta.
+      </p>
 
       <form id="authForm">
 
-        <div class="input-group">
+        <label for="username">NOMBRE DE GUARDIÁN</label>
 
-          <label for="username">
-            NOMBRE
-          </label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          autocomplete="username"
+          maxlength="24"
+          placeholder="Tu nombre"
+          required
+        >
 
-          <input
-            id="username"
-            type="text"
-            autocomplete="username"
-            placeholder="Escribe tu nombre"
-            maxlength="20"
-            required>
+        <label for="password">CONTRASEÑA</label>
 
-        </div>
-
-
-        <div class="input-group">
-
-          <label for="password">
-            CONTRASEÑA
-          </label>
-
-          <input
-            id="password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Escribe tu contraseña"
-            required>
-
-        </div>
-
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          minlength="4"
+          placeholder="••••••••"
+          required
+        >
 
         <button
           id="authSubmit"
-          type="submit">
-
-          ENTRAR AL UNIVERSO
-
+          class="magic-button"
+          type="submit"
+        >
+          ⚡ ENTRAR AL UNIVERSO
         </button>
-
-        <div id="authMsg"></div>
 
       </form>
 
+      <div id="authMsg"></div>
 
-      <div class="realm-status">
-        <span class="status-dot"></span>
-        REINO ONLINE
+      <div class="online">
+        <span></span>
+        UNIVERSO ONLINE
       </div>
 
     </div>
+  </section>
 
 
-    <div class="version">
-      EL TRONO CAÍDO · 1.0
-    </div>
+  <!-- ==================== JUEGO ==================== -->
+  <section id="game" hidden>
 
-  </div>
+    <div id="scene"></div>
 
-</section>
+    <!-- HUD SUPERIOR -->
+    <div class="hud-top">
 
+      <div class="player-card">
 
-
-<!-- =====================================================
-     JUEGO
-===================================================== -->
-
-<section id="game" hidden>
-
-  <div id="scene"></div>
-
-
-  <!-- HUD SUPERIOR -->
-
-  <div class="game-hud">
-
-    <div class="player-info">
-
-      <div id="avatar">
-        A
-      </div>
-
-      <div>
-        <strong id="hudName">
-          Aventurero
-        </strong>
-
-        <div class="hp-bar">
-          <span></span>
+        <div id="avatar">
+          ?
         </div>
 
-        <div class="mana-bar">
-          <span></span>
+        <div>
+          <strong id="playerName">
+            Guardián
+          </strong>
+
+          <small id="playerRace">
+            Humano
+          </small>
         </div>
 
       </div>
 
-    </div>
+      <div class="bars">
 
+        <div class="bar hp">
+          <span id="hpBar"></span>
+        </div>
 
-    <button id="mapBtn">
-      MAPA
-    </button>
+        <div class="bar mana">
+          <span id="manaBar"></span>
+        </div>
 
-  </div>
+      </div>
 
-
-  <!-- BOTONES LATERALES -->
-
-  <div class="side-buttons">
-
-    <button id="sideMap">
-      MAPA
-    </button>
-
-    <button id="enterHouse" hidden>
-      ENTRAR
-    </button>
-
-  </div>
-
-
-  <!-- JOYSTICK -->
-
-  <div id="joystick">
-    <div id="stick"></div>
-  </div>
-
-
-  <!-- COMBATE -->
-
-  <div class="combat">
-
-    <button data-spell="attack">
-      ATAQUE
-    </button>
-
-    <button data-spell="fire">
-      FUEGO
-    </button>
-
-    <button data-spell="water">
-      AGUA
-    </button>
-
-    <button data-spell="arcane">
-      ARCANO
-    </button>
-
-  </div>
-
-
-  <!-- CHAT -->
-
-  <div id="chat">
-
-    <button id="chatToggle">
-      CHAT
-    </button>
-
-    <div id="msgs"></div>
-
-    <form id="form">
-
-      <input
-        id="input"
-        type="text"
-        autocomplete="off"
-        placeholder="Escribí un mensaje...">
-
-    </form>
-
-  </div>
-
-
-  <!-- MAPA -->
-
-  <div id="map" hidden>
-
-    <div class="map-window">
-
-      <button id="closeMap">
-        CERRAR
+      <button
+        id="mapButton"
+        class="hud-button"
+        type="button"
+      >
+        🗺️
       </button>
 
-      <h2>MAPA DEL REINO</h2>
+    </div>
 
-      <div class="map-content">
-        UNIVERSO MÁGICO
+
+    <!-- PANEL DE RAZAS -->
+    <div id="racePanel" class="panel" hidden>
+
+      <h2>Elegí tu linaje</h2>
+
+      <p>
+        Cada raza posee una conexión diferente con la magia.
+      </p>
+
+      <div class="race-grid">
+
+        <button
+          type="button"
+          data-race="human"
+        >
+          🧑 Humano
+        </button>
+
+        <button
+          type="button"
+          data-race="elf"
+        >
+          🧝 Elfo
+        </button>
+
+        <button
+          type="button"
+          data-race="dwarf"
+        >
+          🧔 Enano
+        </button>
+
+        <button
+          type="button"
+          data-race="orc"
+        >
+          👹 Orco
+        </button>
+
+        <button
+          type="button"
+          data-race="fairy"
+        >
+          🧚 Hada
+        </button>
+
+        <button
+          type="button"
+          data-race="draconid"
+        >
+          🐉 Dracónido
+        </button>
+
       </div>
 
     </div>
 
-  </div>
 
-</section>
+    <!-- HABILIDADES -->
+    <div
+      id="abilityPanel"
+      class="ability-panel"
+    >
+
+      <div class="ability-title">
+
+        <strong id="abilityRace">
+          Habilidades
+        </strong>
+
+        <small>
+          PODERES DE TU LINAJE
+        </small>
+
+      </div>
+
+      <div class="ability">
+
+        <button
+          type="button"
+          data-ability="0"
+        >
+          <span>✦</span>
+          <strong id="ability0">
+            Voluntad
+          </strong>
+          <small id="abilityCost0">
+            10 mana
+          </small>
+        </button>
+
+        <button
+          type="button"
+          data-ability="1"
+        >
+          <span>✦</span>
+          <strong id="ability1">
+            Segundo aire
+          </strong>
+          <small id="abilityCost1">
+            15 mana
+          </small>
+        </button>
+
+        <button
+          type="button"
+          data-ability="2"
+        >
+          <span>✦</span>
+          <strong id="ability2">
+            Adaptación
+          </strong>
+          <small id="abilityCost2">
+            20 mana
+          </small>
+        </button>
+
+      </div>
+
+    </div>
 
 
-<!-- =====================================================
-     LIBRERÍAS
-===================================================== -->
+    <!-- JOYSTICK -->
+    <div id="joystick">
 
-<script src="/socket.io/socket.io.js"></script>
-<script type="module" src="/game.js"></script>
+      <div id="stick"></div>
+
+    </div>
+
+
+    <!-- CHAT -->
+    <div class="chat">
+
+      <button
+        id="chatToggle"
+        class="chatToggle"
+        type="button"
+      >
+        💬 Chat
+      </button>
+
+      <div id="msgs"></div>
+
+      <form id="chatForm">
+
+        <input
+          id="chatInput"
+          type="text"
+          maxlength="160"
+          placeholder="Escribí un mensaje..."
+          autocomplete="off"
+        >
+
+        <button type="submit">
+          ➤
+        </button>
+
+      </form>
+
+    </div>
+
+
+    <!-- BOTÓN CASA -->
+    <button
+      id="enterHouse"
+      class="enter-house"
+      type="button"
+      hidden
+    >
+      🏠 Entrar
+    </button>
+
+
+    <!-- BOTÓN SALIR CASA -->
+    <button
+      id="exitHouse"
+      class="enter-house"
+      type="button"
+      hidden
+    >
+      🚪 Salir
+    </button>
+
+
+    <!-- BOTÓN MAPA -->
+    <div id="map" hidden>
+
+      <div class="map-card">
+
+        <button
+          id="closeMap"
+          type="button"
+        >
+          ×
+        </button>
+
+        <h2>Mapa del Universo</h2>
+
+        <div class="map-art">
+
+          <span>🏰 Castillo</span>
+          <span>🏘️ Aldea</span>
+          <span>🌲 Bosque</span>
+          <span>💎 Cristales</span>
+          <span>⛰️ Montañas</span>
+          <span>🏚️ Ruinas</span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- BOTÓN AYUDA -->
+    <button
+      id="howToButton"
+      class="side-button"
+      type="button"
+    >
+      ?
+    </button>
+
+
+    <!-- PANEL AYUDA -->
+    <div id="howTo" class="panel" hidden>
+
+      <h2>Cómo jugar</h2>
+
+      <p>
+        Usá el joystick para moverte por el mundo.
+      </p>
+
+      <p>
+        Deslizá el dedo sobre el escenario para girar
+        la cámara y observar a tu personaje en tercera persona.
+      </p>
+
+      <p>
+        Acercate a las casas para entrar en sus interiores.
+      </p>
+
+      <p>
+        Usá las habilidades de tu raza para sobrevivir
+        y explorar el Universo Mágico.
+      </p>
+
+      <button
+        id="closeHowTo"
+        class="magic-button"
+        type="button"
+      >
+        ENTENDIDO
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <script type="module" src="/game.js"></script>
 
 </body>
 </html>
