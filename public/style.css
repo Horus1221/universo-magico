@@ -8,327 +8,525 @@ html,body{
   width:100%;
   height:100%;
   overflow:hidden;
+  background:#03050d;
   font-family:Georgia,"Times New Roman",serif;
-  background:#050713;
-  color:#fff;
+  color:white;
 }
 
-body{
-  min-height:100vh;
+button,
+input{
+  font:inherit;
 }
 
-/* =========================
-   FONDO MÁGICO
-========================= */
+/* =====================================================
+   MENÚ PRINCIPAL
+===================================================== */
 
 #home{
-  position:relative;
-  width:100%;
-  height:100vh;
+  position:fixed;
+  inset:0;
   overflow:hidden;
   display:flex;
-  justify-content:center;
   align-items:center;
-  background:
-    radial-gradient(circle at 50% 25%,rgba(106,77,180,.25),transparent 32%),
-    radial-gradient(circle at 20% 80%,rgba(0,130,150,.16),transparent 30%),
-    linear-gradient(180deg,#050713 0%,#0b1028 45%,#120b25 100%);
+  justify-content:center;
+  background:#03050d;
 }
+
+/* =====================================================
+   ESCENARIO FANTÁSTICO
+===================================================== */
 
 .magic-bg{
   position:absolute;
   inset:0;
   overflow:hidden;
+}
+
+.fantasy-scene{
+  position:absolute;
+  inset:-3%;
+  background-image:url("/assets/start-menu.png");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  transform:scale(1.04);
+  animation:sceneBreath 14s ease-in-out infinite;
+}
+
+@keyframes sceneBreath{
+  0%,100%{
+    transform:scale(1.04);
+  }
+  50%{
+    transform:scale(1.08);
+  }
+}
+
+/* =====================================================
+   ILUMINACIÓN CINEMATOGRÁFICA
+===================================================== */
+
+.scene-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2,4,15,.18) 0%,
+      rgba(4,5,18,.08) 35%,
+      rgba(3,4,14,.40) 72%,
+      rgba(2,3,10,.86) 100%
+    );
+}
+
+.magic-light{
+  position:absolute;
+  width:45vw;
+  height:45vw;
+  max-width:600px;
+  max-height:600px;
+  top:-10%;
+  right:-5%;
+  border-radius:50%;
+  background:radial-gradient(
+    circle,
+    rgba(235,225,255,.32) 0%,
+    rgba(153,125,255,.15) 30%,
+    transparent 70%
+  );
+  filter:blur(15px);
+  animation:lightPulse 7s ease-in-out infinite;
+}
+
+@keyframes lightPulse{
+  0%,100%{opacity:.65}
+  50%{opacity:1}
+}
+
+/* =====================================================
+   NIEBLA
+===================================================== */
+
+.fog{
+  position:absolute;
+  left:-20%;
+  width:140%;
+  border-radius:50%;
+  pointer-events:none;
+  filter:blur(28px);
+  background:rgba(205,215,255,.13);
+}
+
+.fog-one{
+  height:18%;
+  bottom:7%;
+  animation:fogMoveOne 18s ease-in-out infinite;
+}
+
+.fog-two{
+  height:12%;
+  bottom:24%;
+  opacity:.65;
+  animation:fogMoveTwo 23s ease-in-out infinite;
+}
+
+.fog-three{
+  height:10%;
+  bottom:40%;
+  opacity:.35;
+  animation:fogMoveOne 28s ease-in-out infinite reverse;
+}
+
+@keyframes fogMoveOne{
+  0%,100%{
+    transform:translateX(-5%);
+  }
+  50%{
+    transform:translateX(8%);
+  }
+}
+
+@keyframes fogMoveTwo{
+  0%,100%{
+    transform:translateX(7%);
+  }
+  50%{
+    transform:translateX(-8%);
+  }
+}
+
+/* =====================================================
+   PARTÍCULAS MÁGICAS
+===================================================== */
+
+.particles{
+  position:absolute;
+  inset:0;
   pointer-events:none;
 }
 
-.moon{
+.particles span{
   position:absolute;
-  width:190px;
-  height:190px;
+  width:4px;
+  height:4px;
   border-radius:50%;
-  top:7%;
-  right:9%;
-  background:
-    radial-gradient(circle at 35% 35%,#fffef0 0%,#dcd9ff 35%,#9b8de0 70%,transparent 72%);
+  background:#ffe8a0;
   box-shadow:
-    0 0 30px rgba(210,205,255,.6),
-    0 0 90px rgba(120,100,255,.35);
-  animation:moonFloat 8s ease-in-out infinite;
+    0 0 7px #fff2b8,
+    0 0 18px rgba(255,200,80,.8);
+  animation:particleFloat linear infinite;
 }
 
-@keyframes moonFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(12px)}
+.particles span:nth-child(1){
+  left:7%;
+  bottom:-5%;
+  animation-duration:8s;
+  animation-delay:0s;
 }
+
+.particles span:nth-child(2){
+  left:16%;
+  bottom:-5%;
+  animation-duration:11s;
+  animation-delay:2s;
+}
+
+.particles span:nth-child(3){
+  left:28%;
+  bottom:-5%;
+  animation-duration:9s;
+  animation-delay:4s;
+}
+
+.particles span:nth-child(4){
+  left:39%;
+  bottom:-5%;
+  animation-duration:13s;
+  animation-delay:1s;
+}
+
+.particles span:nth-child(5){
+  left:51%;
+  bottom:-5%;
+  animation-duration:10s;
+  animation-delay:5s;
+}
+
+.particles span:nth-child(6){
+  left:63%;
+  bottom:-5%;
+  animation-duration:12s;
+  animation-delay:3s;
+}
+
+.particles span:nth-child(7){
+  left:72%;
+  bottom:-5%;
+  animation-duration:9s;
+  animation-delay:6s;
+}
+
+.particles span:nth-child(8){
+  left:81%;
+  bottom:-5%;
+  animation-duration:14s;
+  animation-delay:1s;
+}
+
+.particles span:nth-child(9){
+  left:91%;
+  bottom:-5%;
+  animation-duration:10s;
+  animation-delay:4s;
+}
+
+.particles span:nth-child(10){
+  left:23%;
+  bottom:-5%;
+  animation-duration:15s;
+  animation-delay:7s;
+}
+
+.particles span:nth-child(11){
+  left:58%;
+  bottom:-5%;
+  animation-duration:11s;
+  animation-delay:8s;
+}
+
+.particles span:nth-child(12){
+  left:86%;
+  bottom:-5%;
+  animation-duration:13s;
+  animation-delay:5s;
+}
+
+@keyframes particleFloat{
+  0%{
+    transform:translateY(0) scale(.4);
+    opacity:0;
+  }
+
+  15%{
+    opacity:1;
+  }
+
+  70%{
+    opacity:.9;
+  }
+
+  100%{
+    transform:translateY(-115vh) translateX(35px) scale(1.5);
+    opacity:0;
+  }
+}
+
+/* =====================================================
+   ORBES
+===================================================== */
 
 .magic-orb{
   position:absolute;
   border-radius:50%;
-  filter:blur(1px);
+  pointer-events:none;
   animation:orbFloat 7s ease-in-out infinite;
 }
 
-.orb1{
-  width:90px;
-  height:90px;
-  left:8%;
-  top:28%;
-  background:radial-gradient(circle,#fff5b0,#d99b35 30%,transparent 70%);
-  box-shadow:0 0 50px #d99b35;
+.orb-one{
+  width:80px;
+  height:80px;
+  left:7%;
+  top:25%;
+  background:radial-gradient(
+    circle,
+    #fff3bd 0%,
+    #d99b3d 25%,
+    transparent 72%
+  );
+  filter:blur(2px);
+  box-shadow:0 0 50px rgba(255,190,70,.55);
 }
 
-.orb2{
-  width:55px;
-  height:55px;
-  right:22%;
-  bottom:22%;
-  background:radial-gradient(circle,#a9ffff,#247cbd 35%,transparent 70%);
-  box-shadow:0 0 45px #4bdfff;
+.orb-two{
+  width:45px;
+  height:45px;
+  right:15%;
+  bottom:27%;
+  background:radial-gradient(
+    circle,
+    #c7ffff,
+    #50bde5 35%,
+    transparent 72%
+  );
+  box-shadow:0 0 40px rgba(70,220,255,.7);
   animation-delay:2s;
 }
 
-.orb3{
-  width:35px;
-  height:35px;
-  left:28%;
-  bottom:16%;
-  background:radial-gradient(circle,#ffd7ff,#a33dcc 40%,transparent 70%);
-  box-shadow:0 0 35px #bd4de8;
+.orb-three{
+  width:32px;
+  height:32px;
+  left:13%;
+  bottom:20%;
+  background:radial-gradient(
+    circle,
+    #ffe6ff,
+    #bb55e6 35%,
+    transparent 72%
+  );
+  box-shadow:0 0 35px rgba(190,70,235,.6);
   animation-delay:4s;
 }
 
 @keyframes orbFloat{
   0%,100%{
-    transform:translateY(0) translateX(0);
+    transform:translateY(0);
   }
+
   50%{
-    transform:translateY(-25px) translateX(12px);
+    transform:translateY(-25px);
   }
 }
 
-/* =========================
-   NIEBLA
-========================= */
-
-.mist{
-  position:absolute;
-  left:-10%;
-  width:120%;
-  height:25%;
-  border-radius:50%;
-  background:rgba(180,190,255,.08);
-  filter:blur(25px);
-  animation:mistMove 14s ease-in-out infinite;
-}
-
-.mist1{
-  bottom:8%;
-}
-
-.mist2{
-  bottom:24%;
-  opacity:.5;
-  animation-delay:5s;
-}
-
-.mist3{
-  bottom:42%;
-  opacity:.25;
-  animation-delay:9s;
-}
-
-@keyframes mistMove{
-  0%,100%{
-    transform:translateX(-3%);
-  }
-  50%{
-    transform:translateX(3%);
-  }
-}
-
-/* =========================
-   PARTÍCULAS
-========================= */
-
-.spark{
-  position:absolute;
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:#ffe9a3;
-  box-shadow:0 0 10px #ffe9a3,0 0 20px #dcae45;
-  animation:sparkle 4s linear infinite;
-}
-
-.spark:nth-child(1){left:8%;top:18%;animation-delay:0s}
-.spark:nth-child(2){left:18%;top:65%;animation-delay:1s}
-.spark:nth-child(3){left:32%;top:20%;animation-delay:2s}
-.spark:nth-child(4){left:47%;top:75%;animation-delay:3s}
-.spark:nth-child(5){left:64%;top:16%;animation-delay:1.5s}
-.spark:nth-child(6){left:76%;top:62%;animation-delay:2.5s}
-.spark:nth-child(7){left:88%;top:35%;animation-delay:.5s}
-.spark:nth-child(8){left:55%;top:38%;animation-delay:3.5s}
-
-@keyframes sparkle{
-  0%{
-    opacity:0;
-    transform:translateY(25px) scale(.5);
-  }
-  30%{
-    opacity:1;
-  }
-  70%{
-    opacity:1;
-  }
-  100%{
-    opacity:0;
-    transform:translateY(-80px) scale(1.4);
-  }
-}
-
-/* =========================
+/* =====================================================
    CONTENIDO
-========================= */
-
-#home > *:not(.magic-bg){
-  position:relative;
-  z-index:5;
-}
+===================================================== */
 
 .home-content{
-  width:min(92%,620px);
-  text-align:center;
+  position:relative;
+  z-index:10;
+  width:min(92vw,520px);
   display:flex;
   flex-direction:column;
   align-items:center;
+  text-align:center;
+  transform:translateY(-1vh);
 }
 
-/* =========================
-   TÍTULO
-========================= */
+/* =====================================================
+   LOGO
+===================================================== */
 
 .logo{
-  margin-bottom:25px;
-  animation:logoAppear 1.5s ease;
+  margin-bottom:22px;
+  animation:logoReveal 1.5s ease both;
 }
 
-.logo .small{
-  display:block;
+.logo-small{
+  color:#f4e4aa;
+  font-size:clamp(14px,3.5vw,22px);
   letter-spacing:9px;
-  font-size:clamp(13px,3vw,20px);
-  color:#ead89b;
-  text-shadow:0 0 15px rgba(255,215,120,.5);
-  margin-bottom:2px;
+  margin-bottom:4px;
+  text-shadow:
+    0 2px 5px #000,
+    0 0 20px rgba(255,215,120,.6);
 }
 
 .logo h1{
-  font-size:clamp(52px,13vw,100px);
-  line-height:.9;
-  letter-spacing:5px;
+  font-size:clamp(58px,15vw,105px);
+  line-height:.82;
+  letter-spacing:3px;
   font-weight:900;
+
   background:linear-gradient(
     180deg,
-    #fff5b0 0%,
-    #e8bd58 35%,
-    #a96b18 65%,
-    #ffe79a 100%
+    #fff4b0 0%,
+    #f0c45c 28%,
+    #b77920 62%,
+    #ffe79b 100%
   );
+
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
-  filter:drop-shadow(0 5px 5px #000)
-         drop-shadow(0 0 18px rgba(255,190,60,.4));
+
+  filter:
+    drop-shadow(0 5px 3px rgba(0,0,0,.9))
+    drop-shadow(0 0 14px rgba(255,190,60,.55));
 }
 
-.logo .subtitle{
-  display:block;
-  margin-top:14px;
+.logo-subtitle{
+  margin-top:13px;
+  color:#f0ead7;
+  font-size:clamp(13px,3.5vw,19px);
   letter-spacing:6px;
-  font-size:clamp(12px,3vw,17px);
-  color:#ddd7c0;
-  text-shadow:0 2px 8px #000;
+  text-shadow:
+    0 3px 7px #000,
+    0 0 14px rgba(255,255,255,.25);
 }
 
-@keyframes logoAppear{
+@keyframes logoReveal{
   from{
     opacity:0;
-    transform:translateY(-25px) scale(.95);
+    transform:translateY(-35px) scale(.9);
   }
+
   to{
     opacity:1;
     transform:translateY(0) scale(1);
   }
 }
 
-/* =========================
-   PANEL DE ACCESO
-========================= */
+/* =====================================================
+   PANEL
+===================================================== */
 
 .auth-card{
-  width:min(100%,390px);
-  padding:25px;
-  border:1px solid rgba(231,199,112,.45);
-  border-radius:22px;
-  background:rgba(8,10,28,.72);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+  width:100%;
+  padding:23px;
+  border:1px solid rgba(237,204,111,.7);
+  border-radius:24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(10,10,27,.76),
+      rgba(19,13,35,.68)
+    );
+
+  backdrop-filter:blur(13px);
+  -webkit-backdrop-filter:blur(13px);
+
   box-shadow:
-    0 15px 60px rgba(0,0,0,.55),
-    inset 0 0 35px rgba(180,130,255,.06),
-    0 0 30px rgba(203,155,65,.08);
+    0 20px 70px rgba(0,0,0,.7),
+    0 0 40px rgba(213,164,58,.12),
+    inset 0 0 35px rgba(255,255,255,.025);
+
+  animation:panelReveal 1.3s ease .2s both;
 }
 
-.auth-title{
-  color:#f5d984;
-  font-size:23px;
-  margin-bottom:5px;
-  text-shadow:0 0 12px rgba(255,215,100,.3);
+@keyframes panelReveal{
+  from{
+    opacity:0;
+    transform:translateY(35px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
 }
 
-.auth-description{
-  color:#aaa8bd;
-  font-size:13px;
-  margin-bottom:20px;
-}
-
-/* =========================
+/* =====================================================
    PESTAÑAS
-========================= */
+===================================================== */
 
 .auth-tabs{
   display:flex;
-  gap:8px;
-  margin-bottom:18px;
+  gap:9px;
+  margin-bottom:19px;
 }
 
 .auth-tab{
   flex:1;
-  padding:11px 8px;
-  border:1px solid rgba(220,190,100,.25);
-  border-radius:10px;
-  background:rgba(255,255,255,.04);
-  color:#aaa;
-  font-family:inherit;
-  cursor:pointer;
-  transition:.3s;
-}
+  min-height:50px;
+  border:1px solid rgba(229,194,100,.3);
+  border-radius:13px;
 
-.auth-tab:hover{
-  color:#fff;
-  border-color:#d9b85e;
+  background:rgba(5,6,18,.55);
+
+  color:#bcb8c5;
+  cursor:pointer;
+
+  transition:
+    transform .25s,
+    border-color .25s,
+    background .25s,
+    color .25s;
 }
 
 .auth-tab.active{
-  color:#f8dd8b;
-  border-color:#d9b85e;
-  background:rgba(214,166,62,.12);
-  box-shadow:0 0 18px rgba(214,166,62,.12);
+  color:#ffe69a;
+  border-color:#e3bd5c;
+  background:rgba(205,153,49,.16);
+  box-shadow:
+    inset 0 0 18px rgba(255,210,100,.06),
+    0 0 18px rgba(230,185,75,.08);
 }
 
-/* =========================
+.auth-tab:active{
+  transform:scale(.97);
+}
+
+/* =====================================================
+   TEXTO
+===================================================== */
+
+.auth-heading h2{
+  color:#f5d77f;
+  font-size:clamp(20px,5vw,27px);
+  margin-bottom:5px;
+  text-shadow:0 0 15px rgba(255,215,110,.25);
+}
+
+.auth-heading p{
+  color:#bbb6c8;
+  font-size:14px;
+  margin-bottom:20px;
+}
+
+/* =====================================================
    INPUTS
-========================= */
+===================================================== */
 
 .input-group{
   text-align:left;
@@ -337,120 +535,143 @@ body{
 
 .input-group label{
   display:block;
-  margin-bottom:6px;
+  color:#d9bd6b;
   font-size:11px;
-  letter-spacing:2px;
-  color:#c8b873;
+  letter-spacing:3px;
+  margin-bottom:7px;
 }
 
 .input-group input{
   width:100%;
-  padding:13px 14px;
-  border-radius:11px;
-  border:1px solid rgba(210,190,120,.25);
+  height:54px;
+  padding:0 15px;
+
+  border:1px solid rgba(222,191,106,.35);
+  border-radius:13px;
+
   outline:none;
-  background:rgba(0,0,0,.28);
-  color:#fff;
-  font-family:inherit;
-  font-size:15px;
+
+  background:rgba(2,4,15,.65);
+  color:white;
+
+  font-size:16px;
+
   transition:.3s;
 }
 
 .input-group input:focus{
-  border-color:#e3bf61;
-  box-shadow:0 0 18px rgba(227,191,97,.13);
+  border-color:#e6c45f;
+  box-shadow:
+    0 0 20px rgba(227,190,84,.15),
+    inset 0 0 15px rgba(227,190,84,.04);
 }
 
 .input-group input::placeholder{
-  color:#686878;
+  color:#777487;
 }
 
-/* =========================
-   BOTÓN PRINCIPAL
-========================= */
+/* =====================================================
+   BOTÓN
+===================================================== */
 
 #authSubmit{
   width:100%;
+  min-height:57px;
   margin-top:5px;
-  padding:14px;
-  border:1px solid #e2bd5c;
-  border-radius:12px;
-  background:linear-gradient(
-    180deg,
-    #e7c56d,
-    #a66b19
-  );
-  color:#201406;
-  font-family:inherit;
-  font-size:14px;
+
+  border:1px solid #f0d078;
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f3d477 0%,
+      #d59c35 48%,
+      #a96817 100%
+    );
+
+  color:#241606;
+
   font-weight:bold;
   letter-spacing:1px;
-  cursor:pointer;
-  box-shadow:
-    0 5px 20px rgba(208,153,46,.25),
-    inset 0 1px rgba(255,255,255,.6);
-  transition:.3s;
-}
 
-#authSubmit:hover{
-  transform:translateY(-2px);
+  cursor:pointer;
+
   box-shadow:
-    0 8px 28px rgba(208,153,46,.4),
-    0 0 20px rgba(255,214,110,.2);
+    0 7px 25px rgba(211,151,42,.3),
+    inset 0 1px rgba(255,255,255,.8);
+
+  transition:.25s;
 }
 
 #authSubmit:active{
-  transform:translateY(1px);
+  transform:translateY(2px);
 }
+
+#authSubmit:disabled{
+  opacity:.6;
+}
+
+/* =====================================================
+   MENSAJE
+===================================================== */
 
 #authMsg{
   min-height:18px;
-  margin-top:12px;
-  color:#d8cfae;
+  margin-top:10px;
+  color:#e8d7a3;
   font-size:12px;
 }
 
-/* =========================
-   ESTADO DEL REINO
-========================= */
+/* =====================================================
+   ESTADO
+===================================================== */
 
-.status{
-  margin-top:15px;
+.realm-status{
+  margin-top:13px;
+  color:#a9d5a7;
   font-size:10px;
   letter-spacing:3px;
-  color:#8dbe91;
-  text-shadow:0 0 10px rgba(100,255,130,.35);
 }
 
-.status::before{
-  content:"";
+.status-dot{
   display:inline-block;
-  width:6px;
-  height:6px;
-  border-radius:50%;
+  width:7px;
+  height:7px;
   margin-right:7px;
-  background:#77d884;
-  box-shadow:0 0 10px #77d884;
-  animation:pulse 1.8s infinite;
+  border-radius:50%;
+  background:#80dc8b;
+  box-shadow:0 0 12px #80dc8b;
+  animation:statusPulse 1.8s infinite;
 }
 
-@keyframes pulse{
-  0%,100%{opacity:.5}
-  50%{opacity:1}
+@keyframes statusPulse{
+  0%,100%{
+    opacity:.45;
+  }
+
+  50%{
+    opacity:1;
+  }
 }
 
-/* =========================
+.version{
+  margin-top:12px;
+  color:#ddd4bc;
+  font-size:12px;
+  letter-spacing:3px;
+  text-shadow:0 2px 6px #000;
+}
+
+/* =====================================================
    JUEGO
-========================= */
+===================================================== */
 
 #game{
-  display:none;
   position:fixed;
   inset:0;
-  width:100%;
-  height:100%;
   overflow:hidden;
-  background:#080a13;
+  background:#080b12;
 }
 
 #scene{
@@ -460,73 +681,90 @@ body{
   height:100%;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+.game-hud,
+.side-buttons,
+#joystick,
+.combat,
+#chat,
+#map{
+  position:absolute;
+  z-index:20;
+}
+
+/* =====================================================
+   RESPONSIVE IPHONE
+===================================================== */
 
 @media(max-width:600px){
 
-  .moon{
-    width:120px;
-    height:120px;
-    right:4%;
-    top:5%;
+  .home-content{
+    width:calc(100vw - 28px);
+    transform:translateY(-1vh);
   }
 
   .logo{
-    margin-bottom:20px;
+    margin-bottom:16px;
+  }
+
+  .logo-small{
+    letter-spacing:6px;
   }
 
   .logo h1{
-    letter-spacing:2px;
+    font-size:clamp(52px,16vw,82px);
   }
 
-  .logo .small{
-    letter-spacing:5px;
-  }
-
-  .logo .subtitle{
-    letter-spacing:3px;
+  .logo-subtitle{
+    letter-spacing:4px;
+    margin-top:10px;
   }
 
   .auth-card{
-    width:calc(100% - 24px);
-    padding:20px;
-    border-radius:18px;
+    padding:18px;
+    border-radius:20px;
   }
 
-  .auth-title{
-    font-size:20px;
+  .auth-tab{
+    min-height:47px;
+    font-size:12px;
+  }
+
+  .auth-heading h2{
+    font-size:21px;
+  }
+
+  .auth-heading p{
+    margin-bottom:14px;
+  }
+
+  .input-group{
+    margin-bottom:11px;
   }
 
   .input-group input{
-    padding:12px;
+    height:50px;
+  }
+
+  #authSubmit{
+    min-height:53px;
+  }
+
+  .version{
+    font-size:9px;
   }
 }
 
-@media(max-height:700px){
+@media(max-height:720px){
+
+  .home-content{
+    transform:scale(.88);
+  }
 
   .logo{
     margin-bottom:12px;
-  }
-
-  .logo h1{
-    font-size:clamp(45px,11vw,75px);
   }
 
   .auth-card{
     padding:16px;
-  }
-
-  .auth-description{
-    margin-bottom:12px;
-  }
-
-  .input-group{
-    margin-bottom:9px;
-  }
-
-  .status{
-    margin-top:8px;
   }
 }
