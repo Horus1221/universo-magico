@@ -1,15 +1,1239 @@
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080711;color:#fff;font-family:Georgia,"Times New Roman",serif}button,input{font:inherit}button{cursor:pointer}
-#home,#game{position:fixed;inset:0}#game[hidden],#map[hidden],#abilityPanel[hidden],#enterHouse[hidden],#exitHouse[hidden]{display:none!important}
-.magic-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 20%,#263a67 0,#11162c 42%,#080711 100%)}.magic-bg:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,8,20,.1),rgba(5,4,12,.88)),url("/assets/start-menu.png") center/cover no-repeat;opacity:.72}
-.stars{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,240,177,.9) 0 1px,transparent 1.5px);background-size:83px 79px;opacity:.38;animation:drift 16s linear infinite}.fog{position:absolute;inset:auto -20% 0;width:140%;height:48%;background:radial-gradient(ellipse,rgba(175,215,255,.14),transparent 65%);filter:blur(22px);pointer-events:none}.fog-a{animation:fog 12s ease-in-out infinite}.fog-b{bottom:15%;opacity:.5;animation:fog 17s ease-in-out reverse infinite}
-.title-wrap{position:absolute;top:6%;left:50%;transform:translateX(-50%);text-align:center;filter:drop-shadow(0 7px 16px #000);z-index:2}.title-small,.title-main{font-weight:700;letter-spacing:.12em;color:#ffe7a1;text-shadow:0 0 3px #fff0b8,0 4px 0 #6b3e13,0 8px 20px #000}.title-small{font-size:clamp(26px,6vw,55px)}.title-main{font-size:clamp(58px,13vw,130px);line-height:.88;background:linear-gradient(#fff4bd,#f4bd52 50%,#9a4e14);-webkit-background-clip:text;background-clip:text;color:transparent}.title-sub{margin-top:14px;letter-spacing:.45em;color:#f4e5bb;font-size:clamp(11px,2.2vw,20px)}
-.auth-card{position:absolute;z-index:3;left:50%;bottom:7%;transform:translateX(-50%);width:min(480px,88vw);padding:22px;border:1px solid rgba(255,221,133,.55);border-radius:18px;background:rgba(9,8,20,.72);backdrop-filter:blur(14px);box-shadow:0 0 40px rgba(255,185,62,.12),inset 0 0 28px rgba(255,219,139,.06)}.tabs{display:flex;gap:8px}.tabs button{flex:1;padding:13px 8px;border:1px solid #80643b;background:#171522;color:#c7bfd0;border-radius:10px}.tabs button.active{color:#fff1bd;border-color:#f2c76c;box-shadow:0 0 16px rgba(255,198,85,.18)}.auth-card h2{text-align:center;margin:18px 0 4px}.auth-card p{text-align:center;color:#bdb4c6;margin:0 0 18px}.auth-card label{display:block;color:#d7c08a;font-size:12px;letter-spacing:.18em;margin:11px 0 6px}.auth-card input{width:100%;padding:14px;border-radius:9px;border:1px solid #66566e;background:#0c0b15;color:white;outline:none}.magic-button{width:100%;margin-top:16px;padding:15px;border:1px solid #ffd77b;border-radius:11px;background:linear-gradient(#b77b28,#6f3d18);color:#fff5cf;font-weight:700;letter-spacing:.08em}.online{text-align:center;margin-top:14px;font-size:11px;letter-spacing:.2em;color:#c8c1cd}.online span{display:inline-block;width:7px;height:7px;background:#83efae;border-radius:50%;box-shadow:0 0 9px #83efae}
-#scene{position:absolute;inset:0}#scene canvas{display:block;width:100%!important;height:100%!important}.hud-top{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:center;gap:12px;pointer-events:none}.player-card,.hud-button,.panel,.ability-panel,.chat,.enter-house,.map-card{background:rgba(10,9,19,.72);border:1px solid rgba(255,225,158,.34);backdrop-filter:blur(9px);box-shadow:0 8px 30px rgba(0,0,0,.25)}.player-card{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:14px}.player-card #avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#a874ff,#3b207f);font-weight:700}.player-card small{display:block;color:#bfb7c7;font-size:10px;margin-top:3px}.bars{width:160px}.bar{height:7px;background:#211d2a;border-radius:9px;margin:4px 0;overflow:hidden}.bar span{display:block;height:100%;width:100%;transition:width .2s}.hp span{background:#db5261}.mana span{background:#5b9cff}.hud-button{margin-left:auto;pointer-events:auto;color:#f9e8bb;border-radius:11px;padding:10px 14px}
-.panel{position:absolute;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,88vw);padding:20px;border-radius:18px;text-align:center}.panel h2{margin-top:0;color:#ffe4a3}.race-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.race-grid button{padding:14px;border-radius:10px;background:#171322;color:#eee0bb;border:1px solid #6d5b79}.race-grid button:hover{border-color:#f0c66d}
-.ability-panel{position:absolute;right:12px;bottom:18px;width:min(390px,62vw);padding:12px;border-radius:14px;z-index:8}.ability-title{display:flex;justify-content:space-between;align-items:end;color:#ffe2a0}.ability-title small{color:#a99fae;font-size:9px;letter-spacing:.12em}.ability{display:flex;gap:8px;margin-top:8px}.ability button{flex:1;padding:11px 5px;border-radius:9px;background:linear-gradient(145deg,#3a2766,#191326);color:#fff;border:1px solid #8066b2}.ability button:disabled{opacity:.45}.ability small{display:block;color:#c5bdca;font-size:9px;margin-top:3px}
-#joystick{position:absolute;z-index:7;left:26px;bottom:30px;width:150px;height:150px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.04);display:grid;place-items:center;touch-action:none}#stick{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a07bff,#4b2e91);border:1px solid #d8c6ff;box-shadow:0 0 25px rgba(126,87,255,.3)}
-.enter-house{position:absolute;z-index:9;left:50%;bottom:34%;transform:translateX(-50%);padding:13px 22px;border-radius:12px;color:#ffe7a7;background:rgba(20,12,26,.86);font-weight:700}.chat{position:absolute;z-index:7;left:14px;bottom:196px;width:min(330px,68vw);border-radius:12px;overflow:hidden}.chat #msgs{height:90px;overflow:auto;padding:8px;font:12px system-ui;color:#ddd}.chat form{display:flex}.chat input{min-width:0;flex:1;background:#0d0c15;border:0;padding:9px;color:#fff}.chat form button{width:40px;background:#37235e;color:#fff;border:0}.chatToggle{width:100%;padding:6px;background:#171322;color:#d7c89f;border:0}
-.side-button{position:absolute;z-index:7;right:12px;top:68px;border:0;background:rgba(12,10,20,.7);color:#ffe4a4;border-radius:50%;width:42px;height:42px}
-#map{position:absolute;z-index:30;inset:0;background:rgba(3,2,9,.65);display:grid;place-items:center}.map-card{position:relative;width:min(620px,90vw);padding:24px;border-radius:18px}.map-card #closeMap{position:absolute;right:12px;top:8px;background:none;border:0;color:white;font-size:28px}.map-art{height:360px;border-radius:14px;background:radial-gradient(circle at 50% 45%,#47704e,#263c31 40%,#161c22 80%);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:15px;padding:30px}.map-art span{padding:10px 14px;background:rgba(10,10,15,.6);border:1px solid #b49b62;border-radius:9px;color:#f3e4b4}
-@keyframes drift{to{background-position:83px 79px}}@keyframes fog{50%{transform:translateX(7%) scale(1.05)}}
-@media(max-width:700px){.title-wrap{top:5%}.auth-card{bottom:4%;padding:15px}.chat{bottom:190px}.ability-panel{width:64vw}.ability button{font-size:10px}.bars{width:105px}.player-card{padding:6px 8px}}
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
+  background: #07120d;
+  color: #fff;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+
+/* =========================================
+   INICIO
+========================================= */
+
+#home {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #07120d;
+}
+
+.magic-bg {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 0, 0, 0.08),
+      rgba(0, 0, 0, 0.35)
+    ),
+    url("/assets/start-menu.png");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  transform: scale(1.02);
+}
+
+
+/*
+   IMPORTANTE:
+   El título ya está dentro de start-menu.png.
+   Por eso NO ponemos otro título HTML.
+*/
+
+
+/* =========================================
+   LOGIN
+========================================= */
+
+.auth-card {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+
+  width: min(420px, 88vw);
+
+  padding: 26px;
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 29, 25, 0.91),
+      rgba(8, 14, 12, 0.87)
+    );
+
+  border: 1px solid
+    rgba(240, 207, 127, 0.58);
+
+  box-shadow:
+    0 0 35px
+    rgba(0, 0, 0, 0.6),
+
+    inset 0 0 25px
+    rgba(255, 216, 125, 0.05);
+
+  backdrop-filter: blur(8px);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.auth-tab {
+  flex: 1;
+
+  padding: 12px 8px;
+
+  color: #cdbf99;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.06
+  );
+
+  border: 1px solid
+    rgba(255,255,255,.12);
+
+  border-radius: 10px;
+
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.auth-tab.active {
+  color: #fff4c8;
+
+  border-color:
+    rgba(238,201,111,.8);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(177,130,46,.35),
+      rgba(89,59,18,.28)
+    );
+
+  box-shadow:
+    0 0 14px
+    rgba(231,190,87,.16);
+}
+
+.auth-content {
+  text-align: center;
+}
+
+.auth-icon {
+  font-size: 32px;
+  margin-bottom: 5px;
+  filter:
+    drop-shadow(
+      0 0 8px
+      rgba(255,214,115,.7)
+    );
+}
+
+.auth-content h2 {
+  margin: 4px 0 6px;
+
+  color: #f4dc9b;
+
+  font-size: 24px;
+
+  text-shadow:
+    0 2px 8px #000;
+}
+
+.auth-description {
+  margin: 0 0 20px;
+
+  color: #c9c0ad;
+
+  font-size: 14px;
+}
+
+.auth-content label {
+  display: block;
+
+  margin:
+    13px 0 7px;
+
+  text-align: left;
+
+  color: #ddce9d;
+
+  font-size: 13px;
+}
+
+.auth-content input {
+  width: 100%;
+
+  padding: 13px 14px;
+
+  color: #fff;
+
+  outline: none;
+
+  border-radius: 11px;
+
+  border: 1px solid
+    rgba(229,200,125,.3);
+
+  background:
+    rgba(0,0,0,.35);
+}
+
+.auth-content input:focus {
+  border-color:
+    rgba(240,210,130,.85);
+
+  box-shadow:
+    0 0 14px
+    rgba(229,190,82,.13);
+}
+
+.auth-message {
+  min-height: 20px;
+
+  margin:
+    10px 0;
+
+  color: #ffb6a8;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   BOTÓN PRINCIPAL
+========================================= */
+
+.main-button {
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 14px 18px;
+
+  border-radius: 12px;
+
+  color: #251b09;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f3d98e,
+      #b98a36
+    );
+
+  border: 1px solid
+    #f6df9d;
+
+  box-shadow:
+    0 5px 15px
+    rgba(0,0,0,.35),
+
+    inset 0 1px
+    rgba(255,255,255,.6);
+
+  font-weight: bold;
+
+  letter-spacing: .7px;
+}
+
+.main-button:active {
+  transform: translateY(1px);
+}
+
+
+/* =========================================
+   JUEGO
+========================================= */
+
+#game {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0c1912;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+
+  touch-action: none;
+
+  user-select: none;
+}
+
+.scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* =========================================
+   HUD
+========================================= */
+
+.hud {
+  position: absolute;
+
+  top: env(
+    safe-area-inset-top,
+    10px
+  );
+
+  left: 0;
+  right: 0;
+
+  padding:
+    12px
+    14px;
+
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  pointer-events: none;
+}
+
+.player-hud {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 8px 11px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(9,17,13,.72);
+
+  border: 1px solid
+    rgba(232,207,139,.35);
+
+  backdrop-filter: blur(7px);
+}
+
+.avatar {
+  width: 39px;
+  height: 39px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  color: #34240d;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f1d98c,
+      #a9792e
+    );
+
+  font-weight: bold;
+}
+
+.player-name {
+  color: #fff0bc;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.player-race {
+  color: #bdb8a8;
+  font-size: 11px;
+}
+
+.bars {
+  display: grid;
+  gap: 5px;
+
+  width: min(170px, 32vw);
+
+  margin:
+    4px 8px 0;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bar-track {
+  flex: 1;
+
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 99px;
+
+  background:
+    rgba(0,0,0,.55);
+
+  border:
+    1px solid
+    rgba(255,255,255,.15);
+}
+
+.bar-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  transition:
+    width .2s ease;
+}
+
+.hp .bar-fill {
+  background:
+    linear-gradient(
+      90deg,
+      #7e1e27,
+      #e85a58
+    );
+}
+
+.mana .bar-fill {
+  background:
+    linear-gradient(
+      90deg,
+      #244d9a,
+      #65b9ff
+    );
+}
+
+.hud-buttons {
+  pointer-events: auto;
+}
+
+.hud-button {
+  width: 46px;
+  height: 46px;
+
+  border-radius: 14px;
+
+  color: white;
+
+  background:
+    rgba(10,18,14,.78);
+
+  border: 1px solid
+    rgba(232,207,139,.45);
+
+  box-shadow:
+    0 5px 15px
+    rgba(0,0,0,.35);
+
+  font-size: 21px;
+}
+
+
+/* =========================================
+   CREADOR DE PERSONAJE
+========================================= */
+
+.character-creator {
+  position: absolute;
+  inset: 0;
+
+  z-index: 30;
+
+  display: grid;
+  place-items: center;
+
+  padding: 18px;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(50,80,58,.45),
+      rgba(3,8,6,.88)
+    );
+
+  backdrop-filter: blur(6px);
+
+  overflow-y: auto;
+}
+
+.creator-card {
+  width: min(700px, 94vw);
+
+  max-height: 92vh;
+
+  overflow-y: auto;
+
+  padding: 24px;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(28,37,30,.97),
+      rgba(9,15,11,.97)
+    );
+
+  border: 1px solid
+    rgba(238,207,132,.58);
+
+  box-shadow:
+    0 20px 60px
+    rgba(0,0,0,.65);
+}
+
+.creator-title {
+  text-align: center;
+
+  color: #f2d993;
+
+  font-size: 22px;
+
+  font-weight: bold;
+
+  letter-spacing: 1px;
+}
+
+.creator-subtitle {
+  text-align: center;
+
+  margin:
+    7px 0 20px;
+
+  color: #bbb5a4;
+
+  font-size: 13px;
+}
+
+.race-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 10px;
+}
+
+.race-button {
+  min-height: 125px;
+
+  padding: 12px 8px;
+
+  border-radius: 15px;
+
+  color: #eee;
+
+  background:
+    rgba(255,255,255,.055);
+
+  border: 1px solid
+    rgba(255,255,255,.1);
+
+  transition:
+    transform .15s,
+    border-color .15s,
+    background .15s;
+}
+
+.race-button:active {
+  transform: scale(.97);
+}
+
+.race-button:hover {
+  border-color:
+    rgba(237,204,126,.65);
+}
+
+.race-icon {
+  display: block;
+
+  font-size: 34px;
+
+  margin-bottom: 6px;
+}
+
+.race-button strong {
+  display: block;
+
+  color: #f0d99b;
+
+  font-size: 14px;
+}
+
+.race-button small {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #a9a69c;
+
+  line-height: 1.25;
+}
+
+.appearance-section {
+  margin-top: 20px;
+
+  padding-top: 17px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,.1);
+}
+
+.appearance-title {
+  margin-bottom: 10px;
+
+  color: #ddca94;
+
+  font-size: 13px;
+
+  letter-spacing: 1px;
+}
+
+.appearance-options {
+  display: flex;
+  gap: 8px;
+}
+
+.appearance-button {
+  flex: 1;
+
+  padding: 11px 7px;
+
+  color: #ddd;
+
+  border-radius: 10px;
+
+  background:
+    rgba(255,255,255,.06);
+
+  border: 1px solid
+    rgba(255,255,255,.1);
+}
+
+
+/* =========================================
+   HABILIDADES
+========================================= */
+
+.abilities-panel {
+  position: absolute;
+
+  right: 12px;
+  bottom: 92px;
+
+  width: min(210px, 43vw);
+
+  z-index: 10;
+
+  padding: 10px;
+
+  border-radius: 16px;
+
+  background:
+    rgba(8,15,11,.74);
+
+  border: 1px solid
+    rgba(226,201,130,.3);
+
+  backdrop-filter: blur(7px);
+}
+
+.abilities-title {
+  margin-bottom: 7px;
+
+  color: #e8d49b;
+
+  text-align: center;
+
+  font-size: 12px;
+
+  letter-spacing: .8px;
+}
+
+.ability-list {
+  display: grid;
+  gap: 6px;
+}
+
+.ability-button {
+  width: 100%;
+
+  padding: 9px 7px;
+
+  border-radius: 9px;
+
+  color: #e9e4d8;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(92,69,133,.45),
+      rgba(38,28,63,.55)
+    );
+
+  border: 1px solid
+    rgba(190,159,247,.28);
+
+  font-size: 11px;
+}
+
+
+/* =========================================
+   JOYSTICK
+========================================= */
+
+.joystick {
+  position: absolute;
+
+  left: 22px;
+  bottom: 25px;
+
+  width: 112px;
+  height: 112px;
+
+  z-index: 12;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,.12),
+      rgba(0,0,0,.25)
+    );
+
+  border: 1px solid
+    rgba(255,255,255,.18);
+
+  touch-action: none;
+}
+
+.stick {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 52px;
+  height: 52px;
+
+  margin-left: -26px;
+  margin-top: -26px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #f1db9c,
+      #8f672b
+    );
+
+  border: 2px solid
+    rgba(255,255,255,.4);
+
+  box-shadow:
+    0 5px 15px
+    rgba(0,0,0,.4);
+
+  pointer-events: none;
+}
+
+
+/* =========================================
+   CHAT
+========================================= */
+
+.chat {
+  position: absolute;
+
+  left: 12px;
+  bottom: 150px;
+
+  z-index: 20;
+
+  width: min(310px, 72vw);
+
+  border-radius: 15px;
+
+  background:
+    rgba(7,13,10,.78);
+
+  border:
+    1px solid
+    rgba(230,205,137,.3);
+
+  backdrop-filter: blur(7px);
+
+  transition:
+    transform .25s ease,
+    opacity .25s ease;
+}
+
+.chat-hidden {
+  opacity: 0;
+
+  transform:
+    translateX(
+      calc(-100% + 42px)
+    );
+
+  pointer-events: none;
+}
+
+.chat-toggle {
+  position: absolute;
+
+  right: 7px;
+  top: 6px;
+
+  width: 28px;
+  height: 28px;
+
+  z-index: 2;
+
+  border-radius: 8px;
+
+  color: #ead9a8;
+
+  background:
+    rgba(255,255,255,.08);
+}
+
+.chat-messages {
+  height: 120px;
+
+  overflow-y: auto;
+
+  padding:
+    10px 35px 8px 10px;
+
+  font-family:
+    system-ui,
+    sans-serif;
+
+  font-size: 11px;
+}
+
+.chat-message {
+  margin-bottom: 5px;
+
+  color: #dedbd3;
+
+  overflow-wrap: anywhere;
+}
+
+.chat-form {
+  display: flex;
+
+  gap: 5px;
+
+  padding: 7px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,.08);
+}
+
+.chat-form input {
+  min-width: 0;
+  flex: 1;
+
+  padding: 9px;
+
+  color: white;
+
+  outline: none;
+
+  border-radius: 8px;
+
+  border: 1px solid
+    rgba(255,255,255,.12);
+
+  background:
+    rgba(0,0,0,.35);
+}
+
+.chat-form button {
+  width: 38px;
+
+  border-radius: 8px;
+
+  color: #30230d;
+
+  background:
+    #d9b86c;
+}
+
+
+/* =========================================
+   MAPA
+========================================= */
+
+.side-map {
+  position: absolute;
+
+  right: 12px;
+  top: 72px;
+
+  z-index: 25;
+
+  width: min(340px, 86vw);
+
+  padding: 10px;
+
+  border-radius: 18px;
+
+  background:
+    rgba(8,15,11,.94);
+
+  border:
+    1px solid
+    rgba(231,205,137,.5);
+
+  box-shadow:
+    0 15px 40px
+    rgba(0,0,0,.55);
+
+  transform:
+    translateX(120%);
+
+  transition:
+    transform .25s ease;
+}
+
+.side-map.open {
+  transform:
+    translateX(0);
+}
+
+.map-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  color: #e8d39a;
+
+  font-size: 13px;
+}
+
+.map-header button {
+  width: 30px;
+  height: 30px;
+
+  border-radius: 8px;
+
+  color: white;
+
+  background:
+    rgba(255,255,255,.08);
+}
+
+.map-world {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 1;
+
+  overflow: hidden;
+
+  border-radius: 14px;
+
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      #789b5c,
+      #3b6345 48%,
+      #263f35 100%
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,.15);
+}
+
+.map-region {
+  position: absolute;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  color: white;
+
+  font-size: 19px;
+
+  text-shadow:
+    0 1px 4px black;
+}
+
+.map-region span {
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+.village {
+  left: 40%;
+  top: 43%;
+}
+
+.forest {
+  left: 13%;
+  top: 25%;
+}
+
+.lake {
+  right: 13%;
+  top: 22%;
+}
+
+.mountains {
+  left: 12%;
+  bottom: 12%;
+}
+
+.ruins {
+  right: 17%;
+  bottom: 27%;
+}
+
+.castle {
+  right: 37%;
+  bottom: 10%;
+}
+
+.player-marker {
+  position: absolute;
+
+  width: 15px;
+  height: 15px;
+
+  margin:
+    -7px 0 0 -7px;
+
+  border-radius: 50%;
+
+  color: #fff;
+
+  background: #ffdf70;
+
+  border:
+    2px solid white;
+
+  box-shadow:
+    0 0 12px
+    #fff1a1;
+
+  z-index: 5;
+
+  transition:
+    left .15s,
+    top .15s;
+}
+
+
+/* =========================================
+   CASAS
+========================================= */
+
+.house-button {
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 27px;
+
+  transform:
+    translateX(-50%);
+
+  z-index: 18;
+
+  padding:
+    11px 18px;
+
+  border-radius: 12px;
+
+  color: #30230d;
+
+  background:
+    linear-gradient(
+      180deg,
+      #efd58e,
+      #a8782d
+    );
+
+  border: 1px solid
+    #f5df9f;
+
+  font-weight: bold;
+
+  box-shadow:
+    0 5px 15px
+    rgba(0,0,0,.4);
+}
+
+
+/* =========================================
+   TOAST
+========================================= */
+
+.game-toast {
+  position: absolute;
+
+  left: 50%;
+  top: 16%;
+
+  transform:
+    translate(-50%, -15px);
+
+  z-index: 50;
+
+  padding:
+    10px 16px;
+
+  border-radius: 12px;
+
+  color: #f4e6bc;
+
+  background:
+    rgba(8,14,11,.86);
+
+  border:
+    1px solid
+    rgba(236,205,125,.4);
+
+  box-shadow:
+    0 8px 25px
+    rgba(0,0,0,.4);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity .2s ease,
+    transform .2s ease;
+
+  font-size: 13px;
+
+  text-align: center;
+}
+
+.game-toast.show {
+  opacity: 1;
+
+  transform:
+    translate(-50%, 0);
+}
+
+
+/* =========================================
+   MÓVIL
+========================================= */
+
+@media (max-width: 650px) {
+
+  .auth-card {
+    padding: 20px;
+  }
+
+  .race-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .creator-card {
+    padding: 18px;
+  }
+
+  .abilities-panel {
+    right: 8px;
+    bottom: 90px;
+
+    width: 155px;
+  }
+
+  .ability-button {
+    font-size: 10px;
+    padding: 8px 5px;
+  }
+
+  .chat {
+    bottom: 145px;
+    width: 64vw;
+  }
+
+  .bars {
+    width: 105px;
+  }
+
+  .player-hud {
+    padding: 6px 8px;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+}
+
+@media (max-height: 650px) {
+
+  .creator-card {
+    max-height: 88vh;
+  }
+
+  .race-button {
+    min-height: 100px;
+  }
+
+}
