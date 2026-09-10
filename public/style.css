@@ -1,73 +1,82 @@
 :root{
   --gold:#f4c96a;
-  --gold2:#ffe8a0;
+  --gold2:#ffe7a0;
   --purple:#8b5cf6;
-  --dark:#05050d;
+  --bg:#05060d
 }
 
 *{
   box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
+  -webkit-tap-highlight-color:transparent
 }
 
-html,
-body{
+html,body{
+  margin:0;
   width:100%;
   height:100%;
-  margin:0;
-  padding:0;
   overflow:hidden;
-  background:#05050d;
+  background:var(--bg);
   color:#fff;
-  font-family:Inter,Arial,sans-serif;
+  font-family:Inter,Arial,sans-serif
 }
 
-button,
-input{
-  font:inherit;
+button,input{
+  font:inherit
 }
 
-/* =========================================================
+button{
+  cursor:pointer
+}
+
+[hidden]{
+  display:none!important
+}
+
+/* =========================
    MENU PRINCIPAL
-   ========================================================= */
+   ========================= */
 
 #home{
   position:fixed;
   inset:0;
   width:100%;
-  height:100%;
+  height:100dvh;
   overflow:hidden;
-  background:#05050d;
+  background:#05060d
 }
 
-/* La imagen es el escenario completo */
-.fantasy-scene{
+#home .hero{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
-
-  background-image:url("/assets/start-menu.png");
-  background-size:cover;
-  background-position:center center;
-  background-repeat:no-repeat;
-
-  animation:magicBreath 14s ease-in-out infinite;
+  background:transparent;
+  z-index:20
 }
 
-@keyframes magicBreath{
+#home .fantasy-scene{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  background:url("/assets/start-menu.png") center/cover no-repeat;
+  animation:sceneBreath 14s ease-in-out infinite;
+  z-index:1
+}
+
+@keyframes sceneBreath{
   0%,100%{
-    transform:scale(1);
+    transform:scale(1)
   }
 
   50%{
-    transform:scale(1.025);
+    transform:scale(1.02)
   }
 }
 
-/* =========================================================
-   DECORACIÓN
-   ========================================================= */
+/* =========================
+   EFECTOS MÁGICOS
+   ========================= */
 
 .magic-bg,
 .scene-overlay,
@@ -78,12 +87,12 @@ input{
 .particles,
 .orb{
   position:absolute;
-  pointer-events:none;
+  pointer-events:none
 }
 
 .magic-bg{
   inset:0;
-  z-index:2;
+  z-index:2
 }
 
 .scene-overlay{
@@ -91,33 +100,30 @@ input{
   z-index:3;
   background:linear-gradient(
     to bottom,
-    rgba(0,0,0,.03),
-    rgba(0,0,0,.02) 65%,
-    rgba(0,0,0,.18)
-  );
+    rgba(0,0,0,.02),
+    rgba(0,0,0,.12)
+  )
 }
 
 .magic-light{
-  width:320px;
-  height:320px;
+  width:300px;
+  height:300px;
   left:50%;
-  top:25%;
+  top:28%;
   transform:translate(-50%,-50%);
   border-radius:50%;
-  background:rgba(150,100,255,.07);
+  background:rgba(140,90,255,.08);
   filter:blur(70px);
-  animation:magicLight 6s ease-in-out infinite;
+  animation:lightPulse 6s ease-in-out infinite
 }
 
-@keyframes magicLight{
+@keyframes lightPulse{
   0%,100%{
-    opacity:.3;
-    transform:translate(-50%,-50%) scale(.9);
+    opacity:.3
   }
 
   50%{
-    opacity:.8;
-    transform:translate(-50%,-50%) scale(1.1);
+    opacity:.8
   }
 }
 
@@ -125,121 +131,125 @@ input{
   width:150%;
   height:20%;
   left:-25%;
-  bottom:5%;
-  background:rgba(255,255,255,.045);
+  bottom:8%;
+  background:rgba(255,255,255,.04);
   filter:blur(35px);
-  animation:fog1 18s ease-in-out infinite;
+  animation:fog1 18s ease-in-out infinite
 }
 
 .fog2{
   width:160%;
-  height:16%;
+  height:15%;
   left:-30%;
   bottom:25%;
-  background:rgba(130,100,255,.04);
+  background:rgba(140,100,255,.04);
   filter:blur(40px);
-  animation:fog2 25s ease-in-out infinite;
+  animation:fog2 25s ease-in-out infinite
 }
 
 .fog3{
   width:160%;
   height:12%;
   left:-30%;
-  top:20%;
+  top:18%;
   background:rgba(255,255,255,.025);
   filter:blur(45px);
-  animation:fog3 30s ease-in-out infinite;
+  animation:fog3 30s ease-in-out infinite
 }
 
 @keyframes fog1{
-  0%,100%{transform:translateX(-5%)}
-  50%{transform:translateX(5%)}
+  0%,100%{
+    transform:translateX(-5%)
+  }
+
+  50%{
+    transform:translateX(5%)
+  }
 }
 
 @keyframes fog2{
-  0%,100%{transform:translateX(6%)}
-  50%{transform:translateX(-6%)}
+  0%,100%{
+    transform:translateX(6%)
+  }
+
+  50%{
+    transform:translateX(-6%)
+  }
 }
 
 @keyframes fog3{
-  0%,100%{transform:translateX(-4%)}
-  50%{transform:translateX(4%)}
+  0%,100%{
+    transform:translateX(-4%)
+  }
+
+  50%{
+    transform:translateX(4%)
+  }
 }
 
 .particles{
   inset:0;
   z-index:5;
   opacity:.4;
-
   background-image:
-    radial-gradient(circle,rgba(255,230,150,.9) 0 1px,transparent 2px),
-    radial-gradient(circle,rgba(170,130,255,.8) 0 1px,transparent 2px),
-    radial-gradient(circle,rgba(255,255,255,.7) 0 1px,transparent 2px);
-
+    radial-gradient(
+      circle,
+      rgba(255,230,150,.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle,
+      rgba(170,130,255,.8) 0 1px,
+      transparent 2px
+    );
   background-size:
     120px 150px,
-    180px 210px,
-    250px 260px;
-
-  animation:particleMove 20s linear infinite;
+    180px 210px;
+  animation:particleMove 20s linear infinite
 }
 
 @keyframes particleMove{
   from{
-    transform:translateY(15px);
+    transform:translateY(15px)
   }
 
   to{
-    transform:translateY(-25px);
+    transform:translateY(-25px)
   }
 }
 
-/* =========================================================
-   OCULTAMOS EL MENÚ HTML ANTIGUO
-   La ilustración ya contiene título, panel y botones.
-   ========================================================= */
+/* =========================
+   OCULTAR DECORACIÓN HTML
+   ========================= */
 
-.hero{
-  position:absolute;
-  inset:0;
-  z-index:20;
-  background:transparent !important;
-  display:block !important;
+#home .crest,
+#home .hero>small,
+#home .hero>h1,
+#home .hero>label,
+#home .hero>p,
+#home .badges{
+  display:none!important
 }
 
-.crest,
-.hero small,
-.hero h1,
-.hero label,
-.hero p,
-.badges{
-  display:none !important;
-}
-
-/* =========================================================
-   FORMULARIO REAL SOBRE LA ILUSTRACIÓN
-   ========================================================= */
+/* =========================
+   PANEL DE LOGIN
+   ========================= */
 
 .auth-card,
 .auth-panel,
 .auth-box{
-  position:absolute !important;
-  inset:0 !important;
-
-  width:100% !important;
-  height:100% !important;
-
-  margin:0 !important;
-  padding:0 !important;
-
-  background:transparent !important;
-  border:0 !important;
-  box-shadow:none !important;
-
-  z-index:30 !important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  z-index:30!important
 }
 
-/* Ocultamos textos duplicados */
 .auth-card h1,
 .auth-card h2,
 .auth-card h3,
@@ -258,510 +268,394 @@ input{
 .auth-box p,
 .auth-box label,
 .auth-box small{
-  display:none !important;
+  display:none!important
 }
 
-/* =========================================================
-   TABS
-   ========================================================= */
+/* =========================
+   BOTONES LOGIN / REGISTRO
+   ========================= */
 
 .auth-tabs{
-  position:absolute !important;
-  z-index:50 !important;
-
-  left:25% !important;
-  right:12% !important;
-  top:42% !important;
-
-  height:58px !important;
-
-  display:flex !important;
-  gap:18px !important;
+  position:absolute!important;
+  left:12%!important;
+  right:12%!important;
+  top:42%!important;
+  height:58px!important;
+  display:flex!important;
+  gap:3%!important;
+  z-index:50!important
 }
 
 .auth-tabs button{
-  flex:1 !important;
-
-  min-height:50px !important;
-
-  color:transparent !important;
-  background:transparent !important;
-
-  border:0 !important;
-  box-shadow:none !important;
+  flex:1!important;
+  height:58px!important;
+  background:transparent!important;
+  border:0!important;
+  color:transparent!important;
+  box-shadow:none!important
 }
 
-/* =========================================================
+/* =========================
    FORMULARIO
-   ========================================================= */
+   ========================= */
 
 #authForm{
-  position:absolute !important;
-
-  z-index:50 !important;
-
-  left:28% !important;
-  right:14% !important;
-  top:48% !important;
-
-  width:auto !important;
-  margin:0 !important;
-  padding:0 !important;
-
-  background:transparent !important;
+  position:absolute!important;
+  left:12%!important;
+  right:12%!important;
+  top:49%!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  z-index:50!important
 }
 
-/* Campos */
 #username,
 #password{
-  display:block !important;
-
-  width:100% !important;
-  height:58px !important;
-
-  margin:0 0 18px 0 !important;
-  padding:0 18px !important;
-
-  border:1px solid transparent !important;
-  outline:none !important;
-
-  border-radius:12px !important;
-
-  background:rgba(0,0,0,.02) !important;
-
-  color:#fff !important;
-  caret-color:#ffe6a0 !important;
-
-  font-size:18px !important;
+  display:block!important;
+  width:100%!important;
+  height:58px!important;
+  margin:0 0 18px!important;
+  padding:0 22px!important;
+  border:0!important;
+  border-radius:12px!important;
+  outline:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  caret-color:#ffe7a0!important;
+  font-size:18px!important;
+  box-shadow:none!important;
+  -webkit-appearance:none!important;
+  appearance:none!important
 }
 
-/* El placeholder no tapa el texto de la imagen */
 #username::placeholder,
 #password::placeholder{
-  color:transparent !important;
-  opacity:0 !important;
+  color:transparent!important;
+  opacity:0!important
 }
 
-/* Evita que Safari pinte los campos amarillos */
+/* Safari */
 #username:-webkit-autofill,
 #password:-webkit-autofill,
 #username:-webkit-autofill:hover,
 #password:-webkit-autofill:hover,
 #username:-webkit-autofill:focus,
 #password:-webkit-autofill:focus{
-  -webkit-text-fill-color:#fff !important;
-  transition:background-color 9999s ease-out 0s !important;
+  -webkit-text-fill-color:#fff!important;
+  -webkit-box-shadow:
+    0 0 0 1000px transparent inset!important;
+  box-shadow:
+    0 0 0 1000px transparent inset!important;
+  transition:
+    background-color 9999s ease-out 0s!important
 }
 
-/* Botón real */
+/* =========================
+   BOTÓN ENTRAR
+   ========================= */
+
 #authSubmit{
-  display:block !important;
-
-  width:100% !important;
-  height:66px !important;
-
-  margin:0 !important;
-
-  background:transparent !important;
-  border:0 !important;
-  box-shadow:none !important;
-
-  color:transparent !important;
-  font-size:0 !important;
-
-  position:relative;
-  z-index:60;
+  display:block!important;
+  width:100%!important;
+  height:68px!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  color:transparent!important;
+  font-size:0!important;
+  box-shadow:none!important;
+  z-index:60!important
 }
 
 #authSubmit:active{
-  transform:scale(.98);
+  transform:scale(.98)
 }
 
 #authMsg{
-  position:absolute;
-  left:0;
-  right:0;
-  top:145px;
-
-  color:#ffe7a0 !important;
-  font-size:14px;
-  text-align:center;
-
-  text-shadow:0 2px 8px #000;
+  position:absolute!important;
+  left:12%!important;
+  right:12%!important;
+  top:67%!important;
+  color:#ffe7a0!important;
+  text-align:center!important;
+  text-shadow:0 2px 8px #000!important;
+  z-index:70!important
 }
 
-/* =========================================================
+/* =========================
    JUEGO
-   ========================================================= */
-
-/*
-  IMPORTANTE:
-  Antes estaba #game{display:none}, lo que provocaba
-  que game.js no pudiera mostrarlo correctamente.
-*/
+   ========================= */
 
 #game{
   position:fixed;
   inset:0;
-
   width:100%;
   height:100%;
-
   overflow:hidden;
-
-  background:#11152b;
-
-  display:block;
+  background:#86b7d5
 }
 
 #game[hidden]{
-  display:none !important;
+  display:none!important
 }
 
-/* =========================================================
+#game:not([hidden]){
+  display:block
+}
+
+/* =========================
    HUD
-   ========================================================= */
+   ========================= */
 
 #game header{
   position:absolute;
   top:0;
   left:0;
   right:0;
-
-  height:64px;
-
+  height:56px;
   z-index:100;
-
   display:flex;
   align-items:center;
   justify-content:space-between;
-
-  padding:0 18px;
-
-  background:rgba(7,8,18,.85);
+  padding:0 14px;
+  background:rgba(7,8,18,.88);
   border-bottom:1px solid rgba(255,255,255,.12);
-
-  backdrop-filter:blur(12px);
+  backdrop-filter:blur(10px)
 }
-
-#game header strong{
-  color:#fff;
-  font-family:Georgia,serif;
-}
-
-#game header span{
-  color:#aaa;
-  font-size:11px;
-  letter-spacing:2px;
-}
-
-/* =========================================================
-   MUNDO
-   ========================================================= */
 
 #game main{
   position:absolute;
-  inset:64px 0 0 0;
-
+  top:56px;
+  left:0;
+  right:0;
+  bottom:0;
   display:grid;
-  grid-template-columns:220px 1fr 290px;
+  grid-template-columns:220px 1fr 290px
 }
+
+#game aside{
+  padding:18px;
+  background:rgba(12,14,29,.9);
+  border-right:1px solid rgba(255,255,255,.12)
+}
+
+#game aside.chat{
+  border-left:1px solid rgba(255,255,255,.12);
+  border-right:0;
+  display:flex;
+  flex-direction:column
+}
+
+/* =========================
+   ESCENA 3D
+   ========================= */
 
 #scene{
   position:relative;
   width:100%;
   height:100%;
-
   overflow:hidden;
-
-  background:#86b7d5;
+  background:#86b7d5
 }
 
 #scene canvas{
   display:block;
-  width:100% !important;
-  height:100% !important;
+  width:100%!important;
+  height:100%!important
 }
 
-/* =========================================================
-   PANELES
-   ========================================================= */
+/* =========================
+   TÍTULO DEL JUEGO
+   ========================= */
 
-#game aside{
-  padding:18px;
-
-  background:rgba(12,14,29,.9);
-
-  border-right:1px solid rgba(255,255,255,.12);
-}
-
-#game aside.chat{
-  border-right:0;
-  border-left:1px solid rgba(255,255,255,.12);
-
-  display:flex;
-  flex-direction:column;
-}
-
-#game h3{
-  margin:8px 0 14px;
-
-  color:var(--gold);
-
-  font:700 13px Georgia,serif;
+.title{
+  position:absolute;
+  top:16px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
+  padding:8px 14px;
+  border-radius:99px;
+  background:rgba(8,10,19,.75);
+  font:700 11px Georgia;
+  color:#eadba8;
   letter-spacing:3px;
+  white-space:nowrap
 }
 
-.card{
-  padding:13px;
-
-  background:rgba(255,255,255,.05);
-
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;
-}
-
-/* =========================================================
+/* =========================
    JOYSTICK
-   ========================================================= */
+   ========================= */
 
 #joystick{
   position:absolute;
-
-  left:20px;
-  bottom:20px;
-
-  width:125px;
-  height:125px;
-
-  z-index:120;
-
+  left:16px;
+  bottom:16px;
+  width:120px;
+  height:120px;
   border-radius:50%;
-
+  z-index:120;
   background:rgba(255,255,255,.07);
-
   border:2px solid rgba(255,255,255,.18);
-
-  touch-action:none;
+  touch-action:none
 }
 
 #stick{
   position:absolute;
-
-  width:58px;
-  height:58px;
-
   left:50%;
   top:50%;
-
-  margin-left:-29px;
-  margin-top:-29px;
-
+  width:58px;
+  height:58px;
+  margin:-29px;
   border-radius:50%;
-
-  background:rgba(139,92,246,.7);
-
+  background:rgba(139,92,246,.72);
   border:1px solid rgba(255,255,255,.4);
-
   box-shadow:0 0 25px rgba(139,92,246,.4);
-
-  touch-action:none;
+  touch-action:none
 }
 
-/* =========================================================
+/* =========================
    COMBATE
-   ========================================================= */
+   ========================= */
 
 .combat{
   position:absolute;
-
-  right:18px;
-  bottom:18px;
-
+  right:16px;
+  bottom:16px;
   z-index:120;
-
   display:flex;
   gap:7px;
-
   flex-wrap:wrap;
   justify-content:flex-end;
+  max-width:58%
 }
 
 .combat button{
-  padding:10px 13px;
-
+  padding:10px 12px;
   border-radius:12px;
-
-  color:white;
-
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
   background:linear-gradient(
     135deg,
     #f4c96a,
     #8b5cf6
   );
-
-  border:1px solid rgba(255,255,255,.2);
-
-  font-weight:800;
+  font-weight:800
 }
 
-/* =========================================================
+/* =========================
+   MAPA
+   ========================= */
+
+#sideMap{
+  position:absolute;
+  top:70px;
+  right:12px;
+  width:280px;
+  height:350px;
+  z-index:150;
+  background:rgba(8,10,20,.95);
+  border:1px solid rgba(244,201,106,.4);
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.55)
+}
+
+#map[hidden],
+#sideMap[hidden]{
+  display:none!important
+}
+
+/* =========================
    CHAT
-   ========================================================= */
+   ========================= */
 
 #msgs{
   flex:1;
   min-height:0;
-
   overflow:auto;
-
-  padding:10px;
-
-  color:#ddd;
-  font-size:12px;
+  padding:10px
 }
 
-#form{
+.chat form{
   display:flex;
   gap:6px;
-
-  padding:10px;
-
-  border-top:1px solid rgba(255,255,255,.1);
+  padding:10px
 }
 
-#input{
+.chat input{
   flex:1;
-
   min-width:0;
-
   padding:10px;
-
-  color:white;
-
-  background:rgba(255,255,255,.06);
-
+  color:#fff;
+  background:#05060c;
   border:1px solid rgba(255,255,255,.15);
-
-  border-radius:10px;
-
-  outline:none;
+  border-radius:10px
 }
 
-/* =========================================================
-   MAPA
-   ========================================================= */
-
-#sideMap{
-  position:absolute;
-
-  top:78px;
-  right:15px;
-
-  width:280px;
-  height:350px;
-
-  z-index:150;
-
-  background:rgba(8,10,20,.95);
-
-  border:1px solid rgba(244,201,106,.4);
-
-  border-radius:18px;
-
-  box-shadow:0 20px 60px rgba(0,0,0,.55);
-
-  backdrop-filter:blur(15px);
+#game button{
+  border-radius:10px
 }
 
-/* =========================================================
+/* =========================
    MÓVIL
-   ========================================================= */
+   ========================= */
 
-@media(max-width:900px){
+@media(max-width:800px){
 
   #game main{
-    display:block;
-    inset:56px 0 0 0;
+    display:block
   }
 
-  #game main > aside{
-    display:none;
+  .chat,
+  #game main>aside{
+    display:none
   }
 
   #scene{
     width:100%;
-    height:100%;
-  }
-
-  #game header{
-    height:56px;
+    height:100%
   }
 
   .combat{
-    right:12px;
-    bottom:14px;
-    max-width:55%;
+    right:10px;
+    bottom:12px;
+    max-width:58%
   }
 
   .combat button{
     font-size:11px;
-    padding:9px 11px;
-  }
-
-  #joystick{
-    left:15px;
-    bottom:15px;
+    padding:9px 10px
   }
 }
 
-/* =========================================================
+/* =========================
    IPHONE
-   ========================================================= */
+   ========================= */
 
 @media(max-width:600px){
 
-  #home{
-    width:100vw;
-    height:100dvh;
-  }
-
-  .fantasy-scene{
-    width:100%;
-    height:100%;
-
-    background-size:cover;
-    background-position:center center;
-  }
-
-  /*
-    Posiciones calculadas para coincidir
-    con el panel dibujado en la imagen.
-  */
-
   .auth-tabs{
-    left:24% !important;
-    right:11% !important;
-    top:42% !important;
+    top:42%!important
+  }
 
-    height:58px !important;
+  .auth-tabs button{
+    height:56px!important
   }
 
   #authForm{
-    left:28% !important;
-    right:14% !important;
-    top:48% !important;
+    top:49%!important
   }
 
   #username,
   #password{
-    height:56px !important;
-    margin-bottom:17px !important;
-
-    font-size:17px !important;
+    height:56px!important;
+    margin-bottom:17px!important;
+    font-size:17px!important
   }
 
   #authSubmit{
-    height:64px !important;
+    height:66px!important
   }
 }
