@@ -1,7 +1,7 @@
 import * as THREE from "https://esm.sh/three@0.161.0";
 import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GLTFLoader.js";
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 const socket = typeof io === "function" ? io() : null;
 
 console.log("✨ UNIVERSO MÁGICO: game.js cargado");
@@ -10,30 +10,17 @@ const home = $("home");
 const game = $("game");
 const sceneEl = $("scene");
 
-let scene;
-let camera;
-let renderer;
-let clock;
-
+let scene, camera, renderer, clock;
 let player = null;
 let mixer = null;
 let actions = {};
 let currentAction = null;
-
-let moveX = 0;
-let moveY = 0;
-
-let mana = 100;
-let hp = 100;
-
+let moveX = 0, moveY = 0;
+let mana = 100, hp = 100;
 let registerMode = false;
-
-let yaw = 0;
-let pitch = 0.48;
-
+let yaw = 0, pitch = 0.48;
 let draggingCamera = false;
-let lastTouchX = 0;
-let lastTouchY = 0;
+let lastTouchX = 0, lastTouchY = 0;
 
 let selectedRace = "humano";
 
@@ -45,18 +32,13 @@ let selectedAppearance = {
 
 let currentHouse = null;
 let interior = null;
-let toastTimer = null;
+let toastTimer;
 
 const keys = {};
 
 const houses = [];
 const trees = [];
 const mountains = [];
-const solidObjects = [];
-
-const WORLD_SIZE = 700;
-const WORLD_LIMIT = WORLD_SIZE / 2 - 12;
-const MOVE_SPEED = 13;
 
 const state = {
   username: "Aventurero",
@@ -66,7 +48,7 @@ const state = {
 
 const assets = {
   character:
-    "/assets/characters/Superhero_Male_FullBody.gltf",
+    "/assets/characters/Superhero_Male_FullBody_web.gltf",
 
   animations:
     "/assets/characters/UAL1_Standard.glb"
@@ -74,49 +56,66 @@ const assets = {
 
 const loader = new GLTFLoader();
 
+
 /* =========================================================
    AUTENTICACIÓN
 ========================================================= */
 
-$("tabLogin")?.addEventListener("click", () => {
+$("tabLogin")?.addEventListener(
+  "click",
+  () => {
 
-  registerMode = false;
+    registerMode = false;
 
-  $("tabLogin")?.classList.add("active");
-  $("tabRegister")?.classList.remove("active");
+    $("tabLogin")?.classList.add(
+      "active"
+    );
 
-  if ($("authSubmit")) {
+    $("tabRegister")?.classList.remove(
+      "active"
+    );
 
-    $("authSubmit").textContent =
-      "⚡ ENTRAR AL UNIVERSO";
+    if ($("authSubmit")) {
 
-  }
+      $("authSubmit").textContent =
+        "⚡ ENTRAR AL UNIVERSO";
 
-});
-
-
-$("tabRegister")?.addEventListener("click", () => {
-
-  registerMode = true;
-
-  $("tabRegister")?.classList.add("active");
-  $("tabLogin")?.classList.remove("active");
-
-  if ($("authSubmit")) {
-
-    $("authSubmit").textContent =
-      "✨ CREAR PERSONAJE";
+    }
 
   }
+);
 
-});
+
+$("tabRegister")?.addEventListener(
+  "click",
+  () => {
+
+    registerMode = true;
+
+    $("tabRegister")?.classList.add(
+      "active"
+    );
+
+    $("tabLogin")?.classList.remove(
+      "active"
+    );
+
+    if ($("authSubmit")) {
+
+      $("authSubmit").textContent =
+        "✨ CREAR PERSONAJE";
+
+    }
+
+  }
+);
 
 
 $("authForm")?.addEventListener(
   "submit",
-  async (event) => {
+  async (e) => {
 
-    event.preventDefault();
+    e.preventDefault();
 
     const username =
       ($("username")?.value || "").trim();
@@ -124,27 +123,32 @@ $("authForm")?.addEventListener(
     const password =
       $("password")?.value || "";
 
-    if (username.length < 3) {
 
-      authMessage(
+    if (
+      username.length < 3
+    ) {
+
+      return authMessage(
         "El nombre debe tener al menos 3 caracteres."
       );
 
-      return;
-
     }
 
-    if (password.length < 6) {
 
-      authMessage(
+    if (
+      password.length < 6
+    ) {
+
+      return authMessage(
         "La contraseña debe tener al menos 6 caracteres."
       );
 
-      return;
-
     }
 
-    const button = $("authSubmit");
+
+    const button =
+      $("authSubmit");
+
 
     if (button) {
 
@@ -155,6 +159,7 @@ $("authForm")?.addEventListener(
 
     }
 
+
     try {
 
       const endpoint =
@@ -162,10 +167,12 @@ $("authForm")?.addEventListener(
           ? "/api/register"
           : "/api/login";
 
+
       const response =
         await fetch(
           endpoint,
           {
+
             method: "POST",
 
             headers: {
@@ -178,15 +185,22 @@ $("authForm")?.addEventListener(
                 username,
                 password
               })
+
           }
         );
+
 
       const data =
         await response
           .json()
-          .catch(() => ({}));
+          .catch(
+            () => ({})
+          );
 
-      if (!response.ok) {
+
+      if (
+        !response.ok
+      ) {
 
         throw new Error(
           data.error ||
@@ -195,33 +209,41 @@ $("authForm")?.addEventListener(
 
       }
 
+
       localStorage.setItem(
         "universo_magico_user",
         JSON.stringify(data)
       );
 
+
       startGame(
-        data.username || username,
-        data.character || null
+        data.username ||
+          username,
+
+        data.character ||
+          null
       );
 
-    } catch (error) {
+
+    } catch (err) {
 
       console.error(
-        "Error de autenticación:",
-        error
+        err
       );
 
+
       authMessage(
-        error.message ||
+        err.message ||
         "No se pudo conectar con el reino."
       );
+
 
     } finally {
 
       if (button) {
 
-        button.disabled = false;
+        button.disabled =
+          false;
 
         button.textContent =
           registerMode
@@ -236,18 +258,31 @@ $("authForm")?.addEventListener(
 );
 
 
-function authMessage(message) {
+function authMessage(text) {
 
-  const element = $("authMsg");
+  const el =
+    $("authMsg");
 
-  if (!element) return;
 
-  element.textContent = message;
+  if (!el) {
 
-  element.hidden = false;
+    return;
+
+  }
+
+
+  el.textContent =
+    text;
+
+  el.hidden =
+    false;
 
 }
 
+
+/* =========================================================
+   INICIAR JUEGO
+========================================================= */
 
 function startGame(
   username,
@@ -255,26 +290,37 @@ function startGame(
 ) {
 
   state.username =
-    username || "Aventurero";
+    username ||
+    "Aventurero";
+
 
   state.character =
     savedCharacter;
 
-  if ($("playerName")) {
+
+  if (
+    $("playerName")
+  ) {
 
     $("playerName").textContent =
       state.username;
 
   }
 
-  if ($("hudName")) {
+
+  if (
+    $("hudName")
+  ) {
 
     $("hudName").textContent =
       state.username;
 
   }
 
-  if ($("avatar")) {
+
+  if (
+    $("avatar")
+  ) {
 
     $("avatar").textContent =
       state.username
@@ -283,17 +329,22 @@ function startGame(
 
   }
 
+
   if (home) {
 
-    home.hidden = true;
+    home.hidden =
+      true;
 
   }
+
 
   if (game) {
 
-    game.hidden = false;
+    game.hidden =
+      false;
 
   }
+
 
   if (!renderer) {
 
@@ -301,16 +352,23 @@ function startGame(
 
   }
 
+
   setTimeout(
-    () => openCharacterCreator(savedCharacter),
-    600
+    () => {
+
+      openCharacterCreator(
+        savedCharacter
+      );
+
+    },
+    500
   );
 
 }
 
 
 /* =========================================================
-   INICIO DEL MUNDO
+   INICIALIZAR MUNDO
 ========================================================= */
 
 function initWorld() {
@@ -318,11 +376,16 @@ function initWorld() {
   clock =
     new THREE.Clock();
 
+
   scene =
     new THREE.Scene();
 
+
   scene.background =
-    new THREE.Color(0x79a9c5);
+    new THREE.Color(
+      0x79a9c5
+    );
+
 
   scene.fog =
     new THREE.FogExp2(
@@ -334,9 +397,12 @@ function initWorld() {
   camera =
     new THREE.PerspectiveCamera(
       60,
+
       window.innerWidth /
         window.innerHeight,
+
       0.1,
+
       1600
     );
 
@@ -376,14 +442,18 @@ function initWorld() {
   renderer.shadowMap.enabled =
     true;
 
+
   renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
+
 
   renderer.outputColorSpace =
     THREE.SRGBColorSpace;
 
+
   renderer.toneMapping =
     THREE.ACESFilmicToneMapping;
+
 
   renderer.toneMappingExposure =
     1.1;
@@ -405,6 +475,7 @@ function initWorld() {
       1.8
     );
 
+
   scene.add(
     hemisphere
   );
@@ -416,31 +487,39 @@ function initWorld() {
       3.2
     );
 
+
   sun.position.set(
     -120,
     180,
     90
   );
 
+
   sun.castShadow =
     true;
+
 
   sun.shadow.mapSize.set(
     2048,
     2048
   );
 
+
   sun.shadow.camera.left =
     -300;
+
 
   sun.shadow.camera.right =
     300;
 
+
   sun.shadow.camera.top =
     300;
 
+
   sun.shadow.camera.bottom =
     -300;
+
 
   scene.add(
     sun
@@ -462,7 +541,6 @@ function initWorld() {
   createMagicParticles();
 
   loadPlayer();
-
 
   setupJoystick();
 
@@ -502,8 +580,8 @@ function createGround() {
     new THREE.Mesh(
 
       new THREE.PlaneGeometry(
-        WORLD_SIZE,
-        WORLD_SIZE,
+        700,
+        700,
         100,
         100
       ),
@@ -522,8 +600,10 @@ function createGround() {
   ground.rotation.x =
     -Math.PI / 2;
 
+
   ground.receiveShadow =
     true;
+
 
   scene.add(
     ground
@@ -599,7 +679,7 @@ function createGround() {
 
 
   /*
-     PEQUEÑAS PIEDRAS
+     PIEDRAS
   */
 
   const rockMaterial =
@@ -765,13 +845,11 @@ function createVillage() {
           index
         );
 
+
       houses.push(
         house
       );
 
-      solidObjects.push(
-        house
-      );
 
       scene.add(
         house
@@ -819,6 +897,10 @@ function createVillage() {
 
 }
 
+
+/* =========================================================
+   CASA
+========================================================= */
 
 function createHouse(
   x,
@@ -883,6 +965,7 @@ function createHouse(
 
   body.castShadow =
     true;
+
 
   body.receiveShadow =
     true;
@@ -1142,6 +1225,7 @@ function createForest() {
     const tree =
       createTree();
 
+
     tree.position.set(
       x,
       0,
@@ -1155,6 +1239,7 @@ function createForest() {
         1.45
       );
 
+
     tree.scale.setScalar(
       scale
     );
@@ -1165,9 +1250,14 @@ function createForest() {
       Math.PI;
 
 
-    trees.push(tree);
+    trees.push(
+      tree
+    );
 
-    scene.add(tree);
+
+    scene.add(
+      tree
+    );
 
   }
 
@@ -1258,7 +1348,8 @@ function createTree() {
 
 
     branch.position.y =
-      7 + i * 1.2;
+      7 +
+      i * 1.2;
 
 
     branch.rotation.z =
@@ -1287,7 +1378,7 @@ function createTree() {
 
 
   /*
-     COPA
+     COPA DEL ÁRBOL
   */
 
   const leafMaterial =
@@ -1482,8 +1573,7 @@ function createMountain(
   const rockMaterial =
     new THREE.MeshStandardMaterial({
 
-      color:
-        0x59645e,
+      color: 0x59645e,
 
       roughness: 1
 
@@ -1526,10 +1616,12 @@ function createMountain(
 
 
   /*
-     NIEVE EN LA CIMA
+     NIEVE EN LAS CIMAS
   */
 
-  if (height > 52) {
+  if (
+    height > 52
+  ) {
 
     const snow =
       new THREE.Mesh(
@@ -1588,10 +1680,6 @@ function createCastle() {
   );
 
 
-  /*
-     BASE
-  */
-
   const stoneMaterial =
     new THREE.MeshStandardMaterial({
 
@@ -1611,6 +1699,10 @@ function createCastle() {
 
     });
 
+
+  /*
+     TORRE CENTRAL
+  */
 
   const keep =
     new THREE.Mesh(
@@ -1695,7 +1787,7 @@ function createCastle() {
 
 
       /*
-         TECHO DE TORRE
+         TECHO
       */
 
       const roof =
@@ -1851,7 +1943,7 @@ function createCastle() {
 
 
   /*
-     ARCO DE ENTRADA
+     ARCO
   */
 
   const arch =
@@ -1929,7 +2021,8 @@ function createCastle() {
 
         col * 13,
 
-        10 + row * 12,
+        10 +
+          row * 12,
 
         -23
 
@@ -1949,7 +2042,7 @@ function createCastle() {
      MURALLAS
   */
 
-  const wall1 =
+  const wallFront =
     new THREE.Mesh(
 
       new THREE.BoxGeometry(
@@ -1963,36 +2056,36 @@ function createCastle() {
     );
 
 
-  wall1.position.set(
+  wallFront.position.set(
     0,
     8,
     -43
   );
 
 
-  wall1.castShadow =
+  wallFront.castShadow =
     true;
 
 
   castle.add(
-    wall1
+    wallFront
   );
 
 
-  const wall2 =
-    wall1.clone();
+  const wallBack =
+    wallFront.clone();
 
 
-  wall2.position.z =
+  wallBack.position.z =
     43;
 
 
   castle.add(
-    wall2
+    wallBack
   );
 
 
-  const wall3 =
+  const wallLeft =
     new THREE.Mesh(
 
       new THREE.BoxGeometry(
@@ -2006,7 +2099,7 @@ function createCastle() {
     );
 
 
-  wall3.position.set(
+  wallLeft.position.set(
     -45,
     8,
     0
@@ -2014,34 +2107,25 @@ function createCastle() {
 
 
   castle.add(
-    wall3
+    wallLeft
   );
 
 
-  const wall4 =
-    wall3.clone();
+  const wallRight =
+    wallLeft.clone();
 
 
-  wall4.position.x =
+  wallRight.position.x =
     45;
 
 
   castle.add(
-    wall4
+    wallRight
   );
 
-
-  /*
-     CASTILLO ELEVADO
-  */
 
   castle.userData.isCastle =
     true;
-
-
-  solidObjects.push(
-    castle
-  );
 
 
   scene.add(
@@ -2061,7 +2145,9 @@ function createMagicParticles() {
     new THREE.BufferGeometry();
 
 
-  const count = 280;
+  const count =
+    280;
+
 
   const positions =
     new Float32Array(
@@ -2075,19 +2161,27 @@ function createMagicParticles() {
     i++
   ) {
 
-    positions[i * 3] =
+    positions[
+      i * 3
+    ] =
       THREE.MathUtils.randFloat(
         -300,
         300
       );
 
-    positions[i * 3 + 1] =
+
+    positions[
+      i * 3 + 1
+    ] =
       THREE.MathUtils.randFloat(
         1,
         35
       );
 
-    positions[i * 3 + 2] =
+
+    positions[
+      i * 3 + 2
+    ] =
       THREE.MathUtils.randFloat(
         -300,
         300
@@ -2131,17 +2225,17 @@ function createMagicParticles() {
     );
 
 
+  particles.userData.magic =
+    true;
+
+
   scene.add(
     particles
   );
 
-
-  particles.userData.magic =
-    true;
-
 }
 /* =========================================================
-   PERSONAJE 3D
+   PERSONAJE 3D CON SKIN
 ========================================================= */
 
 function loadPlayer() {
@@ -2152,17 +2246,21 @@ function loadPlayer() {
 
     (gltf) => {
 
-      player = gltf.scene;
+      player =
+        gltf.scene;
+
 
       player.position.set(
         0,
         0,
-        15
+        28
       );
 
+
       player.scale.setScalar(
-        1.25
+        1.8
       );
+
 
       player.traverse(
         (object) => {
@@ -2177,6 +2275,23 @@ function loadPlayer() {
             object.receiveShadow =
               true;
 
+
+            /*
+               Aseguramos que las
+               texturas del personaje
+               sean visibles.
+            */
+
+            if (
+              object.material
+            ) {
+
+              object.material
+                .side =
+                THREE.DoubleSide;
+
+            }
+
           }
 
         }
@@ -2189,51 +2304,14 @@ function loadPlayer() {
 
 
       /*
-         ANIMACIONES DEL PERSONAJE
+         ANIMACIONES
       */
 
-      if (
-        gltf.animations &&
-        gltf.animations.length
-      ) {
-
-        mixer =
-          new THREE.AnimationMixer(
-            player
-          );
-
-
-        gltf.animations.forEach(
-          (clip) => {
-
-            actions[
-              clip.name
-            ] =
-              mixer.clipAction(
-                clip
-              );
-
-          }
+      mixer =
+        new THREE.AnimationMixer(
+          player
         );
 
-
-        const first =
-          gltf.animations[0];
-
-        if (first) {
-
-          playAnimation(
-            first.name
-          );
-
-        }
-
-      }
-
-
-      /*
-         CARGAR ANIMACIONES UNIVERSALES
-      */
 
       loader.load(
 
@@ -2242,41 +2320,34 @@ function loadPlayer() {
         (animationGLTF) => {
 
           if (
-            !mixer ||
-            !animationGLTF.animations
+            animationGLTF.animations
           ) {
 
-            return;
+            animationGLTF.animations
+              .forEach(
+                (clip) => {
+
+                  actions[
+                    clip.name
+                  ] =
+                    mixer.clipAction(
+                      clip
+                    );
+
+                }
+              );
 
           }
 
 
-          animationGLTF.animations
-            .forEach(
-              (clip) => {
-
-                const action =
-                  mixer.clipAction(
-                    clip
-                  );
-
-                actions[
-                  clip.name
-                ] =
-                  action;
-
-              }
-            );
-
-
           const idle =
-            findAnimation(
-              [
-                "Idle",
-                "idle",
-                "Standing"
-              ]
-            );
+            findAnimation([
+              "Idle",
+              "Idle_01",
+              "Breathing_Idle",
+              "Idle_2",
+              "Standing"
+            ]);
 
 
           if (idle) {
@@ -2291,16 +2362,22 @@ function loadPlayer() {
 
         undefined,
 
-        (error) => {
+        () => {
 
           console.warn(
-            "No se pudieron cargar las animaciones UAL1:",
-            error
+            "⚠️ No se pudieron cargar las animaciones UAL1."
           );
 
         }
 
       );
+
+
+      /*
+         APLICAR RAZA Y ASPECTO
+      */
+
+      applyCharacterVisuals();
 
     },
 
@@ -2309,9 +2386,10 @@ function loadPlayer() {
     (error) => {
 
       console.error(
-        "Error cargando personaje:",
+        "❌ No se pudo cargar el personaje:",
         error
       );
+
 
       createFallbackPlayer();
 
@@ -2332,29 +2410,25 @@ function createFallbackPlayer() {
     new THREE.Group();
 
 
-  const bodyMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x6b4a8e,
-
-      roughness: 0.75
-
-    });
-
-
   const skinMaterial =
     new THREE.MeshStandardMaterial({
 
-      color: 0xd4a078,
+      color: 0xd5a17c,
 
       roughness: 0.85
 
     });
 
 
-  /*
-     CUERPO
-  */
+  const clothesMaterial =
+    new THREE.MeshStandardMaterial({
+
+      color: 0x64498c,
+
+      roughness: 0.8
+
+    });
+
 
   const body =
     new THREE.Mesh(
@@ -2366,7 +2440,7 @@ function createFallbackPlayer() {
         12
       ),
 
-      bodyMaterial
+      clothesMaterial
 
     );
 
@@ -2383,10 +2457,6 @@ function createFallbackPlayer() {
     body
   );
 
-
-  /*
-     CABEZA
-  */
 
   const head =
     new THREE.Mesh(
@@ -2415,10 +2485,6 @@ function createFallbackPlayer() {
   );
 
 
-  /*
-     BRAZOS
-  */
-
   for (
     const side of [-1, 1]
   ) {
@@ -2433,7 +2499,7 @@ function createFallbackPlayer() {
           8
         ),
 
-        bodyMaterial
+        clothesMaterial
 
       );
 
@@ -2459,10 +2525,6 @@ function createFallbackPlayer() {
 
   }
 
-
-  /*
-     PIERNAS
-  */
 
   for (
     const side of [-1, 1]
@@ -2507,19 +2569,513 @@ function createFallbackPlayer() {
   }
 
 
-  group.position.set(
-    0,
-    0,
-    15
-  );
-
-
   player =
     group;
 
 
+  player.position.set(
+    0,
+    0,
+    28
+  );
+
+
+  player.scale.setScalar(
+    1.8
+  );
+
+
   scene.add(
     player
+  );
+
+
+  applyCharacterVisuals();
+
+}
+
+
+/* =========================================================
+   ASPECTO DEL PERSONAJE
+========================================================= */
+
+function applyCharacterVisuals() {
+
+  if (
+    !player
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+     Escala según raza.
+  */
+
+  const raceScale = {
+
+    humano: 1.8,
+
+    elfo: 1.75,
+
+    enano: 1.45,
+
+    orco: 1.95,
+
+    hada: 1.45,
+
+    vampiro: 1.8
+
+  };
+
+
+  player.scale.setScalar(
+
+    raceScale[
+      selectedRace
+    ] || 1.8
+
+  );
+
+
+  /*
+     Eliminar detalles
+     anteriores.
+  */
+
+  const oldDetails =
+    player.getObjectByName(
+      "raceDetails"
+    );
+
+
+  if (
+    oldDetails
+  ) {
+
+    player.remove(
+      oldDetails
+    );
+
+  }
+
+
+  const details =
+    new THREE.Group();
+
+
+  details.name =
+    "raceDetails";
+
+
+  /*
+     HACER DETALLES SEGÚN RAZA
+  */
+
+  if (
+    selectedRace ===
+    "hada"
+  ) {
+
+    createFairyWings(
+      details
+    );
+
+  }
+
+
+  if (
+    selectedRace ===
+    "elfo"
+  ) {
+
+    createElfEars(
+      details
+    );
+
+  }
+
+
+  if (
+    selectedRace ===
+    "orco"
+  ) {
+
+    createOrcTusks(
+      details
+    );
+
+  }
+
+
+  if (
+    selectedRace ===
+    "vampiro"
+  ) {
+
+    createVampireDetails(
+      details
+    );
+
+  }
+
+
+  player.add(
+    details
+  );
+
+}
+
+
+/* =========================================================
+   ALAS DE HADA
+========================================================= */
+
+function createFairyWings(
+  parent
+) {
+
+  const wingMaterial =
+    new THREE.MeshPhysicalMaterial({
+
+      color: 0xdca7ff,
+
+      transparent: true,
+
+      opacity: 0.58,
+
+      roughness: 0.2,
+
+      metalness: 0.05,
+
+      transmission: 0.15,
+
+      emissive: 0x7d3fb0,
+
+      emissiveIntensity: 0.35,
+
+      side:
+        THREE.DoubleSide
+
+    });
+
+
+  const wingPositions = [
+
+    [-1.0, 3.9, 0],
+
+    [1.0, 3.9, 0],
+
+    [-0.9, 2.9, 0],
+
+    [0.9, 2.9, 0]
+
+  ];
+
+
+  wingPositions.forEach(
+    ([x, y, z], index) => {
+
+      const wing =
+        new THREE.Mesh(
+
+          new THREE.SphereGeometry(
+            1,
+            24,
+            16
+          ),
+
+          wingMaterial
+        );
+
+
+      wing.position.set(
+        x,
+        y,
+        z - 0.25
+      );
+
+
+      wing.scale.set(
+
+        1.55,
+
+        2.5,
+
+        0.12
+
+      );
+
+
+      /*
+         Curvatura de las alas
+      */
+
+      wing.rotation.z =
+        x < 0
+          ? -0.25
+          : 0.25;
+
+
+      wing.rotation.y =
+        x < 0
+          ? -0.18
+          : 0.18;
+
+
+      wing.castShadow =
+        true;
+
+
+      parent.add(
+        wing
+      );
+
+    }
+  );
+
+
+  /*
+     Brillo alrededor
+  */
+
+  const glow =
+    new THREE.PointLight(
+      0xc87cff,
+      1.5,
+      7
+    );
+
+
+  glow.position.set(
+    0,
+    3.5,
+    -0.5
+  );
+
+
+  parent.add(
+    glow
+  );
+
+}
+
+
+/* =========================================================
+   OREJAS DE ELFO
+========================================================= */
+
+function createElfEars(
+  parent
+) {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+
+      color: 0xc98f73,
+
+      roughness: 0.8
+
+    });
+
+
+  for (
+    const side of [-1, 1]
+  ) {
+
+    const ear =
+      new THREE.Mesh(
+
+        new THREE.ConeGeometry(
+          0.28,
+          1.1,
+          12
+        ),
+
+        material
+
+      );
+
+
+    ear.position.set(
+
+      side * 1.0,
+
+      5.45,
+
+      0
+
+    );
+
+
+    ear.rotation.z =
+      side < 0
+        ? Math.PI / 2
+        : -Math.PI / 2;
+
+
+    parent.add(
+      ear
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   COLMILLOS DE ORCO
+========================================================= */
+
+function createOrcTusks(
+  parent
+) {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+
+      color: 0xf2eee2,
+
+      roughness: 0.7
+
+    });
+
+
+  for (
+    const side of [-1, 1]
+  ) {
+
+    const tusk =
+      new THREE.Mesh(
+
+        new THREE.ConeGeometry(
+          0.18,
+          0.7,
+          10
+        ),
+
+        material
+
+      );
+
+
+    tusk.position.set(
+
+      side * 0.45,
+
+      4.8,
+
+      0.95
+
+    );
+
+
+    tusk.rotation.x =
+      Math.PI;
+
+
+    parent.add(
+      tusk
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DETALLES DE VAMPIRO
+========================================================= */
+
+function createVampireDetails(
+  parent
+) {
+
+  const eyeMaterial =
+    new THREE.MeshBasicMaterial({
+
+      color: 0xff3030
+
+    });
+
+
+  for (
+    const side of [-1, 1]
+  ) {
+
+    const eye =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          0.12,
+          12,
+          12
+        ),
+
+        eyeMaterial
+
+      );
+
+
+    eye.position.set(
+
+      side * 0.38,
+
+      5.65,
+
+      0.98
+
+    );
+
+
+    parent.add(
+      eye
+    );
+
+  }
+
+
+  const capeMaterial =
+    new THREE.MeshStandardMaterial({
+
+      color: 0x24142e,
+
+      roughness: 0.8,
+
+      side:
+        THREE.DoubleSide
+
+    });
+
+
+  const cape =
+    new THREE.Mesh(
+
+      new THREE.PlaneGeometry(
+        3.2,
+        4.8
+      ),
+
+      capeMaterial
+
+    );
+
+
+  cape.position.set(
+    0,
+    2.7,
+    -0.7
+  );
+
+
+  cape.rotation.x =
+    0.08;
+
+
+  parent.add(
+    cape
   );
 
 }
@@ -2614,10 +3170,12 @@ function playAnimation(
   }
 
 
-  if (currentAction) {
+  if (
+    currentAction
+  ) {
 
     currentAction.fadeOut(
-      0.18
+      0.2
     );
 
   }
@@ -2625,7 +3183,7 @@ function playAnimation(
 
   next
     .reset()
-    .fadeIn(0.18)
+    .fadeIn(0.2)
     .play();
 
 
@@ -2680,14 +3238,12 @@ function updateMovement(
   }
 
 
-  let x = moveX;
+  let x =
+    moveX;
 
-  let z = moveY;
+  let z =
+    moveY;
 
-
-  /*
-     TECLADO
-  */
 
   if (
     keys["w"] ||
@@ -2743,7 +3299,8 @@ function updateMovement(
     const idle =
       findAnimation([
         "Idle",
-        "idle",
+        "Idle_01",
+        "Breathing_Idle",
         "Standing"
       ]);
 
@@ -2756,6 +3313,7 @@ function updateMovement(
 
     }
 
+
     return;
 
   }
@@ -2764,11 +3322,6 @@ function updateMovement(
   x /= length;
   z /= length;
 
-
-  /*
-     MOVIMIENTO RELATIVO
-     A LA CÁMARA
-  */
 
   const forward =
     new THREE.Vector3(
@@ -2806,7 +3359,7 @@ function updateMovement(
 
 
   const distance =
-    MOVE_SPEED *
+    13 *
     delta;
 
 
@@ -2815,10 +3368,6 @@ function updateMovement(
     distance
   );
 
-
-  /*
-     GIRAR PERSONAJE
-  */
 
   const targetRotation =
     Math.atan2(
@@ -2834,10 +3383,6 @@ function updateMovement(
       0.18
     );
 
-
-  /*
-     ANIMACIÓN CAMINANDO
-  */
 
   const walk =
     findAnimation([
@@ -2876,41 +3421,29 @@ function tryMovePlayer(
   }
 
 
-  const current =
-    player.position.clone();
-
-
   const nextX =
-    current.x +
+    player.position.x +
     direction.x *
     distance;
 
 
   const nextZ =
-    current.z +
+    player.position.z +
     direction.z *
     distance;
 
 
-  /*
-     LÍMITE GENERAL
-  */
-
   if (
     Math.abs(nextX) >
-      WORLD_LIMIT ||
+      288 ||
     Math.abs(nextZ) >
-      WORLD_LIMIT
+      288
   ) {
 
     return;
 
   }
 
-
-  /*
-     MONTAÑAS
-  */
 
   if (
     collidesWithMountains(
@@ -2924,11 +3457,8 @@ function tryMovePlayer(
   }
 
 
-  /*
-     CASAS
-  */
-
   if (
+    !state.insideHouse &&
     collidesWithHouse(
       nextX,
       nextZ
@@ -2940,11 +3470,8 @@ function tryMovePlayer(
   }
 
 
-  /*
-     CASTILLO
-  */
-
   if (
+    !state.insideHouse &&
     collidesWithCastle(
       nextX,
       nextZ
@@ -2956,11 +3483,8 @@ function tryMovePlayer(
   }
 
 
-  /*
-     ÁRBOLES
-  */
-
   if (
+    !state.insideHouse &&
     collidesWithTrees(
       nextX,
       nextZ
@@ -2975,6 +3499,7 @@ function tryMovePlayer(
   player.position.x =
     nextX;
 
+
   player.position.z =
     nextZ;
 
@@ -2983,6 +3508,10 @@ function tryMovePlayer(
 
 }
 
+
+/* =========================================================
+   COLISIÓN MONTAÑAS
+========================================================= */
 
 function collidesWithMountains(
   x,
@@ -3002,6 +3531,10 @@ function collidesWithMountains(
 }
 
 
+/* =========================================================
+   COLISIÓN CASAS
+========================================================= */
+
 function collidesWithHouse(
   x,
   z
@@ -3014,27 +3547,24 @@ function collidesWithHouse(
     const hx =
       house.position.x;
 
+
     const hz =
       house.position.z;
-
-
-    const halfX =
-      13;
-
-    const halfZ =
-      12;
 
 
     if (
 
       x >
-        hx - halfX &&
+        hx - 13 &&
+
       x <
-        hx + halfX &&
+        hx + 13 &&
+
       z >
-        hz - halfZ &&
+        hz - 12 &&
+
       z <
-        hz + halfZ
+        hz + 12
 
     ) {
 
@@ -3050,15 +3580,14 @@ function collidesWithHouse(
 }
 
 
+/* =========================================================
+   COLISIÓN CASTILLO
+========================================================= */
+
 function collidesWithCastle(
   x,
   z
 ) {
-
-  /*
-     Castillo situado
-     aproximadamente en Z=190
-  */
 
   const cx = 0;
   const cz = 190;
@@ -3068,18 +3597,20 @@ function collidesWithCastle(
 
     x >
       cx - 52 &&
+
     x <
       cx + 52 &&
+
     z >
       cz - 50 &&
+
     z <
       cz + 50
 
   ) {
 
     /*
-       Permitimos el acceso
-       por el frente central
+       Entrada principal.
     */
 
     if (
@@ -3101,6 +3632,10 @@ function collidesWithCastle(
 
 }
 
+
+/* =========================================================
+   COLISIÓN ÁRBOLES
+========================================================= */
 
 function collidesWithTrees(
   x,
@@ -3145,7 +3680,7 @@ function collidesWithTrees(
 
 
 /* =========================================================
-   AGUA Y PROFUNDIDAD
+   AGUA
 ========================================================= */
 
 function isInWater(
@@ -3153,17 +3688,12 @@ function isInWater(
   z
 ) {
 
-  const waterX =
-    115;
-
-  const waterZ =
-    80;
-
   const dx =
-    x - waterX;
+    x - 115;
+
 
   const dz =
-    z - waterZ;
+    z - 80;
 
 
   const distance =
@@ -3198,8 +3728,8 @@ function resolvePlayerHeight() {
   ) {
 
     /*
-       El personaje se hunde
-       parcialmente en el agua.
+       Se hunde un poco
+       en el agua.
     */
 
     player.position.y =
@@ -3213,10 +3743,8 @@ function resolvePlayerHeight() {
   }
 
 }
-
-
 /* =========================================================
-   JOYSTICK TÁCTIL
+   JOYSTICK
 ========================================================= */
 
 function setupJoystick() {
@@ -3235,97 +3763,108 @@ function setupJoystick() {
     !stick
   ) {
 
+    console.warn(
+      "⚠️ No se encontró el joystick."
+    );
+
     return;
 
   }
 
 
-  let active = false;
+  let active =
+    false;
 
 
-  const updateStick =
-    (clientX, clientY) => {
+  function updateStick(
+    clientX,
+    clientY
+  ) {
 
-      const rect =
-        joystick.getBoundingClientRect();
-
-
-      const centerX =
-        rect.left +
-        rect.width / 2;
+    const rect =
+      joystick.getBoundingClientRect();
 
 
-      const centerY =
-        rect.top +
-        rect.height / 2;
+    const centerX =
+      rect.left +
+      rect.width / 2;
 
 
-      let dx =
-        clientX -
-        centerX;
+    const centerY =
+      rect.top +
+      rect.height / 2;
 
 
-      let dy =
-        clientY -
-        centerY;
+    let dx =
+      clientX -
+      centerX;
 
 
-      const max =
-        rect.width *
-        0.32;
+    let dy =
+      clientY -
+      centerY;
 
 
-      const length =
-        Math.sqrt(
-          dx * dx +
-          dy * dy
-        );
+    const max =
+      rect.width *
+      0.32;
 
 
-      if (
-        length > max
-      ) {
-
-        dx =
-          dx / length *
-          max;
-
-        dy =
-          dy / length *
-          max;
-
-      }
+    const length =
+      Math.sqrt(
+        dx * dx +
+        dy * dy
+      );
 
 
-      moveX =
-        dx / max;
+    if (
+      length > max
+    ) {
 
-      moveY =
-        dy / max;
-
-
-      stick.style.transform =
-        `translate(${dx}px, ${dy}px)`;
-
-    };
+      dx =
+        dx / length *
+        max;
 
 
-  const resetStick =
-    () => {
+      dy =
+        dy / length *
+        max;
 
-      active =
-        false;
+    }
 
-      moveX =
-        0;
 
-      moveY =
-        0;
+    moveX =
+      dx / max;
 
-      stick.style.transform =
-        "translate(0,0)";
 
-    };
+    moveY =
+      dy / max;
+
+
+    stick.style.transform =
+      `translate(${dx}px, ${dy}px)`;
+
+  }
+
+
+  function resetStick() {
+
+    active =
+      false;
+
+
+    moveX =
+      0;
+
+
+    moveY =
+      0;
+
+
+    stick.style.transform =
+      "translate(0,0)";
+
+  }
 
 
   joystick.addEventListener(
@@ -3335,9 +3874,11 @@ function setupJoystick() {
       active =
         true;
 
-      joystick.setPointerCapture(
+
+      joystick.setPointerCapture?.(
         event.pointerId
       );
+
 
       updateStick(
         event.clientX,
@@ -3385,7 +3926,7 @@ function setupJoystick() {
 
 
 /* =========================================================
-   CÁMARA EN TERCERA PERSONA
+   CÁMARA TÁCTIL
 ========================================================= */
 
 function setupCameraTouch() {
@@ -3403,14 +3944,15 @@ function setupCameraTouch() {
     "pointerdown",
     (event) => {
 
-      /*
-         Si toca el joystick,
-         no mover cámara.
-      */
-
       if (
         event.target.closest(
           "#joystick"
+        ) ||
+        event.target.closest(
+          "#chat"
+        ) ||
+        event.target.closest(
+          "#abilitiesPanel"
         )
       ) {
 
@@ -3425,6 +3967,7 @@ function setupCameraTouch() {
 
       lastTouchX =
         event.clientX;
+
 
       lastTouchY =
         event.clientY;
@@ -3512,6 +4055,10 @@ function setupCameraTouch() {
 }
 
 
+/* =========================================================
+   CÁMARA TERCERA PERSONA
+========================================================= */
+
 function updateCamera() {
 
   if (
@@ -3542,29 +4089,21 @@ function updateCamera() {
     distance;
 
 
-  const targetX =
-    player.position.x -
-    Math.sin(yaw) *
-    horizontal;
-
-
-  const targetZ =
-    player.position.z -
-    Math.cos(yaw) *
-    horizontal;
-
-
-  const targetY =
-    player.position.y +
-    5 +
-    vertical;
-
-
   const desired =
     new THREE.Vector3(
-      targetX,
-      targetY,
-      targetZ
+
+      player.position.x -
+        Math.sin(yaw) *
+        horizontal,
+
+      player.position.y +
+        5 +
+        vertical,
+
+      player.position.z -
+        Math.cos(yaw) *
+        horizontal
+
     );
 
 
@@ -3574,21 +4113,15 @@ function updateCamera() {
   );
 
 
-  const lookAt =
-    new THREE.Vector3(
-
-      player.position.x,
-
-      player.position.y +
-        4.5,
-
-      player.position.z
-
-    );
-
-
   camera.lookAt(
-    lookAt
+
+    player.position.x,
+
+    player.position.y +
+      4.5,
+
+    player.position.z
+
   );
 
 }
@@ -3650,18 +4183,27 @@ function castSpell(
 ) {
 
   const costs = {
+
     "0": 12,
+
     "1": 20,
+
     "2": 30,
+
     fire: 12,
+
     water: 18,
+
     nature: 15,
+
     shadow: 25
+
   };
 
 
   const cost =
-    costs[spell] || 10;
+    costs[spell] ||
+    10;
 
 
   if (
@@ -3669,7 +4211,7 @@ function castSpell(
   ) {
 
     showToast(
-      "No tienes suficiente maná."
+      "💧 No tienes suficiente maná."
     );
 
     return;
@@ -3689,11 +4231,13 @@ function castSpell(
   );
 
 
-  if (socket) {
+  if (
+    socket
+  ) {
 
     socket.emit(
       "system",
-      `${state.username} lanzó un hechizo ${spell}.`
+      `${state.username} lanzó un hechizo.`
     );
 
   }
@@ -3733,11 +4277,6 @@ function createSpellEffect(
   };
 
 
-  const color =
-    colors[spell] ||
-    0xc084ff;
-
-
   const geometry =
     new THREE.SphereGeometry(
       0.55,
@@ -3749,11 +4288,15 @@ function createSpellEffect(
   const material =
     new THREE.MeshBasicMaterial({
 
-      color,
+      color:
+        colors[spell] ||
+        0xc084ff,
 
-      transparent: true,
+      transparent:
+        true,
 
-      opacity: 0.9
+      opacity:
+        0.9
 
     });
 
@@ -3783,57 +4326,59 @@ function createSpellEffect(
     performance.now();
 
 
-  const animateEffect =
-    (now) => {
+  function animateEffect(
+    now
+  ) {
 
-      const elapsed =
-        now - start;
-
-
-      effect.position.y +=
-        0.025;
+    const elapsed =
+      now - start;
 
 
-      effect.scale.setScalar(
+    effect.position.y +=
+      0.025;
 
-        1 +
-        Math.sin(
-          elapsed * 0.012
-        ) *
-        0.35
 
+    effect.scale.setScalar(
+
+      1 +
+      Math.sin(
+        elapsed * 0.012
+      ) *
+      0.35
+
+    );
+
+
+    effect.material.opacity =
+      Math.max(
+        0,
+        1 -
+          elapsed / 1000
       );
 
 
-      effect.material.opacity =
-        Math.max(
-          0,
-          1 -
-            elapsed / 1000
-        );
+    if (
+      elapsed < 1000
+    ) {
+
+      requestAnimationFrame(
+        animateEffect
+      );
+
+    } else {
+
+      scene.remove(
+        effect
+      );
 
 
-      if (
-        elapsed < 1000
-      ) {
+      geometry.dispose();
 
-        requestAnimationFrame(
-          animateEffect
-        );
+      material.dispose();
 
-      } else {
+    }
 
-        scene.remove(
-          effect
-        );
-
-        effect.geometry.dispose();
-
-        effect.material.dispose();
-
-      }
-
-    };
+  }
 
 
   requestAnimationFrame(
@@ -3844,28 +4389,36 @@ function createSpellEffect(
 
 
 /* =========================================================
-   HUD
+   VIDA Y MANÁ
 ========================================================= */
 
 function updateBars() {
 
-  if ($("hpBar")) {
+  if (
+    $("hpBar")
+  ) {
 
     $("hpBar").style.width =
-      `${hp}%`;
+      `${Math.max(0, hp)}%`;
 
   }
 
 
-  if ($("manaBar")) {
+  if (
+    $("manaBar")
+  ) {
 
     $("manaBar").style.width =
-      `${mana}%`;
+      `${Math.max(0, mana)}%`;
 
   }
 
 }
 
+
+/* =========================================================
+   TOAST
+========================================================= */
 
 function showToast(
   message
@@ -3893,6 +4446,10 @@ function showToast(
     false;
 
 
+  toast.style.display =
+    "block";
+
+
   clearTimeout(
     toastTimer
   );
@@ -3905,6 +4462,10 @@ function showToast(
         toast.hidden =
           true;
 
+
+        toast.style.display =
+          "none";
+
       },
       2600
     );
@@ -3913,688 +4474,14 @@ function showToast(
 
 
 /* =========================================================
-   LOOP PRINCIPAL
-========================================================= */
-
-function animate() {
-
-  requestAnimationFrame(
-    animate
-  );
-
-
-  if (
-    !renderer ||
-    !scene ||
-    !camera
-  ) {
-
-    return;
-
-  }
-
-
-  const delta =
-    Math.min(
-      clock.getDelta(),
-      0.05
-    );
-
-
-  if (mixer) {
-
-    mixer.update(
-      delta
-    );
-
-  }
-
-
-  updateMovement(
-    delta
-  );
-
-
-  updateCamera();
-
-
-  /*
-     Partículas mágicas
-  */
-
-  scene.traverse(
-    (object) => {
-
-      if (
-        object.userData?.magic
-      ) {
-
-        object.rotation.y +=
-          delta * 0.08;
-
-      }
-
-    }
-  );
-
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-}
-
-
-/* =========================================================
-   RESIZE
-========================================================= */
-
-function resize() {
-
-  if (
-    !camera ||
-    !renderer
-  ) {
-
-    return;
-
-  }
-
-
-  camera.aspect =
-    window.innerWidth /
-    window.innerHeight;
-
-
-  camera.updateProjectionMatrix();
-
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-
-}
-
-
-/* =========================================================
-   ESTADO INICIAL
-========================================================= */
-
-updateBars();
-/* =========================================================
-   CREADOR DE PERSONAJE
-========================================================= */
-
-function setupCharacterCreator() {
-
-  document
-    .querySelectorAll(
-      ".race-button"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            document
-              .querySelectorAll(
-                ".race-button"
-              )
-              .forEach(
-                (item) =>
-                  item.classList.remove(
-                    "selected"
-                  )
-              );
-
-
-            button.classList.add(
-              "selected"
-            );
-
-
-            selectedRace =
-              button.dataset.race ||
-              "humano";
-
-
-            if (
-              $("playerRace")
-            ) {
-
-              $("playerRace")
-                .textContent =
-                selectedRace;
-
-            }
-
-
-            applyAppearance();
-
-            updateAbilities();
-
-          }
-        );
-
-      }
-    );
-
-
-  document
-    .querySelectorAll(
-      ".appearance-button"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const appearance =
-              button.dataset.appearance ||
-              "";
-
-
-            if (
-              appearance
-                .toLowerCase()
-                .includes("cabello")
-            ) {
-
-              selectedAppearance.cabello =
-                appearance;
-
-            }
-
-
-            if (
-              appearance
-                .toLowerCase()
-                .includes("ropa")
-            ) {
-
-              selectedAppearance.ropa =
-                appearance;
-
-            }
-
-
-            if (
-              appearance
-                .toLowerCase()
-                .includes("accesorio")
-            ) {
-
-              selectedAppearance.accesorios =
-                appearance;
-
-            }
-
-
-            document
-              .querySelectorAll(
-                ".appearance-button"
-              )
-              .forEach(
-                (item) =>
-                  item.classList.remove(
-                    "selected"
-                  )
-              );
-
-
-            button.classList.add(
-              "selected"
-            );
-
-
-            applyAppearance();
-
-          }
-        );
-
-      }
-    );
-
-
-  $("finishCharacter")
-    ?.addEventListener(
-      "click",
-      saveCharacter
-    );
-
-}
-
-
-/* =========================================================
-   ABRIR CREADOR
-========================================================= */
-
-function openCharacterCreator(
-  savedCharacter
-) {
-
-  const creator =
-    $("characterCreator");
-
-
-  if (
-    !creator
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    savedCharacter
-  ) {
-
-    selectedRace =
-      savedCharacter.race ||
-      "humano";
-
-
-    selectedAppearance =
-      savedCharacter.appearance ||
-      selectedAppearance;
-
-
-    if (
-      $("playerRace")
-    ) {
-
-      $("playerRace")
-        .textContent =
-        selectedRace;
-
-    }
-
-
-    applyAppearance();
-
-    updateAbilities();
-
-
-    creator.hidden =
-      true;
-
-
-    showToast(
-      `Bienvenido nuevamente, ${state.username}.`
-    );
-
-
-    return;
-
-  }
-
-
-  creator.hidden =
-    false;
-
-
-  updateAbilities();
-
-}
-
-
-/* =========================================================
-   APARIENCIA
-========================================================= */
-
-function applyAppearance() {
-
-  if (
-    !player
-  ) {
-
-    return;
-
-  }
-
-
-  /*
-     Escala según raza.
-  */
-
-  const raceScale = {
-
-    humano: 1.25,
-
-    elfo: 1.18,
-
-    enano: 0.95,
-
-    orco: 1.38,
-
-    hada: 0.85,
-
-    vampiro: 1.22
-
-  };
-
-
-  const scale =
-    raceScale[
-      selectedRace
-    ] || 1.25;
-
-
-  player.scale.setScalar(
-    scale
-  );
-
-
-  /*
-     Algunos colores
-     según raza para el
-     personaje procedural
-     o partes compatibles.
-  */
-
-  player.traverse(
-    (object) => {
-
-      if (
-        !object.isMesh ||
-        !object.material
-      ) {
-
-        return;
-
-      }
-
-
-      const material =
-        object.material;
-
-
-      if (
-        !material.color
-      ) {
-
-        return;
-
-      }
-
-
-      /*
-         No reemplazamos
-         texturas originales
-         del modelo GLTF.
-      */
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   HABILIDADES POR RAZA
-========================================================= */
-
-function updateAbilities() {
-
-  const abilities = {
-
-    humano: [
-      "Golpe de energía",
-      "Escudo arcano",
-      "Luz sagrada"
-    ],
-
-    elfo: [
-      "Flecha de naturaleza",
-      "Curación",
-      "Tormenta verde"
-    ],
-
-    enano: [
-      "Martillazo",
-      "Piel de piedra",
-      "Terremoto"
-    ],
-
-    orco: [
-      "Furia",
-      "Golpe brutal",
-      "Rugido oscuro"
-    ],
-
-    hada: [
-      "Polvo mágico",
-      "Curación feérica",
-      "Lluvia de estrellas"
-    ],
-
-    vampiro: [
-      "Mordida",
-      "Sombra",
-      "Drenaje vital"
-    ]
-
-  };
-
-
-  const list =
-    abilities[
-      selectedRace
-    ] ||
-    abilities.humano;
-
-
-  list.forEach(
-    (name, index) => {
-
-      const button =
-        $(`ability${index}`);
-
-
-      if (
-        !button
-      ) {
-
-        return;
-
-      }
-
-
-      const label =
-        button.querySelector(
-          ".ability-name"
-        );
-
-
-      if (label) {
-
-        label.textContent =
-          name;
-
-      } else {
-
-        button.title =
-          name;
-
-      }
-
-    }
-  );
-
-
-  if (
-    $("abilityRace")
-  ) {
-
-    $("abilityRace")
-      .textContent =
-      selectedRace;
-
-  }
-
-}
-
-
-/* =========================================================
-   GUARDAR PERSONAJE
-========================================================= */
-
-async function saveCharacter() {
-
-  const character = {
-
-    race:
-      selectedRace,
-
-    appearance:
-      {
-        ...selectedAppearance
-      }
-
-  };
-
-
-  state.character =
-    character;
-
-
-  /*
-     Guardar localmente
-  */
-
-  try {
-
-    const stored =
-      JSON.parse(
-        localStorage.getItem(
-          "universo_magico_user"
-        ) || "{}"
-      );
-
-
-    stored.character =
-      character;
-
-
-    localStorage.setItem(
-      "universo_magico_user",
-      JSON.stringify(
-        stored
-      )
-    );
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      "No se pudo guardar localmente:",
-      error
-    );
-
-  }
-
-
-  /*
-     Guardar en servidor
-  */
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/character",
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body:
-            JSON.stringify({
-
-              username:
-                state.username,
-
-              character
-
-            })
-
-        }
-      );
-
-
-    if (
-      !response.ok
-    ) {
-
-      console.warn(
-        "El servidor no pudo guardar el personaje."
-      );
-
-    }
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      "Guardado remoto no disponible:",
-      error
-    );
-
-  }
-
-
-  const creator =
-    $("characterCreator");
-
-
-  if (
-    creator
-  ) {
-
-    creator.hidden =
-      true;
-
-  }
-
-
-  if (
-    $("playerRace")
-  ) {
-
-    $("playerRace")
-      .textContent =
-      selectedRace;
-
-  }
-
-
-  showToast(
-    "✨ Tu personaje ha sido creado."
-  );
-
-}
-
-
-/* =========================================================
-   CHAT MULTIJUGADOR
+   CHAT — ABRIR / CERRAR
 ========================================================= */
 
 function setupChat() {
+
+  const chat =
+    $("chat");
+
 
   const form =
     $("chatForm") ||
@@ -4612,9 +4499,7 @@ function setupChat() {
 
 
   if (
-    !form ||
-    !input ||
-    !messages
+    !chat
   ) {
 
     return;
@@ -4622,69 +4507,118 @@ function setupChat() {
   }
 
 
-  form.addEventListener(
-    "submit",
+  /*
+     BOTÓN X
+  */
+
+  const closeButton =
+    chat.querySelector(
+      ".close-chat"
+    ) ||
+    chat.querySelector(
+      "[data-close-chat]"
+    );
+
+
+  closeButton?.addEventListener(
+    "click",
     (event) => {
 
       event.preventDefault();
 
+      event.stopPropagation();
 
-      const text =
-        input.value.trim();
-
-
-      if (
-        !text
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        socket
-      ) {
-
-        socket.emit(
-          "chat",
-          {
-            username:
-              state.username,
-
-            message:
-              text
-          }
-        );
-
-      } else {
-
-        addChatMessage(
-          state.username,
-          text
-        );
-
-      }
-
-
-      input.value =
-        "";
+      closeChat();
 
     }
   );
 
 
-  $("chatToggle")
-    ?.addEventListener(
-      "click",
-      () => {
+  /*
+     Si el HTML usa un botón
+     específico con texto X.
+  */
 
-        const chat =
-          $("chat");
+  chat
+    .querySelectorAll(
+      "button"
+    )
+    .forEach(
+      (button) => {
+
+        const text =
+          (
+            button.textContent ||
+            ""
+          ).trim();
 
 
         if (
-          !chat
+          text === "×" ||
+          text === "✕" ||
+          text === "X"
+        ) {
+
+          button.addEventListener(
+            "click",
+            (event) => {
+
+              event.preventDefault();
+
+              event.stopPropagation();
+
+              closeChat();
+
+            }
+          );
+
+        }
+
+      }
+    );
+
+
+  /*
+     BOTÓN PRINCIPAL DEL CHAT
+  */
+
+  $("chatToggle")
+    ?.addEventListener(
+      "click",
+      (event) => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        toggleChat();
+
+      }
+    );
+
+
+  /*
+     ENVIAR MENSAJES
+  */
+
+  if (
+    form &&
+    input
+  ) {
+
+    form.addEventListener(
+      "submit",
+      (event) => {
+
+        event.preventDefault();
+
+
+        const text =
+          input.value.trim();
+
+
+        if (
+          !text
         ) {
 
           return;
@@ -4692,13 +4626,43 @@ function setupChat() {
         }
 
 
-        chat.classList.toggle(
-          "hidden"
-        );
+        if (
+          socket
+        ) {
+
+          socket.emit(
+            "chat",
+            {
+              username:
+                state.username,
+
+              message:
+                text
+            }
+          );
+
+        } else {
+
+          addChatMessage(
+            state.username,
+            text
+          );
+
+        }
+
+
+        input.value =
+          "";
 
       }
     );
 
+  }
+
+
+  /*
+     MENSAJES RECIBIDOS
+  */
 
   if (
     socket
@@ -4725,10 +4689,10 @@ function setupChat() {
 
         addChatMessage(
 
-          data.username ||
+          data?.username ||
             "Jugador",
 
-          data.message ||
+          data?.message ||
             ""
 
         );
@@ -4748,6 +4712,107 @@ function setupChat() {
 
       }
     );
+
+  }
+
+}
+
+
+function closeChat() {
+
+  const chat =
+    $("chat");
+
+
+  if (
+    !chat
+  ) {
+
+    return;
+
+  }
+
+
+  chat.hidden =
+    true;
+
+
+  chat.style.display =
+    "none";
+
+
+  chat.classList.add(
+    "chat-closed"
+  );
+
+}
+
+
+function openChat() {
+
+  const chat =
+    $("chat");
+
+
+  if (
+    !chat
+  ) {
+
+    return;
+
+  }
+
+
+  chat.hidden =
+    false;
+
+
+  chat.style.display =
+    "";
+
+
+  chat.classList.remove(
+    "chat-closed"
+  );
+
+}
+
+
+function toggleChat() {
+
+  const chat =
+    $("chat");
+
+
+  if (
+    !chat
+  ) {
+
+    return;
+
+  }
+
+
+  const closed =
+    chat.hidden ||
+    chat.classList.contains(
+      "chat-closed"
+    ) ||
+    getComputedStyle(
+      chat
+    ).display ===
+      "none";
+
+
+  if (
+    closed
+  ) {
+
+    openChat();
+
+  } else {
+
+    closeChat();
 
   }
 
@@ -4818,11 +4883,6 @@ function addChatMessage(
   );
 
 
-  /*
-     Evita que el chat crezca
-     infinitamente.
-  */
-
   while (
     messages.children.length >
     80
@@ -4842,7 +4902,7 @@ function addChatMessage(
 
 
 /* =========================================================
-   MAPA
+   MAPA — ABRIR / CERRAR
 ========================================================= */
 
 function setupMap() {
@@ -4862,6 +4922,10 @@ function setupMap() {
     !map
   ) {
 
+    console.warn(
+      "⚠️ No se encontró el mapa."
+    );
+
     return;
 
   }
@@ -4869,17 +4933,55 @@ function setupMap() {
 
   button.addEventListener(
     "click",
-    () => {
+    (event) => {
 
-      map.classList.toggle(
-        "hidden"
-      );
+      event.preventDefault();
+
+      event.stopPropagation();
 
 
-      map.hidden =
-        !map.hidden;
+      const isClosed =
+        map.hidden ||
+        getComputedStyle(
+          map
+        ).display ===
+          "none";
 
-      updatePlayerMarker();
+
+      if (
+        isClosed
+      ) {
+
+        map.hidden =
+          false;
+
+
+        map.style.display =
+          "block";
+
+
+        map.classList.remove(
+          "hidden"
+        );
+
+
+        updatePlayerMarker();
+
+      } else {
+
+        map.hidden =
+          true;
+
+
+        map.style.display =
+          "none";
+
+
+        map.classList.add(
+          "hidden"
+        );
+
+      }
 
     }
   );
@@ -4888,10 +4990,19 @@ function setupMap() {
   $("closeMap")
     ?.addEventListener(
       "click",
-      () => {
+      (event) => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
 
         map.hidden =
           true;
+
+
+        map.style.display =
+          "none";
 
       }
     );
@@ -4915,64 +5026,286 @@ function updatePlayerMarker() {
   }
 
 
-  /*
-     Convertimos las coordenadas
-     del mundo al mapa.
-  */
-
   const percentageX =
     (
       player.position.x +
       350
-    ) / 700;
+    ) /
+    700;
 
 
   const percentageZ =
     (
       player.position.z +
       350
-    ) / 700;
+    ) /
+    700;
 
 
   marker.style.left =
-    `${percentageX * 100}%`;
+    `${Math.max(
+      0,
+      Math.min(
+        100,
+        percentageX * 100
+      )
+    )}%`;
 
 
   marker.style.top =
-    `${percentageZ * 100}%`;
+    `${Math.max(
+      0,
+      Math.min(
+        100,
+        percentageZ * 100
+      )
+    )}%`;
 
 }
-
-
 /* =========================================================
    CASAS E INTERIORES
 ========================================================= */
 
 function setupHouse() {
 
-  $("enterHouse")
-    ?.addEventListener(
+  const enterButton =
+    $("enterHouse");
+
+  const exitButton =
+    $("exitHouse");
+
+
+  if (enterButton) {
+
+    enterButton.hidden =
+      true;
+
+    enterButton.style.display =
+      "none";
+
+
+    enterButton.addEventListener(
       "click",
-      () => {
+      (event) => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
 
         enterNearestHouse();
 
       }
     );
 
+  }
 
-  $("exitHouse")
-    ?.addEventListener(
+
+  if (exitButton) {
+
+    exitButton.hidden =
+      true;
+
+    exitButton.style.display =
+      "none";
+
+
+    exitButton.addEventListener(
       "click",
-      () => {
+      (event) => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
 
         exitHouse();
 
       }
     );
 
+  }
+
 }
 
+
+/* =========================================================
+   DETECTAR CASA CERCANA
+========================================================= */
+
+function getNearestHouse() {
+
+  if (
+    !player
+  ) {
+
+    return {
+      house: null,
+      distance: Infinity
+    };
+
+  }
+
+
+  let nearest =
+    null;
+
+
+  let nearestDistance =
+    Infinity;
+
+
+  for (
+    const house of houses
+  ) {
+
+    const dx =
+      player.position.x -
+      house.position.x;
+
+
+    const dz =
+      player.position.z -
+      house.position.z;
+
+
+    const distance =
+      Math.sqrt(
+        dx * dx +
+        dz * dz
+      );
+
+
+    if (
+      distance <
+      nearestDistance
+    ) {
+
+      nearestDistance =
+        distance;
+
+      nearest =
+        house;
+
+    }
+
+  }
+
+
+  return {
+
+    house:
+      nearest,
+
+    distance:
+      nearestDistance
+
+  };
+
+}
+
+
+/* =========================================================
+   MOSTRAR BOTÓN DE CASA
+========================================================= */
+
+function updateHouseButton() {
+
+  const enterButton =
+    $("enterHouse");
+
+
+  const exitButton =
+    $("exitHouse");
+
+
+  if (
+    !enterButton ||
+    !player
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    state.insideHouse
+  ) {
+
+    enterButton.hidden =
+      true;
+
+    enterButton.style.display =
+      "none";
+
+
+    if (
+      exitButton
+    ) {
+
+      exitButton.hidden =
+        false;
+
+      exitButton.style.display =
+        "block";
+
+    }
+
+
+    return;
+
+  }
+
+
+  const nearest =
+    getNearestHouse();
+
+
+  if (
+    nearest.house &&
+    nearest.distance <
+      22
+  ) {
+
+    enterButton.hidden =
+      false;
+
+    enterButton.style.display =
+      "block";
+
+
+    enterButton.textContent =
+      "🏠 ENTRAR";
+
+
+  } else {
+
+    enterButton.hidden =
+      true;
+
+    enterButton.style.display =
+      "none";
+
+  }
+
+
+  if (
+    exitButton
+  ) {
+
+    exitButton.hidden =
+      true;
+
+    exitButton.style.display =
+      "none";
+
+  }
+
+}
+
+
+/* =========================================================
+   ENTRAR EN CASA
+========================================================= */
 
 function enterNearestHouse() {
 
@@ -4986,58 +5319,18 @@ function enterNearestHouse() {
   }
 
 
-  let nearest =
-    null;
-
-
-  let nearestDistance =
-    Infinity;
-
-
-  houses.forEach(
-    (house) => {
-
-      const dx =
-        player.position.x -
-        house.position.x;
-
-
-      const dz =
-        player.position.z -
-        house.position.z;
-
-
-      const distance =
-        Math.sqrt(
-          dx * dx +
-          dz * dz
-        );
-
-
-      if (
-        distance <
-        nearestDistance
-      ) {
-
-        nearestDistance =
-          distance;
-
-        nearest =
-          house;
-
-      }
-
-    }
-  );
+  const nearest =
+    getNearestHouse();
 
 
   if (
-    !nearest ||
-    nearestDistance > 20
+    !nearest.house ||
+    nearest.distance >
+      24
   ) {
 
     showToast(
-      "Acércate a una casa para entrar."
+      "🏠 Acércate a una casa para entrar."
     );
 
     return;
@@ -5045,48 +5338,79 @@ function enterNearestHouse() {
   }
 
 
+  currentHouse =
+    nearest.house;
+
+
   createInterior();
+
 
   state.insideHouse =
     true;
 
-  currentHouse =
-    nearest;
 
+  /*
+     Teletransportar al interior.
+  */
 
   player.position.set(
     0,
     0,
-    0
+    5
   );
 
 
+  player.rotation.y =
+    Math.PI;
+
+
+  const enterButton =
+    $("enterHouse");
+
+
+  const exitButton =
+    $("exitHouse");
+
+
   if (
-    $("enterHouse")
+    enterButton
   ) {
 
-    $("enterHouse").hidden =
+    enterButton.hidden =
       true;
+
+    enterButton.style.display =
+      "none";
 
   }
 
 
   if (
-    $("exitHouse")
+    exitButton
   ) {
 
-    $("exitHouse").hidden =
+    exitButton.hidden =
       false;
+
+    exitButton.style.display =
+      "block";
+
+    exitButton.textContent =
+      "🚪 SALIR";
 
   }
 
 
   showToast(
-    "🏠 Has entrado en la casa."
+    "🏠 Entraste a la casa."
   );
 
 }
 
+
+/* =========================================================
+   CREAR INTERIOR
+========================================================= */
 
 function createInterior() {
 
@@ -5105,9 +5429,23 @@ function createInterior() {
     new THREE.Group();
 
 
+  interior.name =
+    "houseInterior";
+
+
   /*
-     Piso
+     PISO
   */
+
+  const floorMaterial =
+    new THREE.MeshStandardMaterial({
+
+      color: 0x72523c,
+
+      roughness: 0.95
+
+    });
+
 
   const floor =
     new THREE.Mesh(
@@ -5118,13 +5456,7 @@ function createInterior() {
         28
       ),
 
-      new THREE.MeshStandardMaterial({
-
-        color: 0x72523c,
-
-        roughness: 0.95
-
-      })
+      floorMaterial
 
     );
 
@@ -5143,7 +5475,7 @@ function createInterior() {
 
 
   /*
-     Paredes
+     PAREDES
   */
 
   const wallMaterial =
@@ -5222,7 +5554,84 @@ function createInterior() {
 
 
   /*
-     Chimenea
+     PARED DEL FRENTE
+     CON ABERTURA CENTRAL
+  */
+
+  const frontLeft =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        13,
+        12,
+        0.6
+      ),
+
+      wallMaterial
+
+    );
+
+
+  frontLeft.position.set(
+    -10.5,
+    6,
+    14
+  );
+
+
+  interior.add(
+    frontLeft
+  );
+
+
+  const frontRight =
+    frontLeft.clone();
+
+
+  frontRight.position.x =
+    10.5;
+
+
+  interior.add(
+    frontRight
+  );
+
+
+  /*
+     TECHO
+  */
+
+  const ceiling =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        34,
+        0.5,
+        28
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: 0x49352c,
+
+        roughness: 1
+
+      })
+
+    );
+
+
+  ceiling.position.y =
+    12;
+
+
+  interior.add(
+    ceiling
+  );
+
+
+  /*
+     CHIMENEA
   */
 
   const fireplace =
@@ -5248,7 +5657,7 @@ function createInterior() {
   fireplace.position.set(
     0,
     3.5,
-    -13.3
+    -13.2
   );
 
 
@@ -5256,6 +5665,10 @@ function createInterior() {
     fireplace
   );
 
+
+  /*
+     FUEGO
+  */
 
   const fire =
     new THREE.Mesh(
@@ -5287,9 +5700,39 @@ function createInterior() {
   );
 
 
+  const fireLight =
+    new THREE.PointLight(
+      0xff8a4a,
+      8,
+      28
+    );
+
+
+  fireLight.position.set(
+    0,
+    3,
+    -10
+  );
+
+
+  interior.add(
+    fireLight
+  );
+
+
   /*
-     Mesa
+     MESA
   */
+
+  const wood =
+    new THREE.MeshStandardMaterial({
+
+      color: 0x513525,
+
+      roughness: 0.9
+
+    });
+
 
   const table =
     new THREE.Mesh(
@@ -5300,13 +5743,7 @@ function createInterior() {
         3.5
       ),
 
-      new THREE.MeshStandardMaterial({
-
-        color: 0x513525,
-
-        roughness: 0.9
-
-      })
+      wood
 
     );
 
@@ -5321,11 +5758,53 @@ function createInterior() {
 
 
   /*
-     Bancos
+     PATAS
   */
 
   for (
-    const side of [-1, 1]
+    const x of [-2.8, 2.8]
+  ) {
+
+    for (
+      const z of [-1.2, 1.2]
+    ) {
+
+      const leg =
+        new THREE.Mesh(
+
+          new THREE.BoxGeometry(
+            0.45,
+            3,
+            0.45
+          ),
+
+          wood
+
+        );
+
+
+      leg.position.set(
+        x,
+        1.5,
+        z
+      );
+
+
+      interior.add(
+        leg
+      );
+
+    }
+
+  }
+
+
+  /*
+     BANCOS
+  */
+
+  for (
+    const z of [-3, 3]
   ) {
 
     const bench =
@@ -5337,13 +5816,7 @@ function createInterior() {
           1.3
         ),
 
-        new THREE.MeshStandardMaterial({
-
-          color: 0x60412d,
-
-          roughness: 1
-
-        })
+        wood
 
       );
 
@@ -5351,7 +5824,7 @@ function createInterior() {
     bench.position.set(
       0,
       1.2,
-      side * 3
+      z
     );
 
 
@@ -5363,20 +5836,92 @@ function createInterior() {
 
 
   /*
-     Luz interior
+     CAMA
+  */
+
+  const bed =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        7,
+        1.2,
+        4
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: 0x58405f,
+
+        roughness: 0.85
+
+      })
+
+    );
+
+
+  bed.position.set(
+    -10,
+    1,
+    -5
+  );
+
+
+  interior.add(
+    bed
+  );
+
+
+  /*
+     ALMOHADA
+  */
+
+  const pillow =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        2.5,
+        0.6,
+        3
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color: 0xd8cde0,
+
+        roughness: 0.9
+
+      })
+
+    );
+
+
+  pillow.position.set(
+    -11.8,
+    1.8,
+    -5
+  );
+
+
+  interior.add(
+    pillow
+  );
+
+
+  /*
+     LUZ
   */
 
   const light =
     new THREE.PointLight(
-      0xffb36a,
-      8,
+      0xffc17d,
+      7,
       35
     );
 
 
   light.position.set(
     0,
-    8,
+    9,
     0
   );
 
@@ -5393,10 +5938,15 @@ function createInterior() {
 }
 
 
+/* =========================================================
+   SALIR DE CASA
+========================================================= */
+
 function exitHouse() {
 
   if (
-    !state.insideHouse
+    !state.insideHouse ||
+    !player
   ) {
 
     return;
@@ -5433,29 +5983,26 @@ function exitHouse() {
       0,
 
       currentHouse.position.z +
-        18
+        19
 
     );
 
   }
 
 
-  if (
-    $("enterHouse")
-  ) {
-
-    $("enterHouse").hidden =
-      false;
-
-  }
+  const exitButton =
+    $("exitHouse");
 
 
   if (
-    $("exitHouse")
+    exitButton
   ) {
 
-    $("exitHouse").hidden =
+    exitButton.hidden =
       true;
+
+    exitButton.style.display =
+      "none";
 
   }
 
@@ -5465,67 +6012,247 @@ function exitHouse() {
 
 
   showToast(
-    "🚪 Has salido de la casa."
+    "🚪 Saliste de la casa."
   );
 
 }
 
 
 /* =========================================================
-   RESPALDO DE SESIÓN
+   CABELLO / ROPA / ACCESORIOS
 ========================================================= */
 
-function restoreSession() {
+function setupCharacterCreator() {
 
-  try {
+  /*
+     RAZAS
+  */
 
-    const saved =
-      JSON.parse(
-        localStorage.getItem(
-          "universo_magico_user"
-        ) || "null"
-      );
+  document
+    .querySelectorAll(
+      ".race-button"
+    )
+    .forEach(
+      (button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            document
+              .querySelectorAll(
+                ".race-button"
+              )
+              .forEach(
+                b =>
+                  b.classList.remove(
+                    "selected"
+                  )
+              );
 
 
-    if (
-      saved &&
-      saved.username
-    ) {
+            button.classList.add(
+              "selected"
+            );
 
-      /*
-         No entramos automáticamente
-         si todavía estamos en la pantalla
-         de login. El usuario puede hacerlo
-         manualmente.
-      */
 
-      if (
-        $("username")
-      ) {
+            selectedRace =
+              (
+                button.dataset.race ||
+                "humano"
+              ).toLowerCase();
 
-        $("username").value =
-          saved.username;
+
+            if (
+              $("playerRace")
+            ) {
+
+              $("playerRace")
+                .textContent =
+                selectedRace;
+
+            }
+
+
+            applyCharacterVisuals();
+
+            updateAbilities();
+
+          }
+        );
 
       }
-
-    }
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      "No se pudo restaurar la sesión:",
-      error
     );
 
-  }
+
+  /*
+     BOTONES DE APARIENCIA
+  */
+
+  document
+    .querySelectorAll(
+      ".appearance-button"
+    )
+    .forEach(
+      connectAppearanceButton
+    );
+
+
+  /*
+     BOTÓN TERMINAR
+  */
+
+  $("finishCharacter")
+    ?.addEventListener(
+      "click",
+      saveCharacter
+    );
+
+
+  /*
+     CREAR NUESTRO PROPIO
+     SELECTOR DE APARIENCIA
+  */
+
+  createAppearanceMenu();
 
 }
 
 
 /* =========================================================
-   BOTONES DE APARIENCIA DINÁMICOS
+   CONECTAR BOTÓN APARIENCIA
+========================================================= */
+
+function connectAppearanceButton(
+  button
+) {
+
+  if (
+    button.dataset.connected ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  button.dataset.connected =
+    "true";
+
+
+  button.addEventListener(
+    "click",
+    (event) => {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+
+      const type =
+        (
+          button.dataset.type ||
+          button.dataset.appearanceType ||
+          ""
+        ).toLowerCase();
+
+
+      const value =
+        button.dataset.value ||
+        button.dataset.appearance ||
+        button.textContent.trim();
+
+
+      if (
+        type.includes(
+          "cabello"
+        ) ||
+        value.toLowerCase().includes(
+          "cabello"
+        )
+      ) {
+
+        selectedAppearance.cabello =
+          value;
+
+      }
+
+
+      else if (
+        type.includes(
+          "ropa"
+        ) ||
+        value.toLowerCase().includes(
+          "ropa"
+        )
+      ) {
+
+        selectedAppearance.ropa =
+          value;
+
+      }
+
+
+      else if (
+        type.includes(
+          "accesorio"
+        ) ||
+        value.toLowerCase().includes(
+          "accesorio"
+        )
+      ) {
+
+        selectedAppearance.accesorios =
+          value;
+
+      }
+
+
+      document
+        .querySelectorAll(
+          ".appearance-button"
+        )
+        .forEach(
+          b =>
+            b.classList.remove(
+              "selected"
+            )
+        );
+
+
+      document
+        .querySelectorAll(
+          ".appearance-choice"
+        )
+        .forEach(
+          b =>
+            b.classList.remove(
+              "selected"
+            )
+        );
+
+
+      button.classList.add(
+        "selected"
+      );
+
+
+      applyCharacterVisuals();
+
+
+      showToast(
+        `✨ ${value} seleccionado`
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MENÚ DE APARIENCIA
 ========================================================= */
 
 function createAppearanceMenu() {
@@ -5543,115 +6270,189 @@ function createAppearanceMenu() {
   }
 
 
-  if (
+  let menu =
     creator.querySelector(
       ".appearance-menu"
-    )
+    );
+
+
+  if (
+    !menu
   ) {
 
-    return;
+    menu =
+      document.createElement(
+        "div"
+      );
+
+
+    menu.className =
+      "appearance-menu";
+
+
+    menu.innerHTML = `
+
+      <div class="appearance-menu-card">
+
+        <h3>✨ Personalización</h3>
+
+        <div class="appearance-section">
+
+          <strong>💇 Cabello</strong>
+
+          <div class="appearance-choice-grid">
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="cabello"
+              data-value="Cabello corto">
+
+              Cabello corto
+
+            </button>
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="cabello"
+              data-value="Cabello largo">
+
+              Cabello largo
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="appearance-section">
+
+          <strong>👕 Ropa</strong>
+
+          <div class="appearance-choice-grid">
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="ropa"
+              data-value="Ropa de guerrero">
+
+              ⚔️ Guerrero
+
+            </button>
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="ropa"
+              data-value="Ropa de mago">
+
+              🪄 Mago
+
+            </button>
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="ropa"
+              data-value="Ropa noble">
+
+              👑 Noble
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="appearance-section">
+
+          <strong>💎 Accesorios</strong>
+
+          <div class="appearance-choice-grid">
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="accesorios"
+              data-value="Capa">
+
+              🧥 Capa
+
+            </button>
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="accesorios"
+              data-value="Corona">
+
+              👑 Corona
+
+            </button>
+
+            <button
+              type="button"
+              class="appearance-choice"
+              data-type="accesorios"
+              data-value="Ninguno">
+
+              ❌ Ninguno
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    creator.appendChild(
+      menu
+    );
 
   }
 
 
-  const menu =
-    document.createElement(
-      "div"
-    );
-
-
-  menu.className =
-    "appearance-menu";
-
-
-  menu.innerHTML = `
-
-    <div class="appearance-menu-card">
-
-      <h3>✨ Apariencia</h3>
-
-      <p>Personaliza tu aventurero</p>
-
-      <div class="appearance-choice-grid">
-
-        <button
-          class="appearance-choice"
-          data-type="cabello"
-          data-value="Cabello corto">
-          💇 Cabello corto
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="cabello"
-          data-value="Cabello largo">
-          💇 Cabello largo
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="ropa"
-          data-value="Ropa de guerrero">
-          ⚔️ Guerrero
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="ropa"
-          data-value="Ropa de mago">
-          🪄 Mago
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="ropa"
-          data-value="Ropa noble">
-          👑 Noble
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="accesorios"
-          data-value="Capa">
-          🧥 Capa
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="accesorios"
-          data-value="Corona">
-          👑 Corona
-        </button>
-
-        <button
-          class="appearance-choice"
-          data-type="accesorios"
-          data-value="Ninguno">
-          ❌ Ninguno
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  creator.appendChild(
-    menu
-  );
-
+  /*
+     Conectar botones dinámicos.
+  */
 
   menu
     .querySelectorAll(
       ".appearance-choice"
     )
     .forEach(
-      (button) => {
+      button => {
+
+        if (
+          button.dataset.connected ===
+          "true"
+        ) {
+
+          return;
+
+        }
+
+
+        button.dataset.connected =
+          "true";
+
 
         button.addEventListener(
           "click",
-          () => {
+          (event) => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
 
             const type =
               button.dataset.type;
@@ -5662,15 +6463,33 @@ function createAppearanceMenu() {
 
 
             if (
-              type
+              type ===
+              "cabello"
             ) {
 
-              selectedAppearance[
-                type ===
-                "accesorios"
-                  ? "accesorios"
-                  : type
-              ] =
+              selectedAppearance.cabello =
+                value;
+
+            }
+
+
+            if (
+              type ===
+              "ropa"
+            ) {
+
+              selectedAppearance.ropa =
+                value;
+
+            }
+
+
+            if (
+              type ===
+              "accesorios"
+            ) {
+
+              selectedAppearance.accesorios =
                 value;
 
             }
@@ -5681,8 +6500,8 @@ function createAppearanceMenu() {
                 ".appearance-choice"
               )
               .forEach(
-                (item) =>
-                  item.classList.remove(
+                b =>
+                  b.classList.remove(
                     "selected"
                   )
               );
@@ -5693,7 +6512,12 @@ function createAppearanceMenu() {
             );
 
 
-            applyAppearance();
+            applyCharacterVisuals();
+
+
+            showToast(
+              `✨ ${value} seleccionado`
+            );
 
           }
         );
@@ -5705,22 +6529,546 @@ function createAppearanceMenu() {
 
 
 /* =========================================================
+   GUARDAR PERSONAJE
+========================================================= */
+
+async function saveCharacter() {
+
+  const character = {
+
+    race:
+      selectedRace,
+
+    appearance:
+      {
+        ...selectedAppearance
+      }
+
+  };
+
+
+  state.character =
+    character;
+
+
+  /*
+     GUARDADO LOCAL
+  */
+
+  try {
+
+    const saved =
+      JSON.parse(
+        localStorage.getItem(
+          "universo_magico_user"
+        ) || "{}"
+      );
+
+
+    saved.username =
+      state.username;
+
+
+    saved.character =
+      character;
+
+
+    localStorage.setItem(
+      "universo_magico_user",
+      JSON.stringify(
+        saved
+      )
+    );
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      error
+    );
+
+  }
+
+
+  /*
+     GUARDADO SERVIDOR
+  */
+
+  try {
+
+    await fetch(
+      "/api/character",
+      {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify({
+
+            username:
+              state.username,
+
+            character
+
+          })
+
+      }
+    );
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "No se pudo guardar remotamente:",
+      error
+    );
+
+  }
+
+
+  const creator =
+    $("characterCreator");
+
+
+  if (
+    creator
+  ) {
+
+    creator.hidden =
+      true;
+
+  }
+
+
+  if (
+    $("playerRace")
+  ) {
+
+    $("playerRace")
+      .textContent =
+      selectedRace;
+
+  }
+
+
+  showToast(
+    "✨ Personaje guardado."
+  );
+
+}
+
+
+/* =========================================================
+   ABRIR CREADOR
+========================================================= */
+
+function openCharacterCreator(
+  savedCharacter
+) {
+
+  const creator =
+    $("characterCreator");
+
+
+  if (
+    !creator
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    savedCharacter
+  ) {
+
+    selectedRace =
+      (
+        savedCharacter.race ||
+        "humano"
+      ).toLowerCase();
+
+
+    selectedAppearance =
+      {
+
+        cabello:
+          savedCharacter
+            .appearance
+            ?.cabello ||
+          "Cabello corto",
+
+        ropa:
+          savedCharacter
+            .appearance
+            ?.ropa ||
+          "Ropa de guerrero",
+
+        accesorios:
+          savedCharacter
+            .appearance
+            ?.accesorios ||
+          "Ninguno"
+
+      };
+
+
+    if (
+      $("playerRace")
+    ) {
+
+      $("playerRace")
+        .textContent =
+        selectedRace;
+
+    }
+
+
+    applyCharacterVisuals();
+
+    updateAbilities();
+
+
+    creator.hidden =
+      true;
+
+
+    return;
+
+  }
+
+
+  creator.hidden =
+    false;
+
+
+  createAppearanceMenu();
+
+  updateAbilities();
+
+}
+
+
+/* =========================================================
+   HABILIDADES
+========================================================= */
+
+function updateAbilities() {
+
+  const abilities = {
+
+    humano: [
+      "Golpe de energía",
+      "Escudo arcano",
+      "Luz sagrada"
+    ],
+
+    elfo: [
+      "Flecha natural",
+      "Curación",
+      "Tormenta verde"
+    ],
+
+    enano: [
+      "Martillazo",
+      "Piel de piedra",
+      "Terremoto"
+    ],
+
+    orco: [
+      "Furia",
+      "Golpe brutal",
+      "Rugido oscuro"
+    ],
+
+    hada: [
+      "Polvo mágico",
+      "Curación feérica",
+      "Lluvia de estrellas"
+    ],
+
+    vampiro: [
+      "Mordida",
+      "Sombra",
+      "Drenaje vital"
+    ]
+
+  };
+
+
+  const list =
+    abilities[
+      selectedRace
+    ] ||
+    abilities.humano;
+
+
+  list.forEach(
+    (name, index) => {
+
+      const button =
+        $(`ability${index}`);
+
+
+      if (
+        !button
+      ) {
+
+        return;
+
+      }
+
+
+      const label =
+        button.querySelector(
+          ".ability-name"
+        );
+
+
+      if (
+        label
+      ) {
+
+        label.textContent =
+          name;
+
+      } else {
+
+        button.title =
+          name;
+
+      }
+
+    }
+  );
+
+
+  if (
+    $("abilityRace")
+  ) {
+
+    $("abilityRace")
+      .textContent =
+      selectedRace;
+
+  }
+
+}
+
+
+/* =========================================================
+   SESIÓN
+========================================================= */
+
+function restoreSession() {
+
+  try {
+
+    const saved =
+      JSON.parse(
+        localStorage.getItem(
+          "universo_magico_user"
+        ) || "null"
+      );
+
+
+    if (
+      saved?.username &&
+      $("username")
+    ) {
+
+      $("username").value =
+        saved.username;
+
+    }
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   LOOP
+========================================================= */
+
+function animate() {
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  if (
+    !renderer ||
+    !scene ||
+    !camera
+  ) {
+
+    return;
+
+  }
+
+
+  const delta =
+    Math.min(
+      clock.getDelta(),
+      0.05
+    );
+
+
+  if (
+    mixer
+  ) {
+
+    mixer.update(
+      delta
+    );
+
+  }
+
+
+  updateMovement(
+    delta
+  );
+
+
+  updateCamera();
+
+
+  /*
+     Alas de hada flotando
+  */
+
+  if (
+    player &&
+    selectedRace ===
+      "hada"
+  ) {
+
+    const wings =
+      player.getObjectByName(
+        "raceDetails"
+      );
+
+
+    if (
+      wings
+    ) {
+
+      wings.rotation.y =
+        Math.sin(
+          performance.now() *
+          0.0015
+        ) *
+        0.08;
+
+      wings.position.y =
+        Math.sin(
+          performance.now() *
+          0.003
+        ) *
+        0.08;
+
+    }
+
+  }
+
+
+  /*
+     Actualizar botones
+  */
+
+  updateHouseButton();
+
+  updatePlayerMarker();
+
+
+  /*
+     Animación de partículas
+  */
+
+  scene.traverse(
+    (object) => {
+
+      if (
+        object.userData?.magic
+      ) {
+
+        object.rotation.y +=
+          delta * 0.08;
+
+      }
+
+    }
+  );
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+function resize() {
+
+  if (
+    !camera ||
+    !renderer
+  ) {
+
+    return;
+
+  }
+
+
+  camera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+
+  camera.updateProjectionMatrix();
+
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+}
+
+
+/* =========================================================
    ACTUALIZACIÓN DEL MAPA
 ========================================================= */
 
 setInterval(
   () => {
 
-    if (
-      !player
-    ) {
-
-      return;
-
-    }
-
-
     updatePlayerMarker();
+
+    updateHouseButton();
 
   },
   250
@@ -5728,24 +7076,7 @@ setInterval(
 
 
 /* =========================================================
-   INICIAR
-========================================================= */
-
-restoreSession();
-
-
-setTimeout(
-  () => {
-
-    createAppearanceMenu();
-
-  },
-  500
-);
-
-
-/* =========================================================
-   PROTECCIÓN CONTRA ERRORES
+   ERRORES
 ========================================================= */
 
 window.addEventListener(
@@ -5762,6 +7093,14 @@ window.addEventListener(
 );
 
 
+/* =========================================================
+   INICIO
+========================================================= */
+
+restoreSession();
+
+updateBars();
+
 console.log(
-  "🌎 Universo Mágico iniciado correctamente."
+  "🌎 UNIVERSO MÁGICO — SISTEMA COMPLETO CARGADO"
 );
