@@ -1,325 +1,330 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#05030d">
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 maximum-scale=1.0,user-scalable=no">
+  <meta name="theme-color" content="#050713">
   <title>Universo Mágico — El Trono Caído</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-  <!-- ==============================
-       PANTALLA DE INICIO
-       ============================== -->
+<!-- =====================================================
+     PANTALLA PRINCIPAL
+===================================================== -->
 
-  <section id="home">
+<section id="home">
 
-    <div class="magic-bg">
+  <!-- ESCENARIO FANTÁSTICO -->
+  <div class="magic-bg">
 
-      <div class="moon"></div>
+    <!-- Fondo -->
+    <div class="fantasy-scene"></div>
 
-      <div class="magic-orb orb1"></div>
-      <div class="magic-orb orb2"></div>
-      <div class="magic-orb orb3"></div>
+    <!-- Capa oscura para que el menú se lea -->
+    <div class="scene-overlay"></div>
 
-      <!-- Partículas mágicas -->
-      <span class="spark s1">✦</span>
-      <span class="spark s2">✧</span>
-      <span class="spark s3">✦</span>
-      <span class="spark s4">✧</span>
-      <span class="spark s5">✦</span>
-      <span class="spark s6">✧</span>
-      <span class="spark s7">✦</span>
-      <span class="spark s8">✧</span>
+    <!-- Luna / iluminación -->
+    <div class="magic-light"></div>
 
-      <!-- Niebla -->
-      <div class="mist mist1"></div>
-      <div class="mist mist2"></div>
-      <div class="mist mist3"></div>
+    <!-- Niebla -->
+    <div class="fog fog-one"></div>
+    <div class="fog fog-two"></div>
+    <div class="fog fog-three"></div>
+
+    <!-- Partículas -->
+    <div class="particles">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <!-- Brillos mágicos -->
+    <div class="magic-orb orb-one"></div>
+    <div class="magic-orb orb-two"></div>
+    <div class="magic-orb orb-three"></div>
+
+  </div>
+
+
+  <!-- =================================================
+       LOGO
+  ================================================== -->
+
+  <div class="home-content">
+
+    <div class="logo">
+
+      <div class="logo-small">
+        UNIVERSO
+      </div>
+
+      <h1>MÁGICO</h1>
+
+      <div class="logo-subtitle">
+        EL TRONO CAÍDO
+      </div>
 
     </div>
 
 
-    <div class="home-content">
+    <!-- =================================================
+         ACCESO
+    ================================================== -->
 
-      <!-- LOGO -->
+    <div class="auth-card">
 
-      <div class="logo">
+      <div class="auth-tabs">
 
-        <div class="logo-symbol">✦</div>
+        <button
+          id="tabLogin"
+          class="auth-tab active"
+          type="button">
+          INICIAR SESIÓN
+        </button>
 
-        <div class="logo-small">
-          UNIVERSO
-        </div>
-
-        <h1>
-          MÁGICO
-        </h1>
-
-        <div class="logo-line"></div>
-
-        <div class="trono">
-          EL TRONO CAÍDO
-        </div>
+        <button
+          id="tabRegister"
+          class="auth-tab"
+          type="button">
+          CREAR CUENTA
+        </button>
 
       </div>
 
 
-      <!-- LOGIN -->
+      <div class="auth-heading">
 
-      <div class="auth-card">
-
-        <div class="auth-tabs">
-
-          <button
-            id="tabLogin"
-            class="auth-tab active"
-            type="button">
-            INICIAR SESIÓN
-          </button>
-
-          <button
-            id="tabRegister"
-            class="auth-tab"
-            type="button">
-            CREAR CUENTA
-          </button>
-
-        </div>
-
-
-        <div class="auth-title">
-          <span>✦</span>
+        <h2 id="authTitle">
           Bienvenido al Reino
-          <span>✦</span>
-        </div>
+        </h2>
 
-        <p class="auth-description">
+        <p id="authDescription">
           Tu historia comienza aquí
         </p>
 
-
-        <form id="authForm">
-
-          <!-- NOMBRE -->
-
-          <div class="input-group">
-
-            <label>
-              NOMBRE
-            </label>
-
-            <input
-              id="username"
-              type="text"
-              placeholder="Escribe tu nombre"
-              autocomplete="username"
-              maxlength="20"
-              required>
-
-          </div>
-
-
-          <!-- CONTRASEÑA -->
-
-          <div class="input-group">
-
-            <label>
-              CONTRASEÑA
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              placeholder="Escribe tu contraseña"
-              autocomplete="current-password"
-              required>
-
-          </div>
-
-
-          <!-- MENSAJE DE ERROR -->
-
-          <div
-            id="authMsg"
-            class="auth-message">
-          </div>
-
-
-          <!-- ENTRAR -->
-
-          <button
-            id="authSubmit"
-            class="enter-button"
-            type="submit">
-
-            ✦ ENTRAR AL UNIVERSO ✦
-
-          </button>
-
-        </form>
-
-
-        <!-- ESTADO -->
-
-        <div class="realm-status">
-
-          <span></span>
-
-          REINO ONLINE
-
-        </div>
-
       </div>
 
 
-      <div class="version">
-        EL TRONO CAÍDO · 1.0
+      <form id="authForm">
+
+        <div class="input-group">
+
+          <label for="username">
+            NOMBRE
+          </label>
+
+          <input
+            id="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Escribe tu nombre"
+            maxlength="20"
+            required>
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label for="password">
+            CONTRASEÑA
+          </label>
+
+          <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Escribe tu contraseña"
+            required>
+
+        </div>
+
+
+        <button
+          id="authSubmit"
+          type="submit">
+
+          ENTRAR AL UNIVERSO
+
+        </button>
+
+        <div id="authMsg"></div>
+
+      </form>
+
+
+      <div class="realm-status">
+        <span class="status-dot"></span>
+        REINO ONLINE
       </div>
 
     </div>
 
-  </section>
+
+    <div class="version">
+      EL TRONO CAÍDO · 1.0
+    </div>
+
+  </div>
+
+</section>
 
 
 
-  <!-- ==============================
-       JUEGO
-       ============================== -->
+<!-- =====================================================
+     JUEGO
+===================================================== -->
 
-  <section id="game" hidden>
+<section id="game" hidden>
 
-    <header>
-
-      <strong>
-        ✦ UNIVERSO MÁGICO
-      </strong>
-
-      <span>
-        RONDA
-        <b id="round">1</b>
-      </span>
-
-      <button id="menu">
-        ☰
-      </button>
-
-    </header>
+  <div id="scene"></div>
 
 
-    <main>
+  <!-- HUD SUPERIOR -->
 
-      <aside>
+  <div class="game-hud">
 
-        <h3>
-          TU TRONO
-        </h3>
+    <div class="player-info">
 
-        <div class="card">
+      <div id="avatar">
+        A
+      </div>
 
-          ♛
-          <b>
-            Guardián del Fuego
-          </b>
+      <div>
+        <strong id="hudName">
+          Aventurero
+        </strong>
 
+        <div class="hp-bar">
+          <span></span>
         </div>
 
-        <p>
-          VIDA
-          <b id="hp">100</b>
-        </p>
-
-        <p>
-          ENERGÍA
-          <b id="energy">6</b>/10
-        </p>
-
-        <button id="end">
-          TERMINAR TURNO
-        </button>
-
-      </aside>
-
-
-      <div id="scene">
-
-        <div class="title">
-          VALLE DE LOS CUATRO ELEMENTOS
-        </div>
-
-        <div class="actions">
-
-          <button data-e="fire">
-            FUEGO
-          </button>
-
-          <button data-e="water">
-            AGUA
-          </button>
-
-          <button data-e="earth">
-            TIERRA
-          </button>
-
-          <button data-e="air">
-            AIRE
-          </button>
-
+        <div class="mana-bar">
+          <span></span>
         </div>
 
       </div>
 
-
-      <aside class="chat">
-
-        <nav>
-
-          <b>
-            CHAT
-          </b>
-
-          <b>
-            EJÉRCITO
-          </b>
-
-        </nav>
+    </div>
 
 
-        <div id="msgs"></div>
+    <button id="mapBtn">
+      MAPA
+    </button>
+
+  </div>
 
 
-        <form id="form">
+  <!-- BOTONES LATERALES -->
 
-          <input
-            id="input"
-            placeholder="Escribe al reino..."
-            maxlength="300">
+  <div class="side-buttons">
 
-          <button>
-            ➤
-          </button>
+    <button id="sideMap">
+      MAPA
+    </button>
 
-        </form>
+    <button id="enterHouse" hidden>
+      ENTRAR
+    </button>
 
-      </aside>
-
-    </main>
-
-  </section>
+  </div>
 
 
-  <!-- SOCKET.IO -->
+  <!-- JOYSTICK -->
 
-  <script src="/socket.io/socket.io.js"></script>
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
 
-  <!-- JUEGO -->
 
-  <script
-    type="module"
-    src="game.js">
-  </script>
+  <!-- COMBATE -->
+
+  <div class="combat">
+
+    <button data-spell="attack">
+      ATAQUE
+    </button>
+
+    <button data-spell="fire">
+      FUEGO
+    </button>
+
+    <button data-spell="water">
+      AGUA
+    </button>
+
+    <button data-spell="arcane">
+      ARCANO
+    </button>
+
+  </div>
+
+
+  <!-- CHAT -->
+
+  <div id="chat">
+
+    <button id="chatToggle">
+      CHAT
+    </button>
+
+    <div id="msgs"></div>
+
+    <form id="form">
+
+      <input
+        id="input"
+        type="text"
+        autocomplete="off"
+        placeholder="Escribí un mensaje...">
+
+    </form>
+
+  </div>
+
+
+  <!-- MAPA -->
+
+  <div id="map" hidden>
+
+    <div class="map-window">
+
+      <button id="closeMap">
+        CERRAR
+      </button>
+
+      <h2>MAPA DEL REINO</h2>
+
+      <div class="map-content">
+        UNIVERSO MÁGICO
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     LIBRERÍAS
+===================================================== -->
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/game.js"></script>
 
 </body>
 </html>
