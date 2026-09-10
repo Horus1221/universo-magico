@@ -1061,3 +1061,777 @@ function createHouse(
   });
 
 }
+/* =========================================
+   CARGAR PERSONAJE 3D
+========================================= */
+
+function loadPlayer() {
+
+  const loader =
+    new GLTFLoader();
+
+  loader.load(
+
+    "/assets/characters/Superhero_Male_FullBody_web.gltf",
+
+    gltf => {
+
+      player = gltf.scene;
+
+      player.scale.setScalar(1.8);
+
+      player.position.set(
+        0,
+        0,
+        18
+      );
+
+      player.traverse(object => {
+
+        if (object.isMesh) {
+
+          object.castShadow = true;
+          object.receiveShadow = true;
+
+          if (object.material) {
+
+            object.material.roughness =
+              0.75;
+
+          }
+
+        }
+
+      });
+
+      scene.add(player);
+
+      /* =========================
+         ANIMACIONES
+      ========================= */
+
+      mixer =
+        new THREE.AnimationMixer(
+          player
+        );
+
+      loadAnimations();
+
+      /* =========================
+         RAZA
+      ========================= */
+
+      if (state.race) {
+
+        applyRaceAppearance(
+          state.race
+        );
+
+      }
+
+      updateCamera(0.1);
+
+      toast(
+        "✨ Tu aventurero ha llegado al reino"
+      );
+
+    },
+
+    undefined,
+
+    error => {
+
+      console.error(
+        "Error cargando personaje:",
+        error
+      );
+
+      toast(
+        "⚠️ No se pudo cargar el personaje 3D"
+      );
+
+    }
+
+  );
+
+}
+
+
+/* =========================================
+   ANIMACIONES UAL1
+========================================= */
+
+function loadAnimations() {
+
+  const loader =
+    new GLTFLoader();
+
+  loader.load(
+
+    "/assets/characters/UAL1_Standard.glb",
+
+    gltf => {
+
+      if (!gltf.animations?.length) {
+
+        console.warn(
+          "UAL1 no contiene animaciones"
+        );
+
+        return;
+
+      }
+
+      gltf.animations.forEach(
+        clip => {
+
+          const name =
+            clip.name.toLowerCase();
+
+          let key = "idle";
+
+          if (
+            name.includes("walk") ||
+            name.includes("walking")
+          ) {
+
+            key = "walk";
+
+          }
+
+          if (
+            name.includes("run") ||
+            name.includes("running")
+          ) {
+
+            key = "run";
+
+          }
+
+          if (
+            name.includes("idle") ||
+            name.includes("stand")
+          ) {
+
+            key = "idle";
+
+          }
+
+          if (!actions[key]) {
+
+            actions[key] =
+              mixer.clipAction(clip);
+
+          }
+
+        }
+      );
+
+
+      /* Buscar animaciones por nombres
+         aunque el paquete utilice nombres
+         diferentes */
+
+      if (!actions.idle &&
+          gltf.animations[0]) {
+
+        actions.idle =
+          mixer.clipAction(
+            gltf.animations[0]
+          );
+
+      }
+
+      if (!actions.walk &&
+          gltf.animations[1]) {
+
+        actions.walk =
+          mixer.clipAction(
+            gltf.animations[1]
+          );
+
+      }
+
+      playAnimation("idle");
+
+    },
+
+    undefined,
+
+    error => {
+
+      console.warn(
+        "No se pudieron cargar las animaciones UAL1",
+        error
+      );
+
+    }
+
+  );
+
+}
+
+
+/* =========================================
+   CAMBIAR ANIMACIÓN
+========================================= */
+
+function playAnimation(name) {
+
+  const next =
+    actions[name];
+
+  if (!next) return;
+
+  if (activeAction === next)
+    return;
+
+  if (activeAction) {
+
+    activeAction.fadeOut(
+      0.18
+    );
+
+  }
+
+  next.reset();
+
+  next.fadeIn(
+    0.18
+  );
+
+  next.play();
+
+  activeAction =
+    next;
+
+}
+
+
+/* =========================================
+   MOVIMIENTO
+========================================= */
+
+function updateMovement(dt) {
+
+  if (!player) return;
+
+  let x = moveX;
+  let y = moveY;
+
+
+  if (keys.ArrowLeft ||
+      keys.a) {
+
+    x -= 1;
+
+  }
+
+  if (keys.ArrowRight ||
+      keys.d) {
+
+    x += 1;
+
+  }
+
+  if (keys.ArrowUp ||
+      keys.w) {
+
+    y -= 1;
+
+  }
+
+  if (keys.ArrowDown ||
+      keys.s) {
+
+    y += 1;
+
+  }
+
+
+  const length =
+    Math.hypot(x, y);
+
+  moving =
+    length > 0.08;
+
+
+  if (!moving) {
+
+    playAnimation("idle");
+
+    return;
+
+  }
+
+
+  x /= length;
+  y /= length;
+
+
+  /* Movimiento relativo a la cámara */
+
+  const forward =
+    new THREE.Vector3(
+      -Math.sin(cameraYaw),
+      0,
+      -Math.cos(cameraYaw)
+    );
+
+  const right =
+    new THREE.Vector3(
+      Math.cos(cameraYaw),
+      0,
+      -Math.sin(cameraYaw)
+    );
+
+
+  const direction =
+    new THREE.Vector3();
+
+  direction.addScaledVector(
+    right,
+    x
+  );
+
+  direction.addScaledVector(
+    forward,
+    -y
+  );
+
+  direction.normalize();
+
+
+  const speed =
+    MOVE_SPEED *
+    speedMultiplier *
+    dt;
+
+
+  player.position.addScaledVector(
+    direction,
+    speed
+  );
+
+
+  /* El personaje mira hacia donde camina */
+
+  const targetRotation =
+    Math.atan2(
+      direction.x,
+      direction.z
+    );
+
+
+  player.rotation.y =
+    THREE.MathUtils.lerp(
+      player.rotation.y,
+      targetRotation,
+      0.18
+    );
+
+
+  playAnimation(
+    actions.run
+      ? "run"
+      : "walk"
+  );
+
+
+  /* Límites del mundo */
+
+  player.position.x =
+    THREE.MathUtils.clamp(
+      player.position.x,
+      -82,
+      82
+    );
+
+  player.position.z =
+    THREE.MathUtils.clamp(
+      player.position.z,
+      -82,
+      82
+    );
+
+}
+
+
+/* =========================================
+   CÁMARA TERCERA PERSONA
+========================================= */
+
+function updateCamera(dt) {
+
+  if (!player || !camera)
+    return;
+
+
+  const distance = 9;
+
+  const horizontal =
+    Math.cos(cameraPitch) *
+    distance;
+
+  const vertical =
+    Math.sin(cameraPitch) *
+    distance;
+
+
+  const desired =
+    new THREE.Vector3(
+
+      player.position.x +
+      Math.sin(cameraYaw) *
+      horizontal,
+
+      player.position.y +
+      3.2 +
+      vertical,
+
+      player.position.z +
+      Math.cos(cameraYaw) *
+      horizontal
+
+    );
+
+
+  const smooth =
+    1 -
+    Math.pow(
+      0.0005,
+      Math.min(dt, 0.05)
+    );
+
+
+  camera.position.lerp(
+    desired,
+    smooth
+  );
+
+
+  const target =
+    new THREE.Vector3(
+
+      player.position.x,
+
+      player.position.y +
+      2.6,
+
+      player.position.z
+
+    );
+
+
+  camera.lookAt(
+    target
+  );
+
+}
+
+
+/* =========================================
+   CÁMARA TÁCTIL
+========================================= */
+
+function setupCameraTouch() {
+
+  sceneEl.addEventListener(
+    "pointerdown",
+    event => {
+
+      if (
+        event.target.closest(
+          "button,.chat,#joystick,.panel"
+        )
+      ) {
+
+        return;
+
+      }
+
+      lookPointer =
+        event.pointerId;
+
+      lastLookX =
+        event.clientX;
+
+      lastLookY =
+        event.clientY;
+
+      sceneEl.setPointerCapture(
+        event.pointerId
+      );
+
+    }
+  );
+
+
+  sceneEl.addEventListener(
+    "pointermove",
+    event => {
+
+      if (
+        event.pointerId !==
+        lookPointer
+      ) {
+
+        return;
+
+      }
+
+
+      const dx =
+        event.clientX -
+        lastLookX;
+
+      const dy =
+        event.clientY -
+        lastLookY;
+
+
+      lastLookX =
+        event.clientX;
+
+      lastLookY =
+        event.clientY;
+
+
+      cameraYaw -=
+        dx * 0.008;
+
+
+      cameraPitch -=
+        dy * 0.006;
+
+
+      cameraPitch =
+        THREE.MathUtils.clamp(
+          cameraPitch,
+          -0.25,
+          0.9
+        );
+
+    }
+  );
+
+
+  const endLook =
+    event => {
+
+      if (
+        event.pointerId ===
+        lookPointer
+      ) {
+
+        lookPointer =
+          null;
+
+      }
+
+    };
+
+
+  sceneEl.addEventListener(
+    "pointerup",
+    endLook
+  );
+
+  sceneEl.addEventListener(
+    "pointercancel",
+    endLook
+  );
+
+}
+
+
+/* =========================================
+   JOYSTICK
+========================================= */
+
+function setupJoystick() {
+
+  const joystick =
+    $("joystick");
+
+  if (!joystick) return;
+
+  const stick =
+    joystick.querySelector(
+      ".stick"
+    );
+
+  if (!stick) return;
+
+
+  function updateJoystick(
+    event
+  ) {
+
+    const rect =
+      joystick.getBoundingClientRect();
+
+    const centerX =
+      rect.left +
+      rect.width / 2;
+
+    const centerY =
+      rect.top +
+      rect.height / 2;
+
+
+    let dx =
+      event.clientX -
+      centerX;
+
+    let dy =
+      event.clientY -
+      centerY;
+
+
+    const radius =
+      rect.width * 0.38;
+
+
+    const distance =
+      Math.hypot(dx, dy);
+
+
+    if (distance > radius) {
+
+      dx =
+        dx / distance *
+        radius;
+
+      dy =
+        dy / distance *
+        radius;
+
+    }
+
+
+    moveX =
+      dx / radius;
+
+    moveY =
+      dy / radius;
+
+
+    stick.style.transform =
+      `translate(${dx}px, ${dy}px)`;
+
+  }
+
+
+  joystick.addEventListener(
+    "pointerdown",
+    event => {
+
+      joyPointer =
+        event.pointerId;
+
+      joystick.setPointerCapture(
+        event.pointerId
+      );
+
+      updateJoystick(event);
+
+    }
+  );
+
+
+  joystick.addEventListener(
+    "pointermove",
+    event => {
+
+      if (
+        event.pointerId ===
+        joyPointer
+      ) {
+
+        updateJoystick(event);
+
+      }
+
+    }
+  );
+
+
+  function releaseJoystick() {
+
+    joyPointer =
+      null;
+
+    moveX = 0;
+    moveY = 0;
+
+    stick.style.transform =
+      "translate(0,0)";
+
+  }
+
+
+  joystick.addEventListener(
+    "pointerup",
+    releaseJoystick
+  );
+
+  joystick.addEventListener(
+    "pointercancel",
+    releaseJoystick
+  );
+
+}
+
+
+/* =========================================
+   TECLADO
+========================================= */
+
+function setupKeyboard() {
+
+  window.addEventListener(
+    "keydown",
+    event => {
+
+      keys[event.key] =
+        true;
+
+    }
+  );
+
+
+  window.addEventListener(
+    "keyup",
+    event => {
+
+      keys[event.key] =
+        false;
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   REDIMENSIONAR
+========================================= */
+
+function resize() {
+
+  if (!camera || !renderer)
+    return;
+
+  camera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+}
