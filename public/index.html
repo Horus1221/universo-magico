@@ -2,308 +2,549 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  >
+
   <title>Universo Mágico — El Trono Caído</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/socket.io/socket.io.js"></script>
+
+  <link
+    rel="stylesheet"
+    href="/style.css"
+  >
 </head>
 
 <body>
 
-  <!-- ==================== INICIO ==================== -->
-  <section id="home">
+  <!-- ==================================================
+       PANTALLA DE INICIO
+  =================================================== -->
+
+  <main id="home">
 
     <div class="magic-bg"></div>
-    <div class="stars"></div>
-    <div class="fog fog-a"></div>
-    <div class="fog fog-b"></div>
 
-    <div class="title-wrap">
-      <div class="title-small">UNIVERSO</div>
-      <div class="title-main">MÁGICO</div>
-      <div class="title-sub">EL TRONO CAÍDO</div>
-    </div>
+    <section class="auth-card">
 
-    <div class="auth-card">
+      <div class="auth-tabs">
 
-      <div class="tabs">
-        <button id="tabLogin" class="active" type="button">
+        <button
+          id="tabLogin"
+          class="auth-tab active"
+          type="button"
+        >
           ENTRAR
         </button>
 
-        <button id="tabRegister" type="button">
+        <button
+          id="tabRegister"
+          class="auth-tab"
+          type="button"
+        >
           CREAR CUENTA
         </button>
+
       </div>
 
-      <h2 id="authTitle">Bienvenido, viajero</h2>
 
-      <p id="authDescription">
-        Entrá al mundo donde la magia despierta.
-      </p>
+      <div class="auth-content">
 
-      <form id="authForm">
+        <div class="auth-icon">
+          ✨
+        </div>
 
-        <label for="username">NOMBRE DE GUARDIÁN</label>
+        <h2 id="authTitle">
+          Bienvenido al Reino
+        </h2>
 
-        <input
-          id="username"
-          name="username"
-          type="text"
-          autocomplete="username"
-          maxlength="24"
-          placeholder="Tu nombre"
-          required
-        >
+        <p class="auth-description">
+          Tu aventura comienza aquí.
+        </p>
 
-        <label for="password">CONTRASEÑA</label>
 
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          minlength="4"
-          placeholder="••••••••"
-          required
-        >
+        <form id="authForm">
 
-        <button
-          id="authSubmit"
-          class="magic-button"
-          type="submit"
-        >
-          ⚡ ENTRAR AL UNIVERSO
-        </button>
+          <label for="username">
+            Nombre del aventurero
+          </label>
 
-      </form>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Tu nombre"
+            autocomplete="username"
+            maxlength="24"
+            required
+          >
 
-      <div id="authMsg"></div>
 
-      <div class="online">
-        <span></span>
-        UNIVERSO ONLINE
+          <label for="password">
+            Contraseña
+          </label>
+
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Tu contraseña"
+            autocomplete="current-password"
+            required
+          >
+
+
+          <div
+            id="authMsg"
+            class="auth-message"
+          ></div>
+
+
+          <button
+            id="authSubmit"
+            class="main-button"
+            type="submit"
+          >
+            ENTRAR AL UNIVERSO
+          </button>
+
+        </form>
+
       </div>
 
-    </div>
-  </section>
+    </section>
+
+  </main>
 
 
-  <!-- ==================== JUEGO ==================== -->
-  <section id="game" hidden>
+  <!-- ==================================================
+       JUEGO
+  =================================================== -->
 
-    <div id="scene"></div>
+  <main
+    id="game"
+    hidden
+  >
 
-    <!-- HUD SUPERIOR -->
-    <div class="hud-top">
+    <div
+      id="scene"
+      class="scene"
+    ></div>
 
-      <div class="player-card">
 
-        <div id="avatar">
-          ?
+    <!-- ==================================================
+         HUD
+    =================================================== -->
+
+    <header class="hud">
+
+      <div class="player-hud">
+
+        <div
+          id="avatar"
+          class="avatar"
+        >
+          A
         </div>
 
         <div>
-          <strong id="playerName">
-            Guardián
-          </strong>
 
-          <small id="playerRace">
+          <div
+            id="playerName"
+            class="player-name"
+          >
+            Aventurero
+          </div>
+
+          <div
+            id="playerRace"
+            class="player-race"
+          >
             Humano
-          </small>
+          </div>
+
         </div>
 
       </div>
+
 
       <div class="bars">
 
         <div class="bar hp">
-          <span id="hpBar"></span>
+
+          <span>❤️</span>
+
+          <div class="bar-track">
+            <div
+              id="hpBar"
+              class="bar-fill"
+              style="width:100%"
+            ></div>
+          </div>
+
         </div>
+
 
         <div class="bar mana">
-          <span id="manaBar"></span>
+
+          <span>💧</span>
+
+          <div class="bar-track">
+            <div
+              id="manaBar"
+              class="bar-fill"
+              style="width:100%"
+            ></div>
+          </div>
+
         </div>
 
       </div>
 
-      <button
-        id="mapButton"
-        class="hud-button"
-        type="button"
-      >
-        🗺️
-      </button>
 
-    </div>
-
-
-    <!-- PANEL DE RAZAS -->
-    <div id="racePanel" class="panel" hidden>
-
-      <h2>Elegí tu linaje</h2>
-
-      <p>
-        Cada raza posee una conexión diferente con la magia.
-      </p>
-
-      <div class="race-grid">
+      <div class="hud-buttons">
 
         <button
+          id="mapButton"
+          class="hud-button"
           type="button"
-          data-race="human"
         >
-          🧑 Humano
-        </button>
-
-        <button
-          type="button"
-          data-race="elf"
-        >
-          🧝 Elfo
-        </button>
-
-        <button
-          type="button"
-          data-race="dwarf"
-        >
-          🧔 Enano
-        </button>
-
-        <button
-          type="button"
-          data-race="orc"
-        >
-          👹 Orco
-        </button>
-
-        <button
-          type="button"
-          data-race="fairy"
-        >
-          🧚 Hada
-        </button>
-
-        <button
-          type="button"
-          data-race="draconid"
-        >
-          🐉 Dracónido
+          🗺️
         </button>
 
       </div>
 
-    </div>
+    </header>
 
 
-    <!-- HABILIDADES -->
-    <div
-      id="abilityPanel"
-      class="ability-panel"
+    <!-- ==================================================
+         CREADOR DE PERSONAJE
+    =================================================== -->
+
+    <section
+      id="characterCreator"
+      class="character-creator"
+      hidden
     >
 
-      <div class="ability-title">
+      <div class="creator-card">
 
-        <strong id="abilityRace">
-          Habilidades
-        </strong>
+        <div class="creator-title">
+          ✨ CREA TU AVENTURERO
+        </div>
 
-        <small>
-          PODERES DE TU LINAJE
-        </small>
+        <div class="creator-subtitle">
+          Elegí tu raza para comenzar tu aventura
+        </div>
+
+
+        <div class="race-grid">
+
+          <button
+            class="race-button"
+            data-race="Humano"
+            type="button"
+          >
+            <span class="race-icon">🧑</span>
+            <strong>Humano</strong>
+            <small>Equilibrado y adaptable</small>
+          </button>
+
+
+          <button
+            class="race-button"
+            data-race="Elfo"
+            type="button"
+          >
+            <span class="race-icon">🧝</span>
+            <strong>Elfo</strong>
+            <small>Ágil y conectado con la naturaleza</small>
+          </button>
+
+
+          <button
+            class="race-button"
+            data-race="Enano"
+            type="button"
+          >
+            <span class="race-icon">⛏️</span>
+            <strong>Enano</strong>
+            <small>Resistente y poderoso</small>
+          </button>
+
+
+          <button
+            class="race-button"
+            data-race="Orco"
+            type="button"
+          >
+            <span class="race-icon">👹</span>
+            <strong>Orco</strong>
+            <small>Fuerte y feroz</small>
+          </button>
+
+
+          <button
+            class="race-button"
+            data-race="Hada"
+            type="button"
+          >
+            <span class="race-icon">🧚</span>
+            <strong>Hada</strong>
+            <small>Mágica y veloz</small>
+          </button>
+
+
+          <button
+            class="race-button"
+            data-race="Dracónido"
+            type="button"
+          >
+            <span class="race-icon">🐉</span>
+            <strong>Dracónido</strong>
+            <small>Descendiente de dragones</small>
+          </button>
+
+        </div>
+
+
+        <div class="appearance-section">
+
+          <div class="appearance-title">
+            APARIENCIA
+          </div>
+
+          <div class="appearance-options">
+
+            <button
+              class="appearance-button"
+              type="button"
+              data-appearance="cabello"
+            >
+              💇 Cabello
+            </button>
+
+            <button
+              class="appearance-button"
+              type="button"
+              data-appearance="ropa"
+            >
+              👕 Ropa
+            </button>
+
+            <button
+              class="appearance-button"
+              type="button"
+              data-appearance="accesorios"
+            >
+              💎 Accesorios
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <button
+          id="finishCharacter"
+          class="main-button"
+          type="button"
+        >
+          ✨ COMENZAR AVENTURA
+        </button>
 
       </div>
 
-      <div class="ability">
+    </section>
+
+
+    <!-- ==================================================
+         HABILIDADES
+    =================================================== -->
+
+    <section
+      id="abilitiesPanel"
+      class="abilities-panel"
+    >
+
+      <div class="abilities-title">
+        <span>⚔️</span>
+        <span id="abilityRace">Humano</span>
+      </div>
+
+
+      <div class="ability-list">
 
         <button
+          id="ability0"
+          class="ability-button"
           type="button"
-          data-ability="0"
         >
-          <span>✦</span>
-          <strong id="ability0">
-            Voluntad
-          </strong>
-          <small id="abilityCost0">
-            10 mana
-          </small>
+          Voluntad · 15 MP
         </button>
 
         <button
+          id="ability1"
+          class="ability-button"
           type="button"
-          data-ability="1"
         >
-          <span>✦</span>
-          <strong id="ability1">
-            Segundo aire
-          </strong>
-          <small id="abilityCost1">
-            15 mana
-          </small>
+          Segundo aire · 20 MP
         </button>
 
         <button
+          id="ability2"
+          class="ability-button"
           type="button"
-          data-ability="2"
         >
-          <span>✦</span>
-          <strong id="ability2">
-            Adaptación
-          </strong>
-          <small id="abilityCost2">
-            20 mana
-          </small>
+          Adaptación · 25 MP
         </button>
 
       </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         JOYSTICK
+    =================================================== -->
+
+    <div
+      id="joystick"
+      class="joystick"
+    >
+
+      <div class="stick"></div>
 
     </div>
 
 
-    <!-- JOYSTICK -->
-    <div id="joystick">
+    <!-- ==================================================
+         CHAT
+    =================================================== -->
 
-      <div id="stick"></div>
-
-    </div>
-
-
-    <!-- CHAT -->
-    <div class="chat">
+    <section
+      id="chat"
+      class="chat"
+    >
 
       <button
         id="chatToggle"
-        class="chatToggle"
+        class="chat-toggle"
         type="button"
+        aria-label="Ocultar chat"
       >
-        💬 Chat
+        ×
       </button>
 
-      <div id="msgs"></div>
 
-      <form id="chatForm">
+      <div
+        id="chatMessages"
+        class="chat-messages"
+      ></div>
+
+
+      <form
+        id="chatForm"
+        class="chat-form"
+      >
 
         <input
           id="chatInput"
           type="text"
-          maxlength="160"
           placeholder="Escribí un mensaje..."
+          maxlength="180"
           autocomplete="off"
         >
 
-        <button type="submit">
+        <button
+          type="submit"
+        >
           ➤
         </button>
 
       </form>
 
-    </div>
+    </section>
 
 
-    <!-- BOTÓN CASA -->
+    <!-- ==================================================
+         MAPA
+    =================================================== -->
+
+    <aside
+      id="sideMap"
+      class="side-map"
+    >
+
+      <div class="map-header">
+
+        <strong>
+          🗺️ MAPA DEL REINO
+        </strong>
+
+        <button
+          type="button"
+          onclick="document.getElementById('sideMap').classList.remove('open')"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="map-world">
+
+        <div class="map-region village">
+          🏘️
+          <span>Aldea</span>
+        </div>
+
+        <div class="map-region forest">
+          🌲
+          <span>Bosque</span>
+        </div>
+
+        <div class="map-region lake">
+          💧
+          <span>Lago</span>
+        </div>
+
+        <div class="map-region mountains">
+          ⛰️
+          <span>Montañas</span>
+        </div>
+
+        <div class="map-region ruins">
+          🏚️
+          <span>Ruinas</span>
+        </div>
+
+        <div class="map-region castle">
+          🏰
+          <span>Castillo</span>
+        </div>
+
+
+        <div
+          id="playerMarker"
+          class="player-marker"
+        >
+          ●
+        </div>
+
+      </div>
+
+    </aside>
+
+
+    <!-- ==================================================
+         CASA
+    =================================================== -->
+
     <button
       id="enterHouse"
-      class="enter-house"
+      class="house-button"
       type="button"
       hidden
     >
@@ -311,10 +552,9 @@
     </button>
 
 
-    <!-- BOTÓN SALIR CASA -->
     <button
       id="exitHouse"
-      class="enter-house"
+      class="house-button"
       type="button"
       hidden
     >
@@ -322,83 +562,28 @@
     </button>
 
 
-    <!-- BOTÓN MAPA -->
-    <div id="map" hidden>
+    <!-- ==================================================
+         MENSAJES
+    =================================================== -->
 
-      <div class="map-card">
+    <div
+      id="gameToast"
+      class="game-toast"
+    ></div>
 
-        <button
-          id="closeMap"
-          type="button"
-        >
-          ×
-        </button>
-
-        <h2>Mapa del Universo</h2>
-
-        <div class="map-art">
-
-          <span>🏰 Castillo</span>
-          <span>🏘️ Aldea</span>
-          <span>🌲 Bosque</span>
-          <span>💎 Cristales</span>
-          <span>⛰️ Montañas</span>
-          <span>🏚️ Ruinas</span>
-
-        </div>
-
-      </div>
-
-    </div>
+  </main>
 
 
-    <!-- BOTÓN AYUDA -->
-    <button
-      id="howToButton"
-      class="side-button"
-      type="button"
-    >
-      ?
-    </button>
+  <!-- ==================================================
+       SOCKET.IO
+  =================================================== -->
 
+  <script src="/socket.io/socket.io.js"></script>
 
-    <!-- PANEL AYUDA -->
-    <div id="howTo" class="panel" hidden>
-
-      <h2>Cómo jugar</h2>
-
-      <p>
-        Usá el joystick para moverte por el mundo.
-      </p>
-
-      <p>
-        Deslizá el dedo sobre el escenario para girar
-        la cámara y observar a tu personaje en tercera persona.
-      </p>
-
-      <p>
-        Acercate a las casas para entrar en sus interiores.
-      </p>
-
-      <p>
-        Usá las habilidades de tu raza para sobrevivir
-        y explorar el Universo Mágico.
-      </p>
-
-      <button
-        id="closeHowTo"
-        class="magic-button"
-        type="button"
-      >
-        ENTENDIDO
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <script type="module" src="/game.js"></script>
+  <script
+    type="module"
+    src="/game.js"
+  ></script>
 
 </body>
 </html>
