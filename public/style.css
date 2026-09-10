@@ -1,0 +1,494 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #050711;
+  color: white;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* =========================
+   INICIO
+========================= */
+
+.home {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(115, 70, 255, .28), transparent 25%),
+    radial-gradient(circle at 20% 80%, rgba(0, 190, 255, .16), transparent 25%),
+    radial-gradient(circle at 80% 20%, rgba(255, 70, 190, .14), transparent 25%),
+    #050711;
+}
+
+.home::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.8) 1px, transparent 1px);
+  background-size: 55px 55px;
+  opacity: .25;
+  animation: stars 18s linear infinite;
+}
+
+@keyframes stars {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(55px);
+  }
+}
+
+.logo {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  animation: appear 1.2s ease;
+}
+
+.logo-symbol {
+  font-size: 75px;
+  margin-bottom: 5px;
+  text-shadow:
+    0 0 15px #9b6cff,
+    0 0 35px #6d4cff,
+    0 0 70px #5b3dff;
+  animation: pulse 2.5s infinite;
+}
+
+.logo h1 {
+  font-size: clamp(42px, 11vw, 90px);
+  line-height: .85;
+  letter-spacing: 7px;
+  font-weight: 900;
+  background: linear-gradient(
+    90deg,
+    #ffffff,
+    #b79aff,
+    #ffffff,
+    #70d9ff
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine 5s linear infinite;
+}
+
+.logo p {
+  margin-top: 25px;
+  color: #aaaac8;
+  font-size: 15px;
+  letter-spacing: 3px;
+}
+
+@keyframes shine {
+  to {
+    background-position: 250% center;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.12);
+    filter: brightness(1.4);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menu {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(380px, 82vw);
+  margin-top: 45px;
+}
+
+.menu button {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: 18px 25px;
+  cursor: pointer;
+  color: white;
+  font-weight: 800;
+  letter-spacing: 2px;
+  transition: .25s;
+}
+
+#play {
+  background: linear-gradient(100deg, #713cff, #b84cff);
+  box-shadow:
+    0 0 20px rgba(125,70,255,.45),
+    inset 0 0 20px rgba(255,255,255,.12);
+}
+
+#how {
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(10px);
+}
+
+.menu button:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.2);
+}
+
+.version {
+  position: absolute;
+  bottom: 25px;
+  color: #65657c;
+  font-size: 11px;
+  letter-spacing: 3px;
+  z-index: 2;
+}
+
+
+/* =========================
+   JUEGO
+========================= */
+
+.game {
+  position: fixed;
+  inset: 0;
+  background: #071016;
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+}
+
+#scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+.hud {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.player-card,
+.stats {
+  background: rgba(8, 9, 25, .72);
+  border: 1px solid rgba(173, 130, 255, .35);
+  backdrop-filter: blur(14px);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.player-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 17px;
+}
+
+.player-card strong {
+  color: #d0baff;
+}
+
+.player-card span {
+  color: #8e8da5;
+  font-size: 12px;
+}
+
+.stats {
+  display: flex;
+  gap: 18px;
+  padding: 13px 17px;
+  font-weight: bold;
+}
+
+.stats div:first-child {
+  color: #ff7185;
+}
+
+.stats div:nth-child(2) {
+  color: #69cfff;
+}
+
+.stats div:last-child {
+  color: #d3b3ff;
+}
+
+
+/* =========================
+   ACCIONES
+========================= */
+
+.actions {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  max-width: 95vw;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(5, 6, 18, .75);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(15px);
+}
+
+.actions button {
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.07);
+  color: white;
+  padding: 12px 15px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.actions button:hover {
+  background: rgba(143,92,255,.35);
+  transform: translateY(-2px);
+}
+
+
+/* =========================
+   CHAT
+========================= */
+
+.chat {
+  position: absolute;
+  right: 18px;
+  bottom: 100px;
+  width: min(320px, 88vw);
+  height: 310px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(5, 7, 20, .78);
+  border: 1px solid rgba(165,125,255,.35);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 15px 50px rgba(0,0,0,.35);
+}
+
+.chat-title {
+  padding: 14px 16px;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  color: #d4c3ff;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.msg {
+  margin-bottom: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.07);
+  color: #eeeeff;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.msg.system {
+  color: #bfa9ff;
+  background: rgba(125,80,255,.1);
+}
+
+.chat-form {
+  display: flex;
+  gap: 7px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.chat-form input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  outline: none;
+  color: white;
+  background: rgba(255,255,255,.07);
+}
+
+.chat-form input::placeholder {
+  color: #77778d;
+}
+
+.chat-form button {
+  width: 44px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: white;
+  background: #7747ff;
+}
+
+
+/* =========================
+   MODAL
+========================= */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(10px);
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-box {
+  position: relative;
+  width: min(450px, 92vw);
+  padding: 35px;
+  border-radius: 22px;
+  background: linear-gradient(
+    145deg,
+    rgba(25,20,55,.98),
+    rgba(9,10,25,.98)
+  );
+  border: 1px solid rgba(170,130,255,.4);
+  box-shadow: 0 25px 80px rgba(0,0,0,.6);
+}
+
+.modal-box h2 {
+  margin-bottom: 20px;
+  color: #d1baff;
+}
+
+.modal-box p {
+  margin-bottom: 18px;
+  color: #bbb9cf;
+  line-height: 1.7;
+}
+
+.modal-box button:last-child {
+  width: 100%;
+  padding: 13px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  background: linear-gradient(90deg,#7144ff,#b04cff);
+  cursor: pointer;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+
+/* =========================
+   MÓVIL
+========================= */
+
+@media (max-width: 700px) {
+
+  .logo-symbol {
+    font-size: 55px;
+  }
+
+  .logo h1 {
+    letter-spacing: 4px;
+  }
+
+  .logo p {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .hud {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+  }
+
+  .stats {
+    gap: 8px;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .player-card {
+    padding: 9px 11px;
+  }
+
+  .chat {
+    right: 10px;
+    bottom: 105px;
+    width: 270px;
+    height: 235px;
+  }
+
+  .actions {
+    bottom: 12px;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .actions button {
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+}
