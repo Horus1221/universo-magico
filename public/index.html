@@ -1,123 +1,336 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Universo Mágico</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#071018">
+  <title>Universo Mágico — El Trono Caído</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-  <!-- INICIO -->
-  <section id="home" class="home">
-    <div class="logo">
-      <div class="logo-symbol">✦</div>
-      <h1>UNIVERSO<br>MÁGICO</h1>
-      <p>Un mundo donde tu magia cobra vida</p>
-    </div>
+<section id="home">
 
-    <div class="menu">
-      <button id="play">⚡ ENTRAR AL UNIVERSO</button>
-      <button id="how">✦ CÓMO JUGAR</button>
-    </div>
+  <div class="homeCard">
 
-    <div class="version">UNIVERSO MÁGICO • ONLINE</div>
-  </section>
+    <div class="sigil">✦</div>
+
+    <small>EL TRONO CAÍDO</small>
+
+    <h1>
+      UNIVERSO<br>
+      <span>MÁGICO</span>
+    </h1>
+
+    <p>
+      Un reino vivo de magia, naturaleza y aventura.
+    </p>
+
+    <button id="play">
+      ⚡ ENTRAR AL UNIVERSO
+    </button>
+
+    <button id="how" class="secondary">
+      ✦ CÓMO JUGAR
+    </button>
+
+    <b class="online">
+      ● MUNDO ONLINE
+    </b>
+
+  </div>
+
+</section>
 
 
-  <!-- JUEGO -->
-  <section id="game" class="game" style="display:none">
+<main id="game" hidden>
 
-    <div id="scene"></div>
+  <div id="scene"></div>
 
-    <!-- HUD -->
-    <div class="hud">
 
-      <div class="player-card">
-        <strong>✨ MAGO</strong>
-        <span>Jugador</span>
+  <!-- BARRA SUPERIOR -->
+
+  <div class="top">
+
+    <div class="player">
+
+      <div class="avatar">
+        A
       </div>
 
-      <div class="stats">
-        <div>❤️ <span id="hp">100</span></div>
-        <div>⚡ <span id="energy">6</span></div>
-        <div>🌙 Ronda <span id="round">1</span></div>
-      </div>
+      <div>
 
-    </div>
+        <b>Axel</b>
 
+        <small>
+          Nivel 12 · Mago
+        </small>
 
-    <!-- ACCIONES -->
-    <div class="actions">
-      <button data-e="fire">🔥 Fuego</button>
-      <button data-e="water">💧 Curación</button>
-      <button data-e="magic">✨ Magia</button>
-      <button id="end">⏭️ Terminar ronda</button>
-    </div>
-
-
-    <!-- CHAT -->
-    <div class="chat">
-
-      <div class="chat-title">
-        💬 Chat del Universo
-      </div>
-
-      <div id="msgs" class="messages">
-        <div class="msg system">
-          ✨ Bienvenido al Universo Mágico
+        <div class="bar hp">
+          <i id="hpbar"></i>
         </div>
-      </div>
 
-      <form id="form" class="chat-form">
-        <input
-          id="input"
-          type="text"
-          maxlength="200"
-          placeholder="Escribí un mensaje..."
-          autocomplete="off"
-        >
-        <button type="submit">➤</button>
-      </form>
+        <div class="bar mana">
+          <i id="manabar"></i>
+        </div>
+
+        <label>
+          ❤️ <span id="hp">100</span>
+          ·
+          💧 <span id="mana">100</span>
+        </label>
+
+      </div>
 
     </div>
 
-  </section>
+
+    <div class="zone" id="zone">
+      Aldea Central
+    </div>
 
 
-  <!-- VENTANA CÓMO JUGAR -->
-  <div id="modal" class="modal">
+    <button id="mapBtn">
+      🗺️
+    </button>
 
-    <div class="modal-box">
+  </div>
 
-      <button id="close" class="close">×</button>
 
-      <h2>✨ Cómo jugar</h2>
+  <!-- MISIÓN -->
 
-      <p>
-        Explorá el Universo Mágico, descubrí lugares,
-        interactuá con otros jugadores y utilizá tus poderes.
+  <div class="quest">
+
+    <strong>
+      ✦ MISIÓN ACTIVA
+    </strong>
+
+    <b>
+      El cristal perdido
+    </b>
+
+    <small>
+      Explora el Bosque Norte y encuentra el Cristal Arcano.
+    </small>
+
+  </div>
+
+
+  <!-- MENÚ LATERAL -->
+
+  <div class="side">
+
+    <button>
+      🎒
+      <small>
+        Inventario
+      </small>
+    </button>
+
+    <button>
+      🔥
+      <small>
+        Habilidades
+      </small>
+    </button>
+
+    <button id="sideMap">
+      🧭
+      <small>
+        Mapa
+      </small>
+    </button>
+
+    <button>
+      ⚙️
+      <small>
+        Ajustes
+      </small>
+    </button>
+
+  </div>
+
+
+  <!-- JOYSTICK -->
+
+  <div id="joystick">
+
+    <div id="stick"></div>
+
+  </div>
+
+
+  <!-- ATAQUES -->
+
+  <div class="combat">
+
+    <button data-spell="fire">
+      🔥
+    </button>
+
+    <button data-spell="water">
+      💧
+    </button>
+
+    <button data-spell="arcane">
+      ✦
+    </button>
+
+    <button
+      class="attack"
+      data-spell="attack"
+    >
+      ⚔️
+    </button>
+
+  </div>
+
+
+  <!-- CHAT -->
+
+  <div id="chat">
+
+    <button id="chatToggle">
+      ⌄
+    </button>
+
+    <header>
+      💬 Universo
+
+      <span>
+        ● online
+      </span>
+
+    </header>
+
+    <div id="msgs">
+
+      <p class="sys">
+        ✨ Bienvenido al Universo Mágico.
       </p>
 
-      <p>
-        🔥 Fuego — ataque mágico<br>
-        💧 Curación — recupera vida<br>
-        ✨ Magia — habilidad especial
+      <p class="sys">
+        🌿 Usa el joystick para explorar.
       </p>
 
-      <button id="ok">ENTENDIDO</button>
+    </div>
+
+    <form id="form">
+
+      <input
+        id="input"
+        maxlength="200"
+        autocomplete="off"
+        placeholder="Escribí un mensaje..."
+      >
+
+      <button>
+        ➤
+      </button>
+
+    </form>
+
+  </div>
+
+
+  <!-- MAPA -->
+
+  <div id="map" hidden>
+
+    <div class="mapbox">
+
+      <button id="closeMap">
+        ×
+      </button>
+
+      <h2>
+        🗺️ Mapa del Reino
+      </h2>
+
+      <div class="map">
+
+        <b style="left:12%;top:12%">
+          Bosque Norte
+        </b>
+
+        <b style="left:45%;top:42%">
+          Aldea Central
+        </b>
+
+        <b style="left:70%;top:18%">
+          Ruinas
+        </b>
+
+        <b style="left:68%;top:68%">
+          Lago Sagrado
+        </b>
+
+        <b style="left:42%;top:12%">
+          Cristal Arcano
+        </b>
+
+        <b style="left:12%;top:72%">
+          Montañas
+        </b>
+
+        <b style="left:72%;top:45%">
+          Castillo
+        </b>
+
+      </div>
 
     </div>
 
   </div>
 
+</main>
 
-  <!-- Socket.IO -->
-  <script src="/socket.io/socket.io.js"></script>
 
-  <!-- Juego -->
-  <script type="module" src="/game.js"></script>
+<!-- CÓMO JUGAR -->
+
+<div id="howModal" hidden>
+
+  <div class="modal">
+
+    <button id="closeHow">
+      ×
+    </button>
+
+    <h2>
+      ✨ Cómo jugar
+    </h2>
+
+    <p>
+      🎮 Arrastrá el joystick para moverte.
+      En computadora también podés usar WASD.
+    </p>
+
+    <p>
+      ⚔️ Los cuatro botones lanzan ataques
+      con animaciones mágicas.
+    </p>
+
+    <p>
+      💬 El chat se puede minimizar
+      con la flecha.
+    </p>
+
+    <button id="okHow">
+      ENTENDIDO
+    </button>
+
+  </div>
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script
+  type="module"
+  src="/game.js">
+</script>
 
 </body>
 </html>
