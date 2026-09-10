@@ -4,23 +4,36 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
 const $ = id => document.getElementById(id);
 const socket = typeof io === "function" ? io() : null;
 
-console.log("✨ UNIVERSO MÁGICO: game.js cargado");
+console.log("✨ UNIVERSO MÁGICO — GAME.JS CARGADO");
 
 const home = $("home");
 const game = $("game");
 const sceneEl = $("scene");
 
-let scene, camera, renderer, clock;
+let scene;
+let camera;
+let renderer;
+let clock;
+
 let player = null;
 let mixer = null;
 let actions = {};
 let currentAction = null;
-let moveX = 0, moveY = 0;
-let mana = 100, hp = 100;
+
+let moveX = 0;
+let moveY = 0;
+
+let mana = 100;
+let hp = 100;
+
 let registerMode = false;
-let yaw = 0, pitch = 0.48;
+
+let yaw = 0;
+let pitch = 0.48;
+
 let draggingCamera = false;
-let lastTouchX = 0, lastTouchY = 0;
+let lastTouchX = 0;
+let lastTouchY = 0;
 
 let selectedRace = "humano";
 
@@ -32,13 +45,13 @@ let selectedAppearance = {
 
 let currentHouse = null;
 let interior = null;
+
 let toastTimer;
 
 const keys = {};
 
 const houses = [];
 const trees = [];
-const mountains = [];
 
 const state = {
   username: "Aventurero",
@@ -56,64 +69,39 @@ const assets = {
 
 const loader = new GLTFLoader();
 
-
 /* =========================================================
    AUTENTICACIÓN
 ========================================================= */
 
-$("tabLogin")?.addEventListener(
-  "click",
-  () => {
+$("tabLogin")?.addEventListener("click", () => {
 
-    registerMode = false;
+  registerMode = false;
 
-    $("tabLogin")?.classList.add(
-      "active"
-    );
+  $("tabLogin")?.classList.add("active");
+  $("tabRegister")?.classList.remove("active");
 
-    $("tabRegister")?.classList.remove(
-      "active"
-    );
-
-    if ($("authSubmit")) {
-
-      $("authSubmit").textContent =
-        "⚡ ENTRAR AL UNIVERSO";
-
-    }
-
+  if ($("authSubmit")) {
+    $("authSubmit").textContent =
+      "⚡ ENTRAR AL UNIVERSO";
   }
-);
+});
 
+$("tabRegister")?.addEventListener("click", () => {
 
-$("tabRegister")?.addEventListener(
-  "click",
-  () => {
+  registerMode = true;
 
-    registerMode = true;
+  $("tabRegister")?.classList.add("active");
+  $("tabLogin")?.classList.remove("active");
 
-    $("tabRegister")?.classList.add(
-      "active"
-    );
-
-    $("tabLogin")?.classList.remove(
-      "active"
-    );
-
-    if ($("authSubmit")) {
-
-      $("authSubmit").textContent =
-        "✨ CREAR PERSONAJE";
-
-    }
-
+  if ($("authSubmit")) {
+    $("authSubmit").textContent =
+      "✨ CREAR PERSONAJE";
   }
-);
-
+});
 
 $("authForm")?.addEventListener(
   "submit",
-  async (e) => {
+  async e => {
 
     e.preventDefault();
 
@@ -123,32 +111,26 @@ $("authForm")?.addEventListener(
     const password =
       $("password")?.value || "";
 
+    if (username.length < 3) {
 
-    if (
-      username.length < 3
-    ) {
-
-      return authMessage(
+      authMessage(
         "El nombre debe tener al menos 3 caracteres."
       );
 
+      return;
     }
 
+    if (password.length < 6) {
 
-    if (
-      password.length < 6
-    ) {
-
-      return authMessage(
+      authMessage(
         "La contraseña debe tener al menos 6 caracteres."
       );
 
+      return;
     }
-
 
     const button =
       $("authSubmit");
-
 
     if (button) {
 
@@ -156,9 +138,7 @@ $("authForm")?.addEventListener(
 
       button.textContent =
         "✨ CONECTANDO...";
-
     }
-
 
     try {
 
@@ -167,12 +147,10 @@ $("authForm")?.addEventListener(
           ? "/api/register"
           : "/api/login";
 
-
       const response =
         await fetch(
           endpoint,
           {
-
             method: "POST",
 
             headers: {
@@ -180,109 +158,69 @@ $("authForm")?.addEventListener(
                 "application/json"
             },
 
-            body:
-              JSON.stringify({
-                username,
-                password
-              })
-
+            body: JSON.stringify({
+              username,
+              password
+            })
           }
         );
-
 
       const data =
         await response
           .json()
-          .catch(
-            () => ({})
-          );
+          .catch(() => ({}));
 
-
-      if (
-        !response.ok
-      ) {
+      if (!response.ok) {
 
         throw new Error(
           data.error ||
           `Error ${response.status}`
         );
-
       }
-
 
       localStorage.setItem(
         "universo_magico_user",
         JSON.stringify(data)
       );
 
-
       startGame(
-        data.username ||
-          username,
-
-        data.character ||
-          null
+        data.username || username,
+        data.character || null
       );
-
 
     } catch (err) {
 
-      console.error(
-        err
-      );
-
+      console.error(err);
 
       authMessage(
         err.message ||
         "No se pudo conectar con el reino."
       );
 
-
     } finally {
 
       if (button) {
 
-        button.disabled =
-          false;
+        button.disabled = false;
 
         button.textContent =
           registerMode
             ? "✨ CREAR PERSONAJE"
             : "⚡ ENTRAR AL UNIVERSO";
-
       }
-
     }
-
   }
 );
 
-
 function authMessage(text) {
 
-  const el =
-    $("authMsg");
+  const el = $("authMsg");
 
+  if (!el) return;
 
-  if (!el) {
-
-    return;
-
-  }
-
-
-  el.textContent =
-    text;
-
-  el.hidden =
-    false;
-
+  el.textContent = text;
+  el.hidden = false;
 }
-
-
-/* =========================================================
-   INICIAR JUEGO
-========================================================= */
 
 function startGame(
   username,
@@ -290,85 +228,54 @@ function startGame(
 ) {
 
   state.username =
-    username ||
-    "Aventurero";
-
+    username || "Aventurero";
 
   state.character =
     savedCharacter;
 
-
-  if (
-    $("playerName")
-  ) {
+  if ($("playerName")) {
 
     $("playerName").textContent =
       state.username;
-
   }
 
-
-  if (
-    $("hudName")
-  ) {
+  if ($("hudName")) {
 
     $("hudName").textContent =
       state.username;
-
   }
 
-
-  if (
-    $("avatar")
-  ) {
+  if ($("avatar")) {
 
     $("avatar").textContent =
-      state.username
-        .charAt(0)
-        .toUpperCase();
-
+      state.username[0]?.toUpperCase() ||
+      "A";
   }
-
 
   if (home) {
-
-    home.hidden =
-      true;
-
+    home.hidden = true;
   }
-
 
   if (game) {
-
-    game.hidden =
-      false;
-
+    game.hidden = false;
   }
-
 
   if (!renderer) {
-
     initWorld();
-
   }
-
 
   setTimeout(
     () => {
-
       openCharacterCreator(
         savedCharacter
       );
-
     },
     500
   );
-
 }
 
-
 /* =========================================================
-   INICIALIZAR MUNDO
+   INICIO DEL MUNDO
 ========================================================= */
 
 function initWorld() {
@@ -376,36 +283,27 @@ function initWorld() {
   clock =
     new THREE.Clock();
 
-
   scene =
     new THREE.Scene();
-
 
   scene.background =
     new THREE.Color(
       0x79a9c5
     );
 
-
   scene.fog =
     new THREE.FogExp2(
       0x79a9c5,
-      0.0017
+      0.0018
     );
-
 
   camera =
     new THREE.PerspectiveCamera(
       60,
-
-      window.innerWidth /
-        window.innerHeight,
-
+      innerWidth / innerHeight,
       0.1,
-
       1600
     );
-
 
   camera.position.set(
     0,
@@ -413,80 +311,55 @@ function initWorld() {
     34
   );
 
-
   renderer =
     new THREE.WebGLRenderer({
-
       antialias: true,
-
       powerPreference:
         "high-performance"
-
     });
-
 
   renderer.setPixelRatio(
     Math.min(
-      window.devicePixelRatio,
+      devicePixelRatio,
       1.7
     )
   );
 
-
   renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+    innerWidth,
+    innerHeight
   );
-
 
   renderer.shadowMap.enabled =
     true;
 
-
   renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
-
   renderer.outputColorSpace =
     THREE.SRGBColorSpace;
-
-
-  renderer.toneMapping =
-    THREE.ACESFilmicToneMapping;
-
-
-  renderer.toneMappingExposure =
-    1.1;
-
 
   if (sceneEl) {
 
     sceneEl.appendChild(
       renderer.domElement
     );
-
   }
 
-
-  const hemisphere =
+  const hemi =
     new THREE.HemisphereLight(
       0xd8f0ff,
-      0x30452f,
+      0x355034,
       1.8
     );
 
-
-  scene.add(
-    hemisphere
-  );
-
+  scene.add(hemi);
 
   const sun =
     new THREE.DirectionalLight(
       0xfff0cf,
-      3.2
+      3
     );
-
 
   sun.position.set(
     -120,
@@ -494,81 +367,43 @@ function initWorld() {
     90
   );
 
-
-  sun.castShadow =
-    true;
-
+  sun.castShadow = true;
 
   sun.shadow.mapSize.set(
     2048,
     2048
   );
 
-
-  sun.shadow.camera.left =
-    -300;
-
-
-  sun.shadow.camera.right =
-    300;
-
-
-  sun.shadow.camera.top =
-    300;
-
-
-  sun.shadow.camera.bottom =
-    -300;
-
-
-  scene.add(
-    sun
-  );
-
+  scene.add(sun);
 
   createGround();
-
   createWater();
-
   createVillage();
-
   createForest();
-
   createMountains();
-
   createCastle();
-
   createMagicParticles();
 
   loadPlayer();
 
   setupJoystick();
-
   setupKeyboard();
-
   setupCameraTouch();
-
   setupCombat();
 
   setupChat();
-
   setupMap();
-
   setupHouse();
 
   setupCharacterCreator();
 
-
-  window.addEventListener(
+  addEventListener(
     "resize",
     resize
   );
 
-
   animate();
-
 }
-
 
 /* =========================================================
    TERRENO
@@ -578,54 +413,26 @@ function createGround() {
 
   const ground =
     new THREE.Mesh(
-
       new THREE.PlaneGeometry(
         700,
         700,
-        100,
-        100
+        80,
+        80
       ),
 
       new THREE.MeshStandardMaterial({
-
         color: 0x4f804d,
-
         roughness: 1
-
       })
-
     );
-
 
   ground.rotation.x =
     -Math.PI / 2;
 
-
   ground.receiveShadow =
     true;
 
-
-  scene.add(
-    ground
-  );
-
-
-  /*
-     CÉSPED
-  */
-
-  const grassMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x6da357,
-
-      roughness: 1,
-
-      side:
-        THREE.DoubleSide
-
-    });
-
+  scene.add(ground);
 
   for (
     let i = 0;
@@ -635,121 +442,42 @@ function createGround() {
 
     const grass =
       new THREE.Mesh(
-
         new THREE.PlaneGeometry(
           0.35,
           THREE.MathUtils.randFloat(
             0.5,
-            1.6
+            1.4
           )
         ),
 
-        grassMaterial
-
+        new THREE.MeshStandardMaterial({
+          color: 0x6fa65a,
+          side:
+            THREE.DoubleSide
+        })
       );
 
-
     grass.position.set(
-
       THREE.MathUtils.randFloat(
         -340,
         340
       ),
 
-      0.2,
+      0.18,
 
       THREE.MathUtils.randFloat(
         -340,
         340
       )
-
     );
-
 
     grass.rotation.y =
       Math.random() *
       Math.PI;
 
-
-    scene.add(
-      grass
-    );
-
+    scene.add(grass);
   }
-
-
-  /*
-     PIEDRAS
-  */
-
-  const rockMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x77756d,
-
-      roughness: 1
-
-    });
-
-
-  for (
-    let i = 0;
-    i < 350;
-    i++
-  ) {
-
-    const rock =
-      new THREE.Mesh(
-
-        new THREE.DodecahedronGeometry(
-          THREE.MathUtils.randFloat(
-            0.25,
-            1
-          ),
-          0
-        ),
-
-        rockMaterial
-
-      );
-
-
-    rock.position.set(
-
-      THREE.MathUtils.randFloat(
-        -330,
-        330
-      ),
-
-      0.25,
-
-      THREE.MathUtils.randFloat(
-        -330,
-        330
-      )
-
-    );
-
-
-    rock.scale.y =
-      THREE.MathUtils.randFloat(
-        0.4,
-        0.8
-      );
-
-
-    rock.castShadow =
-      true;
-
-
-    scene.add(
-      rock
-    );
-
-  }
-
 }
-
 
 /* =========================================================
    AGUA
@@ -759,32 +487,22 @@ function createWater() {
 
   const water =
     new THREE.Mesh(
-
       new THREE.CircleGeometry(
-        58,
-        80
+        55,
+        64
       ),
 
       new THREE.MeshPhysicalMaterial({
-
         color: 0x258ab0,
-
         transparent: true,
-
         opacity: 0.78,
-
         roughness: 0.12,
-
         metalness: 0.08
-
       })
-
     );
-
 
   water.rotation.x =
     -Math.PI / 2;
-
 
   water.position.set(
     115,
@@ -792,17 +510,8 @@ function createWater() {
     80
   );
 
-
-  water.userData.isWater =
-    true;
-
-
-  scene.add(
-    water
-  );
-
+  scene.add(water);
 }
-
 
 /* =========================================================
    ALDEA
@@ -811,57 +520,36 @@ function createWater() {
 function createVillage() {
 
   const positions = [
-
     [-55, -45],
-
     [-20, -50],
-
     [20, -50],
-
     [55, -42],
-
     [-70, 0],
-
     [65, 5],
-
     [-45, 45],
-
     [5, 45],
-
     [55, 45],
-
     [0, 85]
-
   ];
 
-
   positions.forEach(
-    ([x, z], index) => {
+    ([x, z], i) => {
 
       const house =
         createHouse(
           x,
           z,
-          index
+          i
         );
 
+      houses.push(house);
 
-      houses.push(
-        house
-      );
-
-
-      scene.add(
-        house
-      );
-
+      scene.add(house);
     }
   );
 
-
   const plaza =
     new THREE.Mesh(
-
       new THREE.CylinderGeometry(
         42,
         42,
@@ -870,36 +558,45 @@ function createVillage() {
       ),
 
       new THREE.MeshStandardMaterial({
-
         color: 0x9b8c73,
-
         roughness: 0.9
-
       })
-
     );
-
 
   plaza.position.y =
     0.22;
 
-
   plaza.receiveShadow =
     true;
 
+  scene.add(plaza);
 
-  scene.add(
-    plaza
-  );
+  const fountain =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        8,
+        10,
+        1.5,
+        40
+      ),
 
+      new THREE.MeshStandardMaterial({
+        color: 0x858d93,
+        roughness: 0.9
+      })
+    );
 
-  createFountain();
+  fountain.position.y =
+    0.75;
 
+  fountain.castShadow =
+    true;
+
+  scene.add(fountain);
 }
 
-
 /* =========================================================
-   CASA
+   CASA EXTERIOR
 ========================================================= */
 
 function createHouse(
@@ -911,105 +608,72 @@ function createHouse(
   const group =
     new THREE.Group();
 
-
   group.position.set(
     x,
     0,
     z
   );
 
-
-  const wallMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color:
-        index % 2
-          ? 0x956547
-          : 0xa9714d,
-
-      roughness: 0.85
-
-    });
-
-
-  const roofMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color:
-        index % 3 === 0
-          ? 0x49302b
-          : 0x63372d,
-
-      roughness: 0.9
-
-    });
-
-
-  const body =
+  const wall =
     new THREE.Mesh(
-
       new THREE.BoxGeometry(
         22,
         10,
         18
       ),
 
-      wallMaterial
+      new THREE.MeshStandardMaterial({
+        color:
+          index % 2
+            ? 0x956547
+            : 0xa9714d,
 
+        roughness: 0.85
+      })
     );
 
-
-  body.position.y =
+  wall.position.y =
     5;
 
-
-  body.castShadow =
+  wall.castShadow =
     true;
 
-
-  body.receiveShadow =
+  wall.receiveShadow =
     true;
 
-
-  group.add(
-    body
-  );
-
+  group.add(wall);
 
   const roof =
     new THREE.Mesh(
-
       new THREE.ConeGeometry(
         15,
         9,
         4
       ),
 
-      roofMaterial
+      new THREE.MeshStandardMaterial({
+        color:
+          index % 3
+            ? 0x63372d
+            : 0x49302b,
 
+        roughness: 0.9
+      })
     );
-
 
   roof.rotation.y =
     Math.PI / 4;
 
-
   roof.position.y =
     14;
-
 
   roof.castShadow =
     true;
 
-
-  group.add(
-    roof
-  );
-
+  group.add(roof);
 
   const door =
     new THREE.Mesh(
-
       new THREE.BoxGeometry(
         3.2,
         5.5,
@@ -1017,13 +681,9 @@ function createHouse(
       ),
 
       new THREE.MeshStandardMaterial({
-
         color: 0x35231c
-
       })
-
     );
-
 
   door.position.set(
     0,
@@ -1031,507 +691,118 @@ function createHouse(
     9.15
   );
 
+  group.add(door);
 
-  group.add(
-    door
-  );
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const windowMesh =
-      new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          4,
-          3,
-          0.3
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0x79c8e2,
-
-          emissive: 0x194b60,
-
-          emissiveIntensity:
-            0.6
-
-        })
-
-      );
-
-
-    windowMesh.position.set(
-      side * 7,
-      5.2,
-      9.15
-    );
-
-
-    group.add(
-      windowMesh
-    );
-
-  }
-
-
-  const chimney =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        3,
-        7,
-        3
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x5c514a
-
-      })
-
-    );
-
-
-  chimney.position.set(
-    6,
-    16,
-    -3
-  );
-
-
-  chimney.castShadow =
+  group.userData.house =
     true;
 
+  group.userData.houseIndex =
+    index;
 
-  group.add(
-    chimney
-  );
-
-
-  group.userData.isHouse =
-    true;
-
-
-  return group;
-
-}
-
-
-function createFountain() {
-
-  const stone =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x858d93,
-
-      roughness: 0.9
-
-    });
-
-
-  const base =
-    new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        9,
-        10,
-        1.5,
-        40
-      ),
-
-      stone
-
-    );
-
-
-  base.position.y =
-    0.75;
-
-
-  base.castShadow =
-    true;
-
-
-  scene.add(
-    base
-  );
-
-
-  const water =
-    new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        7.8,
-        7.8,
-        0.3,
-        40
-      ),
-
-      new THREE.MeshPhysicalMaterial({
-
-        color: 0x4bb8d9,
-
-        transparent: true,
-
-        opacity: 0.75
-
-      })
-
-    );
-
-
-  water.position.y =
-    1.5;
-
-
-  scene.add(
-    water
-  );
-
-}
-/* =========================================================
-   ÁRBOLES
-========================================================= */
-
-function createForest() {
-
-  for (let i = 0; i < 320; i++) {
-
-    let x;
-    let z;
-
-    do {
-
-      x = THREE.MathUtils.randFloat(
-        -320,
-        320
-      );
-
-      z = THREE.MathUtils.randFloat(
-        -320,
-        320
-      );
-
-    } while (
-      Math.abs(x) < 100 &&
-      Math.abs(z) < 100
-    );
-
-
-    const tree =
-      createTree();
-
-
-    tree.position.set(
+  group.userData.worldPosition =
+    new THREE.Vector3(
       x,
       0,
       z
     );
 
-
-    const scale =
-      THREE.MathUtils.randFloat(
-        0.75,
-        1.45
-      );
-
-
-    tree.scale.setScalar(
-      scale
-    );
-
-
-    tree.rotation.y =
-      Math.random() *
-      Math.PI;
-
-
-    trees.push(
-      tree
-    );
-
-
-    scene.add(
-      tree
-    );
-
-  }
-
+  return group;
 }
 
+/* =========================================================
+   BOSQUE
+========================================================= */
 
-function createTree() {
-
-  const group =
-    new THREE.Group();
-
-
-  /*
-     TRONCO
-  */
-
-  const trunkMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x60412d,
-
-      roughness: 1
-
-    });
-
-
-  const trunk =
-    new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        0.9,
-        1.25,
-        9,
-        8
-      ),
-
-      trunkMaterial
-
-    );
-
-
-  trunk.position.y =
-    4.5;
-
-
-  trunk.castShadow =
-    true;
-
-
-  group.add(
-    trunk
-  );
-
-
-  /*
-     RAMAS
-  */
-
-  const branchMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x553923,
-
-      roughness: 1
-
-    });
-
+function createForest() {
 
   for (
     let i = 0;
-    i < 4;
+    i < 320;
     i++
   ) {
 
-    const branch =
-      new THREE.Mesh(
+    const tree =
+      new THREE.Group();
 
+    const trunk =
+      new THREE.Mesh(
         new THREE.CylinderGeometry(
-          0.22,
-          0.45,
-          5,
-          7
+          0.7,
+          1.2,
+          8,
+          9
         ),
 
-        branchMaterial
-
+        new THREE.MeshStandardMaterial({
+          color: 0x63402a
+        })
       );
 
+    trunk.position.y =
+      4;
 
-    branch.position.y =
-      7 +
-      i * 1.2;
-
-
-    branch.rotation.z =
-      THREE.MathUtils.randFloat(
-        -0.7,
-        0.7
-      );
-
-
-    branch.rotation.x =
-      THREE.MathUtils.randFloat(
-        -0.35,
-        0.35
-      );
-
-
-    branch.castShadow =
+    trunk.castShadow =
       true;
 
+    tree.add(trunk);
 
-    group.add(
-      branch
-    );
+    for (
+      let j = 0;
+      j < 8;
+      j++
+    ) {
 
-  }
+      const leaf =
+        new THREE.Mesh(
+          new THREE.IcosahedronGeometry(
+            THREE.MathUtils.randFloat(
+              2.4,
+              4
+            ),
+            1
+          ),
 
+          new THREE.MeshStandardMaterial({
+            color: 0x2f713d,
+            roughness: 1
+          })
+        );
 
-  /*
-     COPA DEL ÁRBOL
-  */
+      leaf.position.set(
+        THREE.MathUtils.randFloat(
+          -2,
+          2
+        ),
 
-  const leafMaterial =
-    new THREE.MeshStandardMaterial({
+        THREE.MathUtils.randFloat(
+          7,
+          12
+        ),
 
-      color:
-        Math.random() > 0.5
-          ? 0x356b38
-          : 0x467e3d,
+        THREE.MathUtils.randFloat(
+          -2,
+          2
+        )
+      );
 
-      roughness: 0.95
+      leaf.castShadow =
+        true;
 
-    });
-
-
-  const crown1 =
-    new THREE.Mesh(
-
-      new THREE.IcosahedronGeometry(
-        5.2,
-        1
-      ),
-
-      leafMaterial
-
-    );
-
-
-  crown1.position.set(
-    0,
-    10.5,
-    0
-  );
-
-
-  crown1.scale.set(
-    1.15,
-    1.1,
-    1.05
-  );
-
-
-  crown1.castShadow =
-    true;
-
-
-  group.add(
-    crown1
-  );
-
-
-  const crown2 =
-    new THREE.Mesh(
-
-      new THREE.IcosahedronGeometry(
-        4,
-        1
-      ),
-
-      leafMaterial
-
-    );
-
-
-  crown2.position.set(
-    -2.8,
-    13,
-    0.5
-  );
-
-
-  crown2.castShadow =
-    true;
-
-
-  group.add(
-    crown2
-  );
-
-
-  const crown3 =
-    new THREE.Mesh(
-
-      new THREE.IcosahedronGeometry(
-        3.7,
-        1
-      ),
-
-      leafMaterial
-
-    );
-
-
-  crown3.position.set(
-    2.7,
-    13.2,
-    -0.5
-  );
-
-
-  crown3.castShadow =
-    true;
-
-
-  group.add(
-    crown3
-  );
-
-
-  group.userData.isTree =
-    true;
-
-
-  return group;
-
-}
-
-
-/* =========================================================
-   MONTAÑAS — LÍMITE DEL MAPA
-========================================================= */
-
-function createMountains() {
-
-  for (let i = 0; i < 36; i++) {
+      tree.add(leaf);
+    }
 
     const angle =
-      (i / 36) *
-      Math.PI * 2;
-
+      Math.random() *
+      Math.PI *
+      2;
 
     const radius =
       THREE.MathUtils.randFloat(
-        300,
-        325
+        140,
+        315
       );
 
-
-    const height =
-      THREE.MathUtils.randFloat(
-        35,
-        75
-      );
-
-
-    const mountain =
-      createMountain(
-        height
-      );
-
-
-    mountain.position.set(
-
+    tree.position.set(
       Math.cos(angle) *
         radius,
 
@@ -1539,129 +810,126 @@ function createMountains() {
 
       Math.sin(angle) *
         radius
-
     );
 
+    tree.scale.setScalar(
+      THREE.MathUtils.randFloat(
+        0.8,
+        1.5
+      )
+    );
+
+    tree.userData.phase =
+      Math.random() * 10;
+
+    scene.add(tree);
+
+    trees.push(tree);
+  }
+}
+
+/* =========================================================
+   MONTAÑAS
+========================================================= */
+
+function createMountains() {
+
+  for (
+    let i = 0;
+    i < 36;
+    i++
+  ) {
+
+    const angle =
+      i / 36 *
+      Math.PI *
+      2;
+
+    const radius =
+      THREE.MathUtils.randFloat(
+        300,
+        325
+      );
+
+    const height =
+      THREE.MathUtils.randFloat(
+        55,
+        110
+      );
+
+    const mountain =
+      new THREE.Mesh(
+        new THREE.ConeGeometry(
+          THREE.MathUtils.randFloat(
+            24,
+            42
+          ),
+
+          height,
+
+          8
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x4c6257,
+          roughness: 1
+        })
+      );
+
+    mountain.position.set(
+      Math.cos(angle) *
+        radius,
+
+      height / 2 - 3,
+
+      Math.sin(angle) *
+        radius
+    );
 
     mountain.rotation.y =
       Math.random() *
       Math.PI;
 
+    mountain.castShadow =
+      true;
 
-    mountains.push(
-      mountain
-    );
+    mountain.receiveShadow =
+      true;
 
+    scene.add(mountain);
 
-    scene.add(
-      mountain
-    );
-
-  }
-
-}
-
-
-function createMountain(
-  height
-) {
-
-  const group =
-    new THREE.Group();
-
-
-  const rockMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x59645e,
-
-      roughness: 1
-
-    });
-
-
-  const mountain =
-    new THREE.Mesh(
-
-      new THREE.ConeGeometry(
-        THREE.MathUtils.randFloat(
-          18,
-          30
-        ),
-        height,
-        7,
-        2
-      ),
-
-      rockMaterial
-
-    );
-
-
-  mountain.position.y =
-    height / 2;
-
-
-  mountain.castShadow =
-    true;
-
-
-  mountain.receiveShadow =
-    true;
-
-
-  group.add(
-    mountain
-  );
-
-
-  /*
-     NIEVE EN LAS CIMAS
-  */
-
-  if (
-    height > 52
-  ) {
-
-    const snow =
+    const peak =
       new THREE.Mesh(
-
         new THREE.ConeGeometry(
-          8,
+          THREE.MathUtils.randFloat(
+            7,
+            14
+          ),
+
           height * 0.22,
-          7
+
+          8
         ),
 
         new THREE.MeshStandardMaterial({
-
-          color: 0xe8ece8,
-
+          color: 0xbcc9c6,
           roughness: 1
-
         })
-
       );
 
-
-    snow.position.y =
-      height * 0.84;
-
-
-    snow.castShadow =
-      true;
-
-
-    group.add(
-      snow
+    peak.position.copy(
+      mountain.position
     );
 
+    peak.position.y +=
+      height * 0.39;
+
+    peak.scale.y =
+      0.75;
+
+    scene.add(peak);
   }
-
-
-  return group;
-
 }
-
 
 /* =========================================================
    CASTILLO
@@ -1672,469 +940,123 @@ function createCastle() {
   const castle =
     new THREE.Group();
 
-
   castle.position.set(
+    250,
     0,
-    0,
-    190
+    230
   );
 
-
-  const stoneMaterial =
+  const stone =
     new THREE.MeshStandardMaterial({
-
-      color: 0x74767a,
-
-      roughness: 0.95
-
+      color: 0x68757d,
+      roughness: 0.9
     });
-
 
   const darkStone =
     new THREE.MeshStandardMaterial({
-
-      color: 0x4d5156,
-
-      roughness: 1
-
+      color: 0x4e5961,
+      roughness: 0.95
     });
-
-
-  /*
-     TORRE CENTRAL
-  */
 
   const keep =
     new THREE.Mesh(
-
       new THREE.BoxGeometry(
-        55,
-        45,
-        45
+        70,
+        28,
+        55
       ),
-
-      stoneMaterial
-
+      stone
     );
 
-
   keep.position.y =
-    22.5;
-
+    14;
 
   keep.castShadow =
     true;
 
-
   keep.receiveShadow =
     true;
 
+  castle.add(keep);
 
-  castle.add(
-    keep
-  );
+  for (
+    const [x, z] of [
+      [-34, -26],
+      [34, -26],
+      [-34, 26],
+      [34, 26]
+    ]
+  ) {
 
-
-  /*
-     TORRES
-  */
-
-  const towerPositions = [
-
-    [-32, -25],
-
-    [32, -25],
-
-    [-32, 25],
-
-    [32, 25]
-
-  ];
-
-
-  towerPositions.forEach(
-    ([x, z]) => {
-
-      const tower =
-        new THREE.Mesh(
-
-          new THREE.CylinderGeometry(
-            8,
-            9,
-            55,
-            12
-          ),
-
-          darkStone
-
-        );
-
-
-      tower.position.set(
-        x,
-        27.5,
-        z
+    const tower =
+      new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          8,
+          9,
+          38,
+          12
+        ),
+        darkStone
       );
 
+    tower.position.set(
+      x,
+      19,
+      z
+    );
 
-      tower.castShadow =
-        true;
+    tower.castShadow =
+      true;
 
+    castle.add(tower);
 
-      castle.add(
-        tower
+    const roof =
+      new THREE.Mesh(
+        new THREE.ConeGeometry(
+          10,
+          12,
+          12
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x382a35,
+          roughness: 0.8
+        })
       );
 
+    roof.position.set(
+      x,
+      44,
+      z
+    );
 
-      /*
-         TECHO
-      */
-
-      const roof =
-        new THREE.Mesh(
-
-          new THREE.ConeGeometry(
-            10,
-            12,
-            12
-          ),
-
-          new THREE.MeshStandardMaterial({
-
-            color: 0x302b3c,
-
-            roughness: 0.9
-
-          })
-
-        );
-
-
-      roof.position.set(
-        x,
-        61,
-        z
-      );
-
-
-      roof.castShadow =
-        true;
-
-
-      castle.add(
-        roof
-      );
-
-
-      /*
-         BANDERA
-      */
-
-      const pole =
-        new THREE.Mesh(
-
-          new THREE.CylinderGeometry(
-            0.18,
-            0.18,
-            8,
-            6
-          ),
-
-          new THREE.MeshStandardMaterial({
-
-            color: 0xc0a75b,
-
-            metalness: 0.5,
-
-            roughness: 0.4
-
-          })
-
-        );
-
-
-      pole.position.set(
-        x,
-        69,
-        z
-      );
-
-
-      castle.add(
-        pole
-      );
-
-
-      const flag =
-        new THREE.Mesh(
-
-          new THREE.PlaneGeometry(
-            5,
-            3
-          ),
-
-          new THREE.MeshStandardMaterial({
-
-            color: 0x713c63,
-
-            side:
-              THREE.DoubleSide,
-
-            roughness: 0.8
-
-          })
-
-        );
-
-
-      flag.position.set(
-        x + 2.3,
-        70,
-        z
-      );
-
-
-      flag.rotation.y =
-        Math.PI / 2;
-
-
-      castle.add(
-        flag
-      );
-
-    }
-  );
-
-
-  /*
-     PUERTA PRINCIPAL
-  */
+    castle.add(roof);
+  }
 
   const gate =
     new THREE.Mesh(
-
       new THREE.BoxGeometry(
-        14,
-        20,
+        18,
+        16,
         3
       ),
 
       new THREE.MeshStandardMaterial({
-
-        color: 0x30231d,
-
+        color: 0x2e211b,
         roughness: 0.9
-
       })
-
     );
-
 
   gate.position.set(
     0,
-    10,
-    -24
-  );
-
-
-  castle.add(
-    gate
-  );
-
-
-  /*
-     ARCO
-  */
-
-  const arch =
-    new THREE.Mesh(
-
-      new THREE.TorusGeometry(
-        8,
-        2,
-        8,
-        32,
-        Math.PI
-      ),
-
-      stoneMaterial
-
-    );
-
-
-  arch.position.set(
-    0,
-    20,
-    -25
-  );
-
-
-  arch.rotation.x =
-    Math.PI / 2;
-
-
-  castle.add(
-    arch
-  );
-
-
-  /*
-     VENTANAS
-  */
-
-  for (
-    let row = 0;
-    row < 3;
-    row++
-  ) {
-
-    for (
-      let col = -1;
-      col <= 1;
-      col++
-    ) {
-
-      const windowMesh =
-        new THREE.Mesh(
-
-          new THREE.BoxGeometry(
-            4,
-            6,
-            0.4
-          ),
-
-          new THREE.MeshStandardMaterial({
-
-            color: 0x83c8dc,
-
-            emissive: 0x164c5d,
-
-            emissiveIntensity:
-              0.75
-
-          })
-
-        );
-
-
-      windowMesh.position.set(
-
-        col * 13,
-
-        10 +
-          row * 12,
-
-        -23
-
-      );
-
-
-      castle.add(
-        windowMesh
-      );
-
-    }
-
-  }
-
-
-  /*
-     MURALLAS
-  */
-
-  const wallFront =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        95,
-        16,
-        5
-      ),
-
-      stoneMaterial
-
-    );
-
-
-  wallFront.position.set(
-    0,
     8,
-    -43
+    28
   );
 
+  castle.add(gate);
 
-  wallFront.castShadow =
-    true;
-
-
-  castle.add(
-    wallFront
-  );
-
-
-  const wallBack =
-    wallFront.clone();
-
-
-  wallBack.position.z =
-    43;
-
-
-  castle.add(
-    wallBack
-  );
-
-
-  const wallLeft =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        5,
-        16,
-        85
-      ),
-
-      stoneMaterial
-
-    );
-
-
-  wallLeft.position.set(
-    -45,
-    8,
-    0
-  );
-
-
-  castle.add(
-    wallLeft
-  );
-
-
-  const wallRight =
-    wallLeft.clone();
-
-
-  wallRight.position.x =
-    45;
-
-
-  castle.add(
-    wallRight
-  );
-
-
-  castle.userData.isCastle =
-    true;
-
-
-  scene.add(
-    castle
-  );
-
+  scene.add(castle);
 }
-
-
 /* =========================================================
    PARTÍCULAS MÁGICAS
 ========================================================= */
@@ -2144,16 +1066,12 @@ function createMagicParticles() {
   const geometry =
     new THREE.BufferGeometry();
 
-
-  const count =
-    280;
-
+  const count = 350;
 
   const positions =
     new Float32Array(
       count * 3
     );
-
 
   for (
     let i = 0;
@@ -2161,62 +1079,41 @@ function createMagicParticles() {
     i++
   ) {
 
-    positions[
-      i * 3
-    ] =
+    positions[i * 3] =
       THREE.MathUtils.randFloat(
         -300,
         300
       );
 
-
-    positions[
-      i * 3 + 1
-    ] =
+    positions[i * 3 + 1] =
       THREE.MathUtils.randFloat(
         1,
-        35
+        80
       );
 
-
-    positions[
-      i * 3 + 2
-    ] =
+    positions[i * 3 + 2] =
       THREE.MathUtils.randFloat(
         -300,
         300
       );
-
   }
 
-
   geometry.setAttribute(
-
     "position",
-
     new THREE.BufferAttribute(
       positions,
       3
     )
-
   );
-
 
   const material =
     new THREE.PointsMaterial({
-
-      color: 0xd7c4ff,
-
+      color: 0xffe8a3,
       size: 0.8,
-
       transparent: true,
-
-      opacity: 0.65,
-
+      opacity: 0.7,
       depthWrite: false
-
     });
-
 
   const particles =
     new THREE.Points(
@@ -2224,46 +1121,40 @@ function createMagicParticles() {
       material
     );
 
-
   particles.userData.magic =
     true;
 
-
-  scene.add(
-    particles
-  );
-
+  scene.add(particles);
 }
+
 /* =========================================================
-   PERSONAJE 3D CON SKIN
+   JUGADOR
 ========================================================= */
 
 function loadPlayer() {
 
   loader.load(
-
     assets.character,
 
-    (gltf) => {
+    gltf => {
 
       player =
         gltf.scene;
 
+      player.scale.set(
+        1.9,
+        1.9,
+        1.9
+      );
 
       player.position.set(
         0,
         0,
-        28
+        15
       );
-
-
-      player.scale.setScalar(
-        1.8
-      );
-
 
       player.traverse(
-        (object) => {
+        object => {
 
           if (
             object.isMesh
@@ -2274,134 +1165,35 @@ function loadPlayer() {
 
             object.receiveShadow =
               true;
-
-
-            /*
-               Aseguramos que las
-               texturas del personaje
-               sean visibles.
-            */
-
-            if (
-              object.material
-            ) {
-
-              object.material
-                .side =
-                THREE.DoubleSide;
-
-            }
-
           }
-
         }
       );
 
-
-      scene.add(
-        player
-      );
-
-
-      /*
-         ANIMACIONES
-      */
-
-      mixer =
-        new THREE.AnimationMixer(
-          player
-        );
-
-
-      loader.load(
-
-        assets.animations,
-
-        (animationGLTF) => {
-
-          if (
-            animationGLTF.animations
-          ) {
-
-            animationGLTF.animations
-              .forEach(
-                (clip) => {
-
-                  actions[
-                    clip.name
-                  ] =
-                    mixer.clipAction(
-                      clip
-                    );
-
-                }
-              );
-
-          }
-
-
-          const idle =
-            findAnimation([
-              "Idle",
-              "Idle_01",
-              "Breathing_Idle",
-              "Idle_2",
-              "Standing"
-            ]);
-
-
-          if (idle) {
-
-            playAnimation(
-              idle
-            );
-
-          }
-
-        },
-
-        undefined,
-
-        () => {
-
-          console.warn(
-            "⚠️ No se pudieron cargar las animaciones UAL1."
-          );
-
-        }
-
-      );
-
-
-      /*
-         APLICAR RAZA Y ASPECTO
-      */
+      scene.add(player);
 
       applyCharacterVisuals();
 
+      loadAnimations();
+
+      updateCamera();
     },
 
     undefined,
 
-    (error) => {
+    error => {
 
       console.error(
-        "❌ No se pudo cargar el personaje:",
+        "❌ Error cargando personaje:",
         error
       );
 
-
       createFallbackPlayer();
-
     }
-
   );
-
 }
 
-
 /* =========================================================
-   PERSONAJE DE RESPALDO
+   PERSONAJE DE EMERGENCIA
 ========================================================= */
 
 function createFallbackPlayer() {
@@ -2409,270 +1201,304 @@ function createFallbackPlayer() {
   const group =
     new THREE.Group();
 
-
-  const skinMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0xd5a17c,
-
-      roughness: 0.85
-
-    });
-
-
-  const clothesMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x64498c,
-
-      roughness: 0.8
-
-    });
-
-
   const body =
     new THREE.Mesh(
-
       new THREE.CapsuleGeometry(
-        1.2,
-        3.2,
+        0.65,
+        1.8,
         8,
-        12
+        16
       ),
 
-      clothesMaterial
-
+      new THREE.MeshStandardMaterial({
+        color: 0x3b64a0,
+        roughness: 0.8
+      })
     );
 
-
   body.position.y =
-    3;
-
+    1.3;
 
   body.castShadow =
     true;
 
-
-  group.add(
-    body
-  );
-
+  group.add(body);
 
   const head =
     new THREE.Mesh(
-
       new THREE.SphereGeometry(
-        1.15,
-        20,
-        20
+        0.62,
+        24,
+        24
       ),
 
-      skinMaterial
-
+      new THREE.MeshStandardMaterial({
+        color: 0xf0c29b,
+        roughness: 0.75
+      })
     );
 
-
   head.position.y =
-    5.5;
-
+    2.75;
 
   head.castShadow =
     true;
 
+  group.add(head);
 
-  group.add(
-    head
-  );
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const arm =
-      new THREE.Mesh(
-
-        new THREE.CapsuleGeometry(
-          0.35,
-          2,
-          6,
-          8
-        ),
-
-        clothesMaterial
-
-      );
-
-
-    arm.position.set(
-      side * 1.5,
-      3.4,
-      0
-    );
-
-
-    arm.rotation.z =
-      side * 0.15;
-
-
-    arm.castShadow =
-      true;
-
-
-    group.add(
-      arm
-    );
-
-  }
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const leg =
-      new THREE.Mesh(
-
-        new THREE.CapsuleGeometry(
-          0.42,
-          2.3,
-          6,
-          8
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0x292c38,
-
-          roughness: 0.9
-
-        })
-
-      );
-
-
-    leg.position.set(
-      side * 0.55,
-      0.9,
-      0
-    );
-
-
-    leg.castShadow =
-      true;
-
-
-    group.add(
-      leg
-    );
-
-  }
-
-
-  player =
-    group;
-
+  player = group;
 
   player.position.set(
     0,
     0,
-    28
+    15
   );
 
-
-  player.scale.setScalar(
-    1.8
-  );
-
-
-  scene.add(
-    player
-  );
-
+  scene.add(player);
 
   applyCharacterVisuals();
-
 }
 
+/* =========================================================
+   ANIMACIONES
+========================================================= */
+
+function loadAnimations() {
+
+  loader.load(
+    assets.animations,
+
+    gltf => {
+
+      if (
+        !player ||
+        !gltf.animations
+      ) {
+        return;
+      }
+
+      mixer =
+        new THREE.AnimationMixer(
+          player
+        );
+
+      gltf.animations.forEach(
+        clip => {
+
+          const action =
+            mixer.clipAction(
+              clip
+            );
+
+          actions[
+            clip.name
+          ] = action;
+        }
+      );
+
+      const idle =
+        findAnimation([
+          "Idle",
+          "idle",
+          "Stand",
+          "Breathing"
+        ]);
+
+      if (idle) {
+
+        idle.play();
+
+        currentAction =
+          idle;
+      }
+    },
+
+    undefined,
+
+    error => {
+
+      console.warn(
+        "⚠️ No se pudieron cargar las animaciones:",
+        error
+      );
+    }
+  );
+}
+
+function findAnimation(
+  names
+) {
+
+  for (
+    const name of names
+  ) {
+
+    if (
+      actions[name]
+    ) {
+      return actions[name];
+    }
+  }
+
+  const keys =
+    Object.keys(actions);
+
+  if (
+    keys.length > 0
+  ) {
+    return actions[keys[0]];
+  }
+
+  return null;
+}
+
+function playAnimation(
+  names
+) {
+
+  if (!mixer) return;
+
+  const next =
+    findAnimation(names);
+
+  if (!next) return;
+
+  if (
+    currentAction === next
+  ) {
+    return;
+  }
+
+  if (currentAction) {
+
+    currentAction.fadeOut(
+      0.18
+    );
+  }
+
+  next.reset();
+  next.fadeIn(
+    0.18
+  );
+  next.play();
+
+  currentAction =
+    next;
+}
 
 /* =========================================================
-   ASPECTO DEL PERSONAJE
+   APARIENCIA DEL PERSONAJE
 ========================================================= */
 
 function applyCharacterVisuals() {
 
-  if (
-    !player
-  ) {
+  if (!player) return;
 
-    return;
+  const character =
+    state.character;
 
+  if (character?.race) {
+
+    selectedRace =
+      character.race;
   }
 
+  if (
+    character?.appearance
+  ) {
 
-  /*
-     Escala según raza.
-  */
+    selectedAppearance =
+      {
+        ...selectedAppearance,
+        ...character.appearance
+      };
+  }
 
-  const raceScale = {
+  player.traverse(
+    object => {
 
-    humano: 1.8,
+      if (
+        !object.isMesh
+      ) {
+        return;
+      }
 
-    elfo: 1.75,
+      const name =
+        (
+          object.name ||
+          ""
+        ).toLowerCase();
 
-    enano: 1.45,
+      if (
+        selectedRace ===
+        "hada"
+      ) {
 
-    orco: 1.95,
+        if (
+          name.includes("body") ||
+          name.includes("skin") ||
+          name.includes("face") ||
+          name.includes("head") ||
+          name.includes("hand") ||
+          name.includes("arm") ||
+          name.includes("leg") ||
+          name.includes("foot") ||
+          name.includes(
+            "superhero_male"
+          )
+        ) {
 
-    hada: 1.45,
+          if (
+            object.material
+          ) {
 
-    vampiro: 1.8
+            object.material =
+              object.material.clone();
 
-  };
-
-
-  player.scale.setScalar(
-
-    raceScale[
-      selectedRace
-    ] || 1.8
-
+            object.material.color.set(
+              0xe5b59f
+            );
+          }
+        }
+      }
+    }
   );
 
+  updateRaceDetails();
+}
 
-  /*
-     Eliminar detalles
-     anteriores.
-  */
+/* =========================================================
+   DETALLES DE RAZA
+========================================================= */
 
-  const oldDetails =
+function updateRaceDetails() {
+
+  if (!player) return;
+
+  let details =
     player.getObjectByName(
       "raceDetails"
     );
 
+  if (!details) {
 
-  if (
-    oldDetails
-  ) {
+    details =
+      new THREE.Group();
 
-    player.remove(
-      oldDetails
-    );
+    details.name =
+      "raceDetails";
 
+    player.add(details);
   }
 
+  while (
+    details.children.length
+  ) {
 
-  const details =
-    new THREE.Group();
-
-
-  details.name =
-    "raceDetails";
-
-
-  /*
-     HACER DETALLES SEGÚN RAZA
-  */
+    details.remove(
+      details.children[0]
+    );
+  }
 
   if (
     selectedRace ===
@@ -2682,52 +1508,28 @@ function applyCharacterVisuals() {
     createFairyWings(
       details
     );
-
   }
-
 
   if (
     selectedRace ===
     "elfo"
   ) {
 
-    createElfEars(
+    createElfDetails(
       details
     );
-
   }
-
 
   if (
     selectedRace ===
-    "orco"
+    "demonio"
   ) {
 
-    createOrcTusks(
+    createDemonDetails(
       details
     );
-
   }
-
-
-  if (
-    selectedRace ===
-    "vampiro"
-  ) {
-
-    createVampireDetails(
-      details
-    );
-
-  }
-
-
-  player.add(
-    details
-  );
-
 }
-
 
 /* =========================================================
    ALAS DE HADA
@@ -2739,459 +1541,183 @@ function createFairyWings(
 
   const wingMaterial =
     new THREE.MeshPhysicalMaterial({
-
-      color: 0xdca7ff,
-
+      color: 0xd9b8ff,
       transparent: true,
-
-      opacity: 0.58,
-
-      roughness: 0.2,
-
-      metalness: 0.05,
-
+      opacity: 0.55,
       transmission: 0.15,
-
-      emissive: 0x7d3fb0,
-
-      emissiveIntensity: 0.35,
-
-      side:
-        THREE.DoubleSide
-
+      roughness: 0.18,
+      side: THREE.DoubleSide,
+      emissive: 0x7b4eb5,
+      emissiveIntensity: 0.45
     });
 
+  const glowMaterial =
+    new THREE.MeshBasicMaterial({
+      color: 0xe9cfff,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide
+    });
 
-  const wingPositions = [
-
-    [-1.0, 3.9, 0],
-
-    [1.0, 3.9, 0],
-
-    [-0.9, 2.9, 0],
-
-    [0.9, 2.9, 0]
-
+  const positions = [
+    [-0.55, 1.7, 0.15],
+    [0.55, 1.7, 0.15],
+    [-0.7, 1.1, 0.18],
+    [0.7, 1.1, 0.18]
   ];
 
-
-  wingPositions.forEach(
+  positions.forEach(
     ([x, y, z], index) => {
 
       const wing =
         new THREE.Mesh(
-
           new THREE.SphereGeometry(
-            1,
+            0.65,
             24,
             16
           ),
-
-          wingMaterial
+          index < 2
+            ? wingMaterial.clone()
+            : glowMaterial.clone()
         );
-
 
       wing.position.set(
         x,
         y,
-        z - 0.25
+        z
       );
-
 
       wing.scale.set(
-
-        1.55,
-
-        2.5,
-
-        0.12
-
+        0.22,
+        1.25,
+        0.08
       );
-
-
-      /*
-         Curvatura de las alas
-      */
 
       wing.rotation.z =
         x < 0
-          ? -0.25
-          : 0.25;
+          ? -0.28
+          : 0.28;
 
-
-      wing.rotation.y =
-        x < 0
-          ? -0.18
-          : 0.18;
-
+      wing.rotation.x =
+        0.12;
 
       wing.castShadow =
-        true;
+        false;
 
+      parent.add(wing);
+    }
+  );
+
+  const light =
+    new THREE.PointLight(
+      0xdcb7ff,
+      0.8,
+      5
+    );
+
+  light.position.set(
+    0,
+    1.5,
+    0
+  );
+
+  parent.add(light);
+}
+
+/* =========================================================
+   DETALLES ELFOS
+========================================================= */
+
+function createElfDetails(
+  parent
+) {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x78c99c,
+      roughness: 0.7
+    });
+
+  const earLeft =
+    new THREE.Mesh(
+      new THREE.ConeGeometry(
+        0.16,
+        0.65,
+        8
+      ),
+      material
+    );
+
+  earLeft.position.set(
+    -0.65,
+    2.8,
+    0
+  );
+
+  earLeft.rotation.z =
+    -Math.PI / 2;
+
+  parent.add(
+    earLeft
+  );
+
+  const earRight =
+    earLeft.clone();
+
+  earRight.position.x =
+    0.65;
+
+  earRight.rotation.z =
+    Math.PI / 2;
+
+  parent.add(
+    earRight
+  );
+}
+
+/* =========================================================
+   DETALLES DEMONIO
+========================================================= */
+
+function createDemonDetails(
+  parent
+) {
+
+  const hornMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x3b2025,
+      roughness: 0.7
+    });
+
+  [-0.38, 0.38]
+    .forEach(x => {
+
+      const horn =
+        new THREE.Mesh(
+          new THREE.ConeGeometry(
+            0.18,
+            0.85,
+            10
+          ),
+          hornMaterial
+        );
+
+      horn.position.set(
+        x,
+        3.2,
+        0
+      );
+
+      horn.rotation.z =
+        x < 0
+          ? -0.28
+          : 0.28;
 
       parent.add(
-        wing
+        horn
       );
-
-    }
-  );
-
-
-  /*
-     Brillo alrededor
-  */
-
-  const glow =
-    new THREE.PointLight(
-      0xc87cff,
-      1.5,
-      7
-    );
-
-
-  glow.position.set(
-    0,
-    3.5,
-    -0.5
-  );
-
-
-  parent.add(
-    glow
-  );
-
-}
-
-
-/* =========================================================
-   OREJAS DE ELFO
-========================================================= */
-
-function createElfEars(
-  parent
-) {
-
-  const material =
-    new THREE.MeshStandardMaterial({
-
-      color: 0xc98f73,
-
-      roughness: 0.8
-
     });
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const ear =
-      new THREE.Mesh(
-
-        new THREE.ConeGeometry(
-          0.28,
-          1.1,
-          12
-        ),
-
-        material
-
-      );
-
-
-    ear.position.set(
-
-      side * 1.0,
-
-      5.45,
-
-      0
-
-    );
-
-
-    ear.rotation.z =
-      side < 0
-        ? Math.PI / 2
-        : -Math.PI / 2;
-
-
-    parent.add(
-      ear
-    );
-
-  }
-
 }
-
-
-/* =========================================================
-   COLMILLOS DE ORCO
-========================================================= */
-
-function createOrcTusks(
-  parent
-) {
-
-  const material =
-    new THREE.MeshStandardMaterial({
-
-      color: 0xf2eee2,
-
-      roughness: 0.7
-
-    });
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const tusk =
-      new THREE.Mesh(
-
-        new THREE.ConeGeometry(
-          0.18,
-          0.7,
-          10
-        ),
-
-        material
-
-      );
-
-
-    tusk.position.set(
-
-      side * 0.45,
-
-      4.8,
-
-      0.95
-
-    );
-
-
-    tusk.rotation.x =
-      Math.PI;
-
-
-    parent.add(
-      tusk
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   DETALLES DE VAMPIRO
-========================================================= */
-
-function createVampireDetails(
-  parent
-) {
-
-  const eyeMaterial =
-    new THREE.MeshBasicMaterial({
-
-      color: 0xff3030
-
-    });
-
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const eye =
-      new THREE.Mesh(
-
-        new THREE.SphereGeometry(
-          0.12,
-          12,
-          12
-        ),
-
-        eyeMaterial
-
-      );
-
-
-    eye.position.set(
-
-      side * 0.38,
-
-      5.65,
-
-      0.98
-
-    );
-
-
-    parent.add(
-      eye
-    );
-
-  }
-
-
-  const capeMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x24142e,
-
-      roughness: 0.8,
-
-      side:
-        THREE.DoubleSide
-
-    });
-
-
-  const cape =
-    new THREE.Mesh(
-
-      new THREE.PlaneGeometry(
-        3.2,
-        4.8
-      ),
-
-      capeMaterial
-
-    );
-
-
-  cape.position.set(
-    0,
-    2.7,
-    -0.7
-  );
-
-
-  cape.rotation.x =
-    0.08;
-
-
-  parent.add(
-    cape
-  );
-
-}
-
-
-/* =========================================================
-   ANIMACIONES
-========================================================= */
-
-function findAnimation(
-  possibleNames
-) {
-
-  for (
-    const name of possibleNames
-  ) {
-
-    if (
-      actions[name]
-    ) {
-
-      return name;
-
-    }
-
-  }
-
-
-  const names =
-    Object.keys(
-      actions
-    );
-
-
-  for (
-    const name of names
-  ) {
-
-    const lower =
-      name.toLowerCase();
-
-
-    for (
-      const wanted
-      of possibleNames
-    ) {
-
-      if (
-        lower.includes(
-          wanted.toLowerCase()
-        )
-      ) {
-
-        return name;
-
-      }
-
-    }
-
-  }
-
-
-  return null;
-
-}
-
-
-function playAnimation(
-  name
-) {
-
-  if (
-    !mixer ||
-    !actions[name]
-  ) {
-
-    return;
-
-  }
-
-
-  const next =
-    actions[name];
-
-
-  if (
-    currentAction === next
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    currentAction
-  ) {
-
-    currentAction.fadeOut(
-      0.2
-    );
-
-  }
-
-
-  next
-    .reset()
-    .fadeIn(0.2)
-    .play();
-
-
-  currentAction =
-    next;
-
-}
-
 
 /* =========================================================
    MOVIMIENTO
@@ -3199,549 +1725,2493 @@ function playAnimation(
 
 function setupKeyboard() {
 
-  window.addEventListener(
+  addEventListener(
     "keydown",
-    (event) => {
+    e => {
 
-      keys[
-        event.key.toLowerCase()
-      ] = true;
-
+      keys[e.key.toLowerCase()] =
+        true;
     }
   );
 
-
-  window.addEventListener(
+  addEventListener(
     "keyup",
-    (event) => {
+    e => {
 
-      keys[
-        event.key.toLowerCase()
-      ] = false;
-
+      keys[e.key.toLowerCase()] =
+        false;
     }
   );
-
 }
 
+function getMovementInput() {
 
-function updateMovement(
+  let x =
+    moveX;
+
+  let y =
+    moveY;
+
+  if (
+    keys["a"] ||
+    keys["arrowleft"]
+  ) {
+    x -= 1;
+  }
+
+  if (
+    keys["d"] ||
+    keys["arrowright"]
+  ) {
+    x += 1;
+  }
+
+  if (
+    keys["w"] ||
+    keys["arrowup"]
+  ) {
+    y += 1;
+  }
+
+  if (
+    keys["s"] ||
+    keys["arrowdown"]
+  ) {
+    y -= 1;
+  }
+
+  const length =
+    Math.hypot(
+      x,
+      y
+    );
+
+  if (
+    length > 1
+  ) {
+
+    x /= length;
+    y /= length;
+  }
+
+  return {
+    x,
+    y
+  };
+}
+
+function updatePlayer(
   delta
 ) {
 
   if (
     !player
   ) {
-
     return;
-
   }
 
+  const input =
+    getMovementInput();
 
-  let x =
-    moveX;
+  const moving =
+    Math.abs(input.x) >
+      0.03 ||
+    Math.abs(input.y) >
+      0.03;
 
-  let z =
-    moveY;
+  if (moving) {
 
+    const speed =
+      state.insideHouse
+        ? 7
+        : 9;
 
-  if (
-    keys["w"] ||
-    keys["arrowup"]
-  ) {
-
-    z -= 1;
-
-  }
-
-
-  if (
-    keys["s"] ||
-    keys["arrowdown"]
-  ) {
-
-    z += 1;
-
-  }
-
-
-  if (
-    keys["a"] ||
-    keys["arrowleft"]
-  ) {
-
-    x -= 1;
-
-  }
-
-
-  if (
-    keys["d"] ||
-    keys["arrowright"]
-  ) {
-
-    x += 1;
-
-  }
-
-
-  const length =
-    Math.sqrt(
-      x * x +
-      z * z
-    );
-
-
-  if (
-    length < 0.05
-  ) {
-
-    const idle =
-      findAnimation([
-        "Idle",
-        "Idle_01",
-        "Breathing_Idle",
-        "Standing"
-      ]);
-
-
-    if (idle) {
-
-      playAnimation(
-        idle
+    const forward =
+      new THREE.Vector3(
+        -Math.sin(yaw),
+        0,
+        -Math.cos(yaw)
       );
 
+    const right =
+      new THREE.Vector3(
+        Math.cos(yaw),
+        0,
+        -Math.sin(yaw)
+      );
+
+    const direction =
+      new THREE.Vector3();
+
+    direction.addScaledVector(
+      forward,
+      input.y
+    );
+
+    direction.addScaledVector(
+      right,
+      input.x
+    );
+
+    if (
+      direction.lengthSq()
+        > 0
+    ) {
+
+      direction.normalize();
+
+      const newPosition =
+        player.position.clone();
+
+      newPosition.addScaledVector(
+        direction,
+        speed * delta
+      );
+
+      if (
+        canMoveTo(
+          newPosition
+        )
+      ) {
+
+        player.position.copy(
+          newPosition
+        );
+      }
+
+      const targetRotation =
+        Math.atan2(
+          direction.x,
+          direction.z
+        );
+
+      player.rotation.y =
+        THREE.MathUtils.lerp(
+          player.rotation.y,
+          targetRotation,
+          Math.min(
+            1,
+            delta * 10
+          )
+        );
     }
 
-
-    return;
-
-  }
-
-
-  x /= length;
-  z /= length;
-
-
-  const forward =
-    new THREE.Vector3(
-      -Math.sin(yaw),
-      0,
-      -Math.cos(yaw)
-    );
-
-
-  const right =
-    new THREE.Vector3(
-      Math.cos(yaw),
-      0,
-      -Math.sin(yaw)
-    );
-
-
-  const direction =
-    new THREE.Vector3();
-
-
-  direction.addScaledVector(
-    right,
-    x
-  );
-
-
-  direction.addScaledVector(
-    forward,
-    -z
-  );
-
-
-  direction.normalize();
-
-
-  const distance =
-    13 *
-    delta;
-
-
-  tryMovePlayer(
-    direction,
-    distance
-  );
-
-
-  const targetRotation =
-    Math.atan2(
-      direction.x,
-      direction.z
-    );
-
-
-  player.rotation.y =
-    THREE.MathUtils.lerp(
-      player.rotation.y,
-      targetRotation,
-      0.18
-    );
-
-
-  const walk =
-    findAnimation([
+    playAnimation([
       "Walk",
       "Walking",
-      "Run"
+      "Run",
+      "Running"
     ]);
 
+  } else {
 
-  if (walk) {
+    playAnimation([
+      "Idle",
+      "idle",
+      "Stand"
+    ]);
+  }
 
-    playAnimation(
-      walk
+  if (
+    mixer
+  ) {
+
+    mixer.update(
+      delta
+    );
+  }
+}
+
+/* =========================================================
+   COLISIONES GENERALES
+========================================================= */
+
+function canMoveTo(
+  position
+) {
+
+  if (
+    state.insideHouse
+  ) {
+
+    return canMoveInsideHouse(
+      position
+    );
+  }
+
+  const boundary =
+    Math.hypot(
+      position.x,
+      position.z
     );
 
-  }
-
-}
-
-
-/* =========================================================
-   COLISIONES
-========================================================= */
-
-function tryMovePlayer(
-  direction,
-  distance
-) {
-
   if (
-    !player
+    boundary > 292
   ) {
-
-    return;
-
+    return false;
   }
-
-
-  const nextX =
-    player.position.x +
-    direction.x *
-    distance;
-
-
-  const nextZ =
-    player.position.z +
-    direction.z *
-    distance;
-
-
-  if (
-    Math.abs(nextX) >
-      288 ||
-    Math.abs(nextZ) >
-      288
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    collidesWithMountains(
-      nextX,
-      nextZ
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    !state.insideHouse &&
-    collidesWithHouse(
-      nextX,
-      nextZ
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    !state.insideHouse &&
-    collidesWithCastle(
-      nextX,
-      nextZ
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    !state.insideHouse &&
-    collidesWithTrees(
-      nextX,
-      nextZ
-    )
-  ) {
-
-    return;
-
-  }
-
-
-  player.position.x =
-    nextX;
-
-
-  player.position.z =
-    nextZ;
-
-
-  resolvePlayerHeight();
-
-}
-
-
-/* =========================================================
-   COLISIÓN MONTAÑAS
-========================================================= */
-
-function collidesWithMountains(
-  x,
-  z
-) {
-
-  const distance =
-    Math.sqrt(
-      x * x +
-      z * z
-    );
-
-
-  return distance >
-    292;
-
-}
-
-
-/* =========================================================
-   COLISIÓN CASAS
-========================================================= */
-
-function collidesWithHouse(
-  x,
-  z
-) {
 
   for (
     const house of houses
   ) {
 
-    const hx =
-      house.position.x;
+    const hp =
+      house.position;
 
+    const dx =
+      position.x - hp.x;
 
-    const hz =
-      house.position.z;
-
-
-    if (
-
-      x >
-        hx - 13 &&
-
-      x <
-        hx + 13 &&
-
-      z >
-        hz - 12 &&
-
-      z <
-        hz + 12
-
-    ) {
-
-      return true;
-
-    }
-
-  }
-
-
-  return false;
-
-}
-
-
-/* =========================================================
-   COLISIÓN CASTILLO
-========================================================= */
-
-function collidesWithCastle(
-  x,
-  z
-) {
-
-  const cx = 0;
-  const cz = 190;
-
-
-  if (
-
-    x >
-      cx - 52 &&
-
-    x <
-      cx + 52 &&
-
-    z >
-      cz - 50 &&
-
-    z <
-      cz + 50
-
-  ) {
-
-    /*
-       Entrada principal.
-    */
+    const dz =
+      position.z - hp.z;
 
     if (
-      Math.abs(x) < 9 &&
-      z < 166
+      Math.abs(dx) < 13 &&
+      Math.abs(dz) < 11
     ) {
 
       return false;
-
     }
+  }
 
+  return true;
+}
+/* =========================================================
+   INTERIOR DE LAS CASAS
+========================================================= */
 
+function canMoveInsideHouse(position) {
+
+  if (!state.insideHouse || !interior) {
     return true;
-
   }
 
+  const localX =
+    position.x -
+    interior.worldX;
 
-  return false;
+  const localZ =
+    position.z -
+    interior.worldZ;
 
+  const limitX =
+    interior.width / 2 - 1.3;
+
+  const limitZ =
+    interior.depth / 2 - 1.3;
+
+  return (
+    localX > -limitX &&
+    localX < limitX &&
+    localZ > -limitZ &&
+    localZ < limitZ
+  );
 }
 
+function enterHouse(house) {
 
-/* =========================================================
-   COLISIÓN ÁRBOLES
-========================================================= */
-
-function collidesWithTrees(
-  x,
-  z
-) {
-
-  for (
-    const tree of trees
+  if (
+    !house ||
+    state.insideHouse
   ) {
-
-    const dx =
-      x -
-      tree.position.x;
-
-
-    const dz =
-      z -
-      tree.position.z;
-
-
-    const distance =
-      Math.sqrt(
-        dx * dx +
-        dz * dz
-      );
-
-
-    if (
-      distance < 3.2
-    ) {
-
-      return true;
-
-    }
-
+    return;
   }
 
+  currentHouse =
+    house;
 
-  return false;
+  state.insideHouse =
+    true;
 
-}
+  /*
+   * Guardamos la posición exterior.
+   * Esto permite volver exactamente
+   * al lugar donde estaba el jugador.
+   */
+  house.userData.previousPlayerPosition =
+    player
+      ? player.position.clone()
+      : null;
 
+  /*
+   * Ocultamos completamente
+   * el exterior de la casa.
+   */
+  house.visible =
+    false;
 
-/* =========================================================
-   AGUA
-========================================================= */
+  createHouseInterior(
+    house
+  );
 
-function isInWater(
-  x,
-  z
-) {
+  /*
+   * Posición inicial del jugador
+   * dentro del interior.
+   */
+  if (player) {
 
-  const dx =
-    x - 115;
-
-
-  const dz =
-    z - 80;
-
-
-  const distance =
-    Math.sqrt(
-      dx * dx +
-      dz * dz
+    player.position.set(
+      house.position.x,
+      0,
+      house.position.z + 4
     );
 
-
-  return distance <
-    54;
-
-}
-
-
-function resolvePlayerHeight() {
-
-  if (
-    !player
-  ) {
-
-    return;
-
+    player.rotation.y =
+      Math.PI;
   }
 
+  /*
+   * Cámara cercana.
+   */
+  yaw = 0;
+  pitch = 0.35;
+
+  updateCamera();
+
+  showExitHouseButton(
+    true
+  );
+
+  showToast(
+    "🏠 Entraste a tu casa"
+  );
+}
+
+function exitHouse() {
 
   if (
-    isInWater(
-      player.position.x,
-      player.position.z
-    )
+    !state.insideHouse ||
+    !currentHouse
+  ) {
+    return;
+  }
+
+  /*
+   * Guardamos la posición
+   * exterior antes de destruir
+   * el interior.
+   */
+  const exitPosition =
+    currentHouse
+      .userData
+      .previousPlayerPosition;
+
+  removeHouseInterior();
+
+  currentHouse.visible =
+    true;
+
+  state.insideHouse =
+    false;
+
+  if (
+    player
+  ) {
+
+    if (
+      exitPosition
+    ) {
+
+      player.position.copy(
+        exitPosition
+      );
+
+      /*
+       * Lo desplazamos un poco
+       * hacia afuera para evitar
+       * quedar dentro de la pared.
+       */
+      const direction =
+        new THREE.Vector3(
+          0,
+          0,
+          1
+        );
+
+      direction.applyEuler(
+        currentHouse.rotation
+      );
+
+      player.position.addScaledVector(
+        direction,
+        3
+      );
+
+    } else {
+
+      player.position.set(
+        currentHouse.position.x,
+        0,
+        currentHouse.position.z + 14
+      );
+    }
+  }
+
+  currentHouse =
+    null;
+
+  showExitHouseButton(
+    false
+  );
+
+  updateCamera();
+
+  showToast(
+    "🌿 Volviste a la aldea"
+  );
+}
+
+/* =========================================================
+   CREACIÓN DEL INTERIOR
+========================================================= */
+
+function createHouseInterior(
+  house
+) {
+
+  removeHouseInterior();
+
+  const width = 20;
+  const depth = 16;
+  const height = 8;
+
+  interior = {
+    group:
+      new THREE.Group(),
+
+    width,
+    depth,
+    height,
+
+    worldX:
+      house.position.x,
+
+    worldZ:
+      house.position.z
+  };
+
+  const group =
+    interior.group;
+
+  group.position.set(
+    house.position.x,
+    0,
+    house.position.z
+  );
+
+  group.userData.interior =
+    true;
+
+  /*
+   * =====================================================
+   * PISO
+   * =====================================================
+   */
+
+  const floor =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width,
+        0.35,
+        depth
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x765139,
+        roughness: 0.88
+      })
+    );
+
+  floor.position.y =
+    0.05;
+
+  floor.receiveShadow =
+    true;
+
+  group.add(floor);
+
+  /*
+   * =====================================================
+   * ALFOMBRA
+   * =====================================================
+   */
+
+  const carpet =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        7,
+        0.12,
+        5
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x713e58,
+        roughness: 0.95
+      })
+    );
+
+  carpet.position.set(
+    0,
+    0.28,
+    1
+  );
+
+  carpet.receiveShadow =
+    true;
+
+  group.add(carpet);
+
+  /*
+   * =====================================================
+   * PAREDES
+   *
+   * Son cerradas completamente.
+   * No tienen ventanas abiertas.
+   * =====================================================
+   */
+
+  const wallMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x9b6848,
+      roughness: 0.9
+    });
+
+  const backWall =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width,
+        height,
+        0.5
+      ),
+      wallMaterial
+    );
+
+  backWall.position.set(
+    0,
+    height / 2,
+    -depth / 2
+  );
+
+  backWall.receiveShadow =
+    true;
+
+  group.add(backWall);
+
+  const leftWall =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        0.5,
+        height,
+        depth
+      ),
+      wallMaterial
+    );
+
+  leftWall.position.set(
+    -width / 2,
+    height / 2,
+    0
+  );
+
+  leftWall.receiveShadow =
+    true;
+
+  group.add(leftWall);
+
+  const rightWall =
+    leftWall.clone();
+
+  rightWall.position.x =
+    width / 2;
+
+  group.add(
+    rightWall
+  );
+
+  const frontWall =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width,
+        height,
+        0.5
+      ),
+      wallMaterial
+    );
+
+  frontWall.position.set(
+    0,
+    height / 2,
+    depth / 2
+  );
+
+  frontWall.receiveShadow =
+    true;
+
+  group.add(frontWall);
+
+  /*
+   * =====================================================
+   * TECHO
+   *
+   * Es sólido para que la cámara
+   * nunca pueda mirar al exterior.
+   * =====================================================
+   */
+
+  const ceiling =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width + 1,
+        0.5,
+        depth + 1
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x5b4031,
+        roughness: 1
+      })
+    );
+
+  ceiling.position.y =
+    height;
+
+  ceiling.receiveShadow =
+    true;
+
+  group.add(ceiling);
+
+  /*
+   * =====================================================
+   * PUERTA INTERIOR
+   * =====================================================
+   */
+
+  const door =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.2,
+        5.2,
+        0.35
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x38251c,
+        roughness: 0.75
+      })
+    );
+
+  door.position.set(
+    0,
+    2.6,
+    depth / 2 + 0.05
+  );
+
+  group.add(door);
+
+  /*
+   * =====================================================
+   * MARCO DE PUERTA
+   * =====================================================
+   */
+
+  const frameMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x3e271d,
+      roughness: 0.8
+    });
+
+  const frameLeft =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        0.35,
+        5.8,
+        0.55
+      ),
+      frameMaterial
+    );
+
+  frameLeft.position.set(
+    -1.75,
+    2.9,
+    depth / 2
+  );
+
+  group.add(
+    frameLeft
+  );
+
+  const frameRight =
+    frameLeft.clone();
+
+  frameRight.position.x =
+    1.75;
+
+  group.add(
+    frameRight
+  );
+
+  const frameTop =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.8,
+        0.35,
+        0.55
+      ),
+      frameMaterial
+    );
+
+  frameTop.position.set(
+    0,
+    5.65,
+    depth / 2
+  );
+
+  group.add(
+    frameTop
+  );
+
+  /*
+   * =====================================================
+   * CHIMENEA
+   * =====================================================
+   */
+
+  createFireplace(
+    group,
+    -6.8,
+    4.2
+  );
+
+  /*
+   * =====================================================
+   * CAMA
+   * =====================================================
+   */
+
+  createBed(
+    group,
+    5.8,
+    -5
+  );
+
+  /*
+   * =====================================================
+   * MESA
+   * =====================================================
+   */
+
+  createTable(
+    group,
+    0,
+    -3.5
+  );
+
+  /*
+   * =====================================================
+   * SILLAS
+   * =====================================================
+   */
+
+  createChair(
+    group,
+    -2.8,
+    -3.5
+  );
+
+  createChair(
+    group,
+    2.8,
+    -3.5
+  );
+
+  /*
+   * =====================================================
+   * ESTANTERÍA
+   * =====================================================
+   */
+
+  createBookshelf(
+    group,
+    -7.5,
+    -5
+  );
+
+  /*
+   * =====================================================
+   * BAÚL
+   * =====================================================
+   */
+
+  createChest(
+    group,
+    7,
+    2.8
+  );
+
+  /*
+   * =====================================================
+   * VELAS
+   * =====================================================
+   */
+
+  createCandle(
+    group,
+    -2.5,
+    0
+  );
+
+  createCandle(
+    group,
+    3,
+    -3.5
+  );
+
+  /*
+   * =====================================================
+   * LÁMPARAS
+   * =====================================================
+   */
+
+  createInteriorLight(
+    group,
+    0,
+    4.8,
+    0
+  );
+
+  createInteriorLight(
+    group,
+    -6,
+    3.5,
+    4
+  );
+
+  /*
+   * =====================================================
+   * DECORACIÓN
+   * =====================================================
+   */
+
+  createInteriorDecorations(
+    group
+  );
+
+  scene.add(
+    group
+  );
+}
+
+/* =========================================================
+   CHIMENEA
+========================================================= */
+
+function createFireplace(
+  group,
+  x,
+  z
+) {
+
+  const stoneMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x514b49,
+      roughness: 0.95
+    });
+
+  const base =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        5,
+        0.8,
+        2
+      ),
+      stoneMaterial
+    );
+
+  base.position.set(
+    x,
+    0.45,
+    z
+  );
+
+  group.add(
+    base
+  );
+
+  for (
+    let i = 0;
+    i < 5;
+    i++
+  ) {
+
+    const stone =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.9,
+          0.65,
+          0.8
+        ),
+        stoneMaterial
+      );
+
+    stone.position.set(
+      x - 1.8 +
+        i * 0.9,
+      0.75,
+      z
+    );
+
+    stone.rotation.y =
+      (Math.random() -
+        0.5) *
+      0.25;
+
+    group.add(
+      stone
+    );
+  }
+
+  const fire =
+    new THREE.Mesh(
+      new THREE.ConeGeometry(
+        0.9,
+        2.3,
+        12
+      ),
+
+      new THREE.MeshBasicMaterial({
+        color: 0xff6b19,
+        transparent: true,
+        opacity: 0.82
+      })
+    );
+
+  fire.position.set(
+    x,
+    1.8,
+    z - 0.2
+  );
+
+  fire.userData.fire =
+    true;
+
+  group.add(
+    fire
+  );
+
+  const light =
+    new THREE.PointLight(
+      0xff7b2e,
+      3,
+      12
+    );
+
+  light.position.set(
+    x,
+    2,
+    z
+  );
+
+  light.userData.fireLight =
+    true;
+
+  group.add(
+    light
+  );
+}
+
+/* =========================================================
+   CAMA
+========================================================= */
+
+function createBed(
+  group,
+  x,
+  z
+) {
+
+  const wood =
+    new THREE.MeshStandardMaterial({
+      color: 0x563525,
+      roughness: 0.82
+    });
+
+  const frame =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        4.2,
+        0.9,
+        7
+      ),
+      wood
+    );
+
+  frame.position.set(
+    x,
+    0.7,
+    z
+  );
+
+  frame.castShadow =
+    true;
+
+  group.add(
+    frame
+  );
+
+  const mattress =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.8,
+        0.65,
+        6.5
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0xd9d0c4,
+        roughness: 0.9
+      })
+    );
+
+  mattress.position.set(
+    x,
+    1.35,
+    z
+  );
+
+  group.add(
+    mattress
+  );
+
+  const blanket =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.85,
+        0.15,
+        3.2
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x596b86,
+        roughness: 0.9
+      })
+    );
+
+  blanket.position.set(
+    x,
+    1.72,
+    z + 1.25
+  );
+
+  group.add(
+    blanket
+  );
+
+  const pillow =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.3,
+        0.35,
+        1.15
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0xf2e9dc,
+        roughness: 0.9
+      })
+    );
+
+  pillow.position.set(
+    x,
+    1.72,
+    z - 2.25
+  );
+
+  group.add(
+    pillow
+  );
+
+  for (
+    const side of [-1, 1]
+  ) {
+
+    const post =
+      new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.16,
+          0.16,
+          2.5,
+          10
+        ),
+        wood
+      );
+
+    post.position.set(
+      x +
+        side * 1.8,
+      1.7,
+      z - 2.8
+    );
+
+    group.add(
+      post
+    );
+  }
+}
+
+/* =========================================================
+   MESA
+========================================================= */
+
+function createTable(
+  group,
+  x,
+  z
+) {
+
+  const wood =
+    new THREE.MeshStandardMaterial({
+      color: 0x674329,
+      roughness: 0.85
+    });
+
+  const top =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        5,
+        0.45,
+        2.6
+      ),
+      wood
+    );
+
+  top.position.set(
+    x,
+    2.2,
+    z
+  );
+
+  top.castShadow =
+    true;
+
+  group.add(
+    top
+  );
+
+  for (
+    const dx of [-1.9, 1.9]
+  ) {
+
+    for (
+      const dz of [-0.8, 0.8]
+    ) {
+
+      const leg =
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            0.35,
+            2,
+            0.35
+          ),
+          wood
+        );
+
+      leg.position.set(
+        x + dx,
+        1,
+        z + dz
+      );
+
+      group.add(
+        leg
+      );
+    }
+  }
+
+  /*
+   * Pequeños objetos sobre la mesa.
+   */
+
+  const book =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        1.1,
+        0.18,
+        0.75
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x8b3042,
+        roughness: 0.8
+      })
+    );
+
+  book.position.set(
+    x - 1,
+    2.52,
+    z
+  );
+
+  book.rotation.y =
+    -0.18;
+
+  group.add(
+    book
+  );
+
+  const cup =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.22,
+        0.18,
+        0.45,
+        12
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0xd8c8a8,
+        roughness: 0.7
+      })
+    );
+
+  cup.position.set(
+    x + 1.2,
+    2.65,
+    z
+  );
+
+  group.add(
+    cup
+  );
+}
+
+/* =========================================================
+   SILLA
+========================================================= */
+
+function createChair(
+  group,
+  x,
+  z
+) {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x5b3925,
+      roughness: 0.85
+    });
+
+  const seat =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        1.7,
+        0.35,
+        1.7
+      ),
+      material
+    );
+
+  seat.position.set(
+    x,
+    1.25,
+    z
+  );
+
+  group.add(
+    seat
+  );
+
+  for (
+    const dx of [-0.55, 0.55]
+  ) {
+
+    for (
+      const dz of [-0.55, 0.55]
+    ) {
+
+      const leg =
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            0.2,
+            1.2,
+            0.2
+          ),
+          material
+        );
+
+      leg.position.set(
+        x + dx,
+        0.6,
+        z + dz
+      );
+
+      group.add(
+        leg
+      );
+    }
+  }
+
+  const back =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        1.7,
+        2,
+        0.25
+      ),
+      material
+    );
+
+  back.position.set(
+    x,
+    2,
+    z + 0.7
+  );
+
+  group.add(
+    back
+  );
+}
+/* =========================================================
+   ESTANTERÍA
+========================================================= */
+
+function createBookshelf(group, x, z) {
+
+  const wood =
+    new THREE.MeshStandardMaterial({
+      color: 0x543522,
+      roughness: 0.9
+    });
+
+  const shelf =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.2,
+        6,
+        0.7
+      ),
+      wood
+    );
+
+  shelf.position.set(
+    x,
+    3.2,
+    z
+  );
+
+  shelf.castShadow = true;
+
+  group.add(shelf);
+
+  for (
+    let i = 0;
+    i < 4;
+    i++
+  ) {
+
+    const board =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          3.6,
+          0.18,
+          0.9
+        ),
+        wood
+      );
+
+    board.position.set(
+      x,
+      1.2 + i * 1.35,
+      z + 0.42
+    );
+
+    group.add(board);
+  }
+
+  const bookColors = [
+    0x7e3040,
+    0x365b78,
+    0x8b6b35,
+    0x4d754c,
+    0x704a73,
+    0x9b553d
+  ];
+
+  for (
+    let i = 0;
+    i < 18;
+    i++
+  ) {
+
+    const book =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          THREE.MathUtils.randFloat(
+            0.28,
+            0.55
+          ),
+          THREE.MathUtils.randFloat(
+            0.75,
+            1.15
+          ),
+          0.45
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color:
+            bookColors[
+              i %
+              bookColors.length
+            ],
+          roughness: 0.85
+        })
+      );
+
+    const row =
+      Math.floor(i / 6);
+
+    const column =
+      i % 6;
+
+    book.position.set(
+      x - 1.15 +
+        column * 0.42,
+
+      1.45 +
+        row * 1.35,
+
+      z + 0.55
+    );
+
+    book.rotation.z =
+      (Math.random() - 0.5) *
+      0.12;
+
+    group.add(book);
+  }
+}
+
+/* =========================================================
+   BAÚL
+========================================================= */
+
+function createChest(group, x, z) {
+
+  const wood =
+    new THREE.MeshStandardMaterial({
+      color: 0x694025,
+      roughness: 0.8
+    });
+
+  const metal =
+    new THREE.MeshStandardMaterial({
+      color: 0x81745d,
+      metalness: 0.55,
+      roughness: 0.45
+    });
+
+  const body =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3,
+        1.5,
+        1.8
+      ),
+      wood
+    );
+
+  body.position.set(
+    x,
+    0.9,
+    z
+  );
+
+  body.castShadow = true;
+
+  group.add(body);
+
+  const lid =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.1,
+        0.35,
+        1.9
+      ),
+      wood
+    );
+
+  lid.position.set(
+    x,
+    1.8,
+    z
+  );
+
+  group.add(lid);
+
+  const lock =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        0.45,
+        0.55,
+        0.2
+      ),
+      metal
+    );
+
+  lock.position.set(
+    x,
+    1.25,
+    z + 0.95
+  );
+
+  group.add(lock);
+}
+
+/* =========================================================
+   VELA
+========================================================= */
+
+function createCandle(group, x, z) {
+
+  const candle =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.12,
+        0.15,
+        0.7,
+        12
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0xe9dfc4,
+        roughness: 0.75
+      })
+    );
+
+  candle.position.set(
+    x,
+    2.85,
+    z
+  );
+
+  group.add(candle);
+
+  const flame =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.13,
+        12,
+        12
+      ),
+
+      new THREE.MeshBasicMaterial({
+        color: 0xffb52e
+      })
+    );
+
+  flame.scale.y =
+    1.7;
+
+  flame.position.set(
+    x,
+    3.32,
+    z
+  );
+
+  flame.userData.flame =
+    true;
+
+  group.add(flame);
+
+  const light =
+    new THREE.PointLight(
+      0xffad45,
+      0.75,
+      5
+    );
+
+  light.position.set(
+    x,
+    3.35,
+    z
+  );
+
+  light.userData.candleLight =
+    true;
+
+  group.add(light);
+}
+
+/* =========================================================
+   LUZ INTERIOR
+========================================================= */
+
+function createInteriorLight(
+  group,
+  x,
+  y,
+  z
+) {
+
+  const lamp =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.3,
+        16,
+        16
+      ),
+
+      new THREE.MeshBasicMaterial({
+        color: 0xffd98a
+      })
+    );
+
+  lamp.position.set(
+    x,
+    y,
+    z
+  );
+
+  group.add(lamp);
+
+  const light =
+    new THREE.PointLight(
+      0xffc978,
+      1.4,
+      13
+    );
+
+  light.position.set(
+    x,
+    y,
+    z
+  );
+
+  group.add(light);
+}
+
+/* =========================================================
+   DECORACIONES INTERIORES
+========================================================= */
+
+function createInteriorDecorations(
+  group
+) {
+
+  /*
+   * Cuadro 1
+   */
+
+  const frame =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.2,
+        2.2,
+        0.18
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x4a2c20
+      })
+    );
+
+  frame.position.set(
+    3.5,
+    4.7,
+    -7.72
+  );
+
+  group.add(frame);
+
+  const painting =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        2.65,
+        1.65,
+        0.08
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x5c7890,
+        roughness: 0.8
+      })
+    );
+
+  painting.position.set(
+    3.5,
+    4.7,
+    -7.58
+  );
+
+  group.add(painting);
+
+  /*
+   * Jarrón
+   */
+
+  const vase =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.35,
+        0.48,
+        1.1,
+        16
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x6f547e,
+        roughness: 0.6
+      })
+    );
+
+  vase.position.set(
+    -3,
+    0.95,
+    -5
+  );
+
+  group.add(vase);
+
+  /*
+   * Planta
+   */
+
+  for (
+    let i = 0;
+    i < 5;
+    i++
+  ) {
+
+    const leaf =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          0.35,
+          12,
+          12
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x3c7c4a,
+          roughness: 0.85
+        })
+      );
+
+    leaf.position.set(
+      -3 +
+        Math.cos(i) *
+        0.35,
+
+      1.8 +
+        i * 0.12,
+
+      -5 +
+        Math.sin(i) *
+        0.35
+    );
+
+    leaf.scale.set(
+      0.7,
+      1.5,
+      0.5
+    );
+
+    group.add(leaf);
+  }
+
+  /*
+   * Barril
+   */
+
+  const barrel =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.8,
+        0.8,
+        1.8,
+        18
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x69442b,
+        roughness: 0.9
+      })
+    );
+
+  barrel.position.set(
+    7,
+    1,
+    -5.8
+  );
+
+  group.add(barrel);
+}
+
+/* =========================================================
+   BOTÓN DE SALIDA
+========================================================= */
+
+function showExitHouseButton(
+  visible
+) {
+
+  let button =
+    $("exitHouse");
+
+  /*
+   * Si no existe en el HTML,
+   * lo creamos automáticamente.
+   */
+
+  if (!button) {
+
+    button =
+      document.createElement(
+        "button"
+      );
+
+    button.id =
+      "exitHouse";
+
+    button.textContent =
+      "🚪 SALIR DE LA CASA";
+
+    document.body.appendChild(
+      button
+    );
+
+    button.addEventListener(
+      "click",
+      e => {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        exitHouse();
+      }
+    );
+
+    button.addEventListener(
+      "touchend",
+      e => {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        exitHouse();
+      },
+      {
+        passive: false
+      }
+    );
+  }
+
+  button.style.position =
+    "fixed";
+
+  button.style.left =
+    "50%";
+
+  button.style.bottom =
+    "25px";
+
+  button.style.transform =
+    "translateX(-50%)";
+
+  button.style.zIndex =
+    "999999";
+
+  button.style.padding =
+    "14px 22px";
+
+  button.style.borderRadius =
+    "18px";
+
+  button.style.border =
+    "2px solid rgba(255,255,255,.55)";
+
+  button.style.background =
+    "rgba(40,25,20,.92)";
+
+  button.style.color =
+    "#fff";
+
+  button.style.fontSize =
+    "16px";
+
+  button.style.fontWeight =
+    "700";
+
+  button.style.boxShadow =
+    "0 5px 25px rgba(0,0,0,.45)";
+
+  button.style.pointerEvents =
+    visible
+      ? "auto"
+      : "none";
+
+  button.style.display =
+    visible
+      ? "block"
+      : "none";
+
+  button.hidden =
+    !visible;
+}
+
+/* =========================================================
+   BOTÓN ENTRAR
+========================================================= */
+
+function ensureEnterHouseButton() {
+
+  let button =
+    $("enterHouse");
+
+  if (!button) {
+
+    button =
+      document.createElement(
+        "button"
+      );
+
+    button.id =
+      "enterHouse";
+
+    button.textContent =
+      "🏠 ENTRAR";
+
+    document.body.appendChild(
+      button
+    );
+  }
+
+  button.style.position =
+    "fixed";
+
+  button.style.left =
+    "50%";
+
+  button.style.bottom =
+    "95px";
+
+  button.style.transform =
+    "translateX(-50%)";
+
+  button.style.zIndex =
+    "999998";
+
+  button.style.padding =
+    "13px 25px";
+
+  button.style.borderRadius =
+    "18px";
+
+  button.style.border =
+    "2px solid rgba(255,255,255,.55)";
+
+  button.style.background =
+    "rgba(57,35,24,.94)";
+
+  button.style.color =
+    "#fff";
+
+  button.style.fontSize =
+    "16px";
+
+  button.style.fontWeight =
+    "800";
+
+  button.style.boxShadow =
+    "0 5px 25px rgba(0,0,0,.4)";
+
+  button.style.display =
+    "none";
+
+  button.style.pointerEvents =
+    "none";
+
+  /*
+   * Limpiamos listeners anteriores
+   * reemplazando el botón.
+   */
+
+  const fresh =
+    button.cloneNode(true);
+
+  button.replaceWith(
+    fresh
+  );
+
+  button = fresh;
+
+  const activate = e => {
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      currentHouse
+    ) {
+
+      enterHouse(
+        currentHouse
+      );
+
+    } else {
+
+      const nearest =
+        findNearestHouse();
+
+      if (nearest) {
+
+        enterHouse(
+          nearest
+        );
+      }
+    }
+  };
+
+  button.addEventListener(
+    "click",
+    activate
+  );
+
+  button.addEventListener(
+    "touchend",
+    activate,
+    {
+      passive: false
+    }
+  );
+
+  return button;
+}
+
+/* =========================================================
+   BUSCAR CASA CERCANA
+========================================================= */
+
+function findNearestHouse() {
+
+  if (
+    !player ||
+    state.insideHouse
+  ) {
+    return null;
+  }
+
+  let nearest =
+    null;
+
+  let distance =
+    Infinity;
+
+  houses.forEach(
+    house => {
+
+      const d =
+        player.position.distanceTo(
+          house.position
+        );
+
+      if (
+        d < distance
+      ) {
+
+        distance =
+          d;
+
+        nearest =
+          house;
+      }
+    }
+  );
+
+  return distance <= 18
+    ? nearest
+    : null;
+}
+
+/* =========================================================
+   SISTEMA DE CASAS
+========================================================= */
+
+function setupHouse() {
+
+  const enterButton =
+    ensureEnterHouseButton();
+
+  /*
+   * Botón de salida.
+   */
+
+  showExitHouseButton(
+    false
+  );
+
+  /*
+   * Compatibilidad con HTML
+   * antiguo.
+   */
+
+  const oldEnter =
+    $("enterHouse");
+
+  if (
+    oldEnter &&
+    oldEnter !== enterButton
+  ) {
+
+    oldEnter.addEventListener(
+      "click",
+      e => {
+
+        e.preventDefault();
+
+        const house =
+          findNearestHouse();
+
+        if (house) {
+          enterHouse(
+            house
+          );
+        }
+      }
+    );
+  }
+
+  /*
+   * Revisamos continuamente
+   * si hay una casa cerca.
+   */
+
+  setInterval(
+    () => {
+
+      if (
+        !player ||
+        state.insideHouse
+      ) {
+
+        enterButton.style.display =
+          "none";
+
+        enterButton.style.pointerEvents =
+          "none";
+
+        return;
+      }
+
+      const nearest =
+        findNearestHouse();
+
+      if (nearest) {
+
+        currentHouse =
+          nearest;
+
+        enterButton.textContent =
+          "🏠 ENTRAR A LA CASA";
+
+        enterButton.style.display =
+          "block";
+
+        enterButton.style.pointerEvents =
+          "auto";
+
+        enterButton.hidden =
+          false;
+
+      } else {
+
+        currentHouse =
+          null;
+
+        enterButton.style.display =
+          "none";
+
+        enterButton.style.pointerEvents =
+          "none";
+
+        enterButton.hidden =
+          true;
+      }
+
+    },
+    120
+  );
+}
+
+/* =========================================================
+   ELIMINAR INTERIOR
+========================================================= */
+
+function removeHouseInterior() {
+
+  if (
+    !interior
+  ) {
+    return;
+  }
+
+  if (
+    interior.group &&
+    scene
+  ) {
+
+    scene.remove(
+      interior.group
+    );
+
+    interior.group.traverse(
+      object => {
+
+        if (
+          object.geometry
+        ) {
+
+          object.geometry.dispose();
+        }
+
+        if (
+          object.material
+        ) {
+
+          if (
+            Array.isArray(
+              object.material
+            )
+          ) {
+
+            object.material.forEach(
+              material =>
+                material.dispose()
+            );
+
+          } else {
+
+            object.material.dispose();
+          }
+        }
+      }
+    );
+  }
+
+  interior =
+    null;
+}
+
+/* =========================================================
+   CÁMARA
+========================================================= */
+
+function updateCamera() {
+
+  if (
+    !camera ||
+    !player
+  ) {
+    return;
+  }
+
+  let distance;
+  let height;
+
+  if (
+    state.insideHouse
   ) {
 
     /*
-       Se hunde un poco
-       en el agua.
-    */
+     * Cámara corta dentro
+     * del interior.
+     */
 
-    player.position.y =
-      -0.8;
+    distance = 7;
+    height = 3.6;
 
   } else {
 
-    player.position.y =
-      0;
-
+    distance = 18;
+    height = 8;
   }
 
+  const offset =
+    new THREE.Vector3(
+      Math.sin(yaw) *
+        distance,
+
+      height +
+        Math.sin(pitch) *
+        5,
+
+      Math.cos(yaw) *
+        distance
+    );
+
+  const target =
+    player.position
+      .clone();
+
+  target.y += 3;
+
+  camera.position.lerp(
+    target.clone().add(
+      offset
+    ),
+    0.15
+  );
+
+  camera.lookAt(
+    target
+  );
+}
+
+/* =========================================================
+   CÁMARA TÁCTIL
+========================================================= */
+
+function setupCameraTouch() {
+
+  if (!renderer) return;
+
+  const canvas =
+    renderer.domElement;
+
+  canvas.addEventListener(
+    "touchstart",
+    e => {
+
+      if (
+        e.touches.length !== 1
+      ) {
+        return;
+      }
+
+      /*
+       * No mover cámara si el dedo
+       * está sobre controles.
+       */
+
+      const target =
+        e.target;
+
+      if (
+        target.closest(
+          "#joystick"
+        ) ||
+        target.closest(
+          "#chat"
+        ) ||
+        target.closest(
+          "#sideMap"
+        ) ||
+        target.closest(
+          "#map"
+        ) ||
+        target.closest(
+          "button"
+        )
+      ) {
+
+        return;
+      }
+
+      draggingCamera =
+        true;
+
+      lastTouchX =
+        e.touches[0].clientX;
+
+      lastTouchY =
+        e.touches[0].clientY;
+
+    },
+    {
+      passive: true
+    }
+  );
+
+  canvas.addEventListener(
+    "touchmove",
+    e => {
+
+      if (
+        !draggingCamera ||
+        e.touches.length !== 1
+      ) {
+        return;
+      }
+
+      const touch =
+        e.touches[0];
+
+      const dx =
+        touch.clientX -
+        lastTouchX;
+
+      const dy =
+        touch.clientY -
+        lastTouchY;
+
+      lastTouchX =
+        touch.clientX;
+
+      lastTouchY =
+        touch.clientY;
+
+      yaw -=
+        dx * 0.008;
+
+      pitch +=
+        dy * 0.004;
+
+      pitch =
+        THREE.MathUtils.clamp(
+          pitch,
+          -0.15,
+          0.8
+        );
+
+      updateCamera();
+
+    },
+    {
+      passive: true
+    }
+  );
+
+  canvas.addEventListener(
+    "touchend",
+    () => {
+
+      draggingCamera =
+        false;
+
+    }
+  );
+}
+
+/* =========================================================
+   REDIMENSIONAR
+========================================================= */
+
+function resize() {
+
+  if (
+    !camera ||
+    !renderer
+  ) {
+    return;
+  }
+
+  camera.aspect =
+    innerWidth /
+    innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
 }
 /* =========================================================
    JOYSTICK
@@ -3752,29 +4222,16 @@ function setupJoystick() {
   const joystick =
     $("joystick");
 
+  if (!joystick) return;
+
   const stick =
-    joystick?.querySelector(
+    joystick.querySelector(
       ".stick"
     );
 
+  if (!stick) return;
 
-  if (
-    !joystick ||
-    !stick
-  ) {
-
-    console.warn(
-      "⚠️ No se encontró el joystick."
-    );
-
-    return;
-
-  }
-
-
-  let active =
-    false;
-
+  let active = false;
 
   function updateStick(
     clientX,
@@ -3784,348 +4241,121 @@ function setupJoystick() {
     const rect =
       joystick.getBoundingClientRect();
 
-
     const centerX =
       rect.left +
       rect.width / 2;
-
 
     const centerY =
       rect.top +
       rect.height / 2;
 
-
     let dx =
-      clientX -
-      centerX;
-
+      clientX - centerX;
 
     let dy =
-      clientY -
-      centerY;
-
+      clientY - centerY;
 
     const max =
-      rect.width *
-      0.32;
+      rect.width * 0.32;
 
-
-    const length =
-      Math.sqrt(
-        dx * dx +
-        dy * dy
+    const distance =
+      Math.hypot(
+        dx,
+        dy
       );
 
-
     if (
-      length > max
+      distance > max
     ) {
 
       dx =
-        dx / length *
-        max;
-
+        dx / distance * max;
 
       dy =
-        dy / length *
-        max;
-
+        dy / distance * max;
     }
-
 
     moveX =
       dx / max;
 
-
     moveY =
-      dy / max;
-
+      -dy / max;
 
     stick.style.transform =
       `translate(${dx}px, ${dy}px)`;
-
   }
-
 
   function resetStick() {
 
-    active =
-      false;
+    active = false;
 
-
-    moveX =
-      0;
-
-
-    moveY =
-      0;
-
+    moveX = 0;
+    moveY = 0;
 
     stick.style.transform =
-      "translate(0,0)";
-
+      "translate(0px, 0px)";
   }
 
-
   joystick.addEventListener(
-    "pointerdown",
-    (event) => {
+    "touchstart",
+    e => {
 
-      active =
-        true;
+      e.preventDefault();
 
+      active = true;
 
-      joystick.setPointerCapture?.(
-        event.pointerId
-      );
-
+      const touch =
+        e.touches[0];
 
       updateStick(
-        event.clientX,
-        event.clientY
+        touch.clientX,
+        touch.clientY
       );
-
+    },
+    {
+      passive: false
     }
   );
 
-
   joystick.addEventListener(
-    "pointermove",
-    (event) => {
+    "touchmove",
+    e => {
 
-      if (
-        !active
-      ) {
+      if (!active) return;
 
-        return;
+      e.preventDefault();
 
-      }
-
+      const touch =
+        e.touches[0];
 
       updateStick(
-        event.clientX,
-        event.clientY
+        touch.clientX,
+        touch.clientY
       );
-
+    },
+    {
+      passive: false
     }
   );
-
 
   joystick.addEventListener(
-    "pointerup",
-    resetStick
-  );
+    "touchend",
+    e => {
 
+      e.preventDefault();
+
+      resetStick();
+    },
+    {
+      passive: false
+    }
+  );
 
   joystick.addEventListener(
-    "pointercancel",
+    "touchcancel",
     resetStick
   );
-
 }
-
-
-/* =========================================================
-   CÁMARA TÁCTIL
-========================================================= */
-
-function setupCameraTouch() {
-
-  if (
-    !sceneEl
-  ) {
-
-    return;
-
-  }
-
-
-  sceneEl.addEventListener(
-    "pointerdown",
-    (event) => {
-
-      if (
-        event.target.closest(
-          "#joystick"
-        ) ||
-        event.target.closest(
-          "#chat"
-        ) ||
-        event.target.closest(
-          "#abilitiesPanel"
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      draggingCamera =
-        true;
-
-
-      lastTouchX =
-        event.clientX;
-
-
-      lastTouchY =
-        event.clientY;
-
-
-      sceneEl.setPointerCapture?.(
-        event.pointerId
-      );
-
-    }
-  );
-
-
-  sceneEl.addEventListener(
-    "pointermove",
-    (event) => {
-
-      if (
-        !draggingCamera
-      ) {
-
-        return;
-
-      }
-
-
-      const dx =
-        event.clientX -
-        lastTouchX;
-
-
-      const dy =
-        event.clientY -
-        lastTouchY;
-
-
-      lastTouchX =
-        event.clientX;
-
-
-      lastTouchY =
-        event.clientY;
-
-
-      yaw -=
-        dx * 0.008;
-
-
-      pitch -=
-        dy * 0.005;
-
-
-      pitch =
-        THREE.MathUtils.clamp(
-          pitch,
-          0.15,
-          1.15
-        );
-
-    }
-  );
-
-
-  sceneEl.addEventListener(
-    "pointerup",
-    () => {
-
-      draggingCamera =
-        false;
-
-    }
-  );
-
-
-  sceneEl.addEventListener(
-    "pointercancel",
-    () => {
-
-      draggingCamera =
-        false;
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   CÁMARA TERCERA PERSONA
-========================================================= */
-
-function updateCamera() {
-
-  if (
-    !player ||
-    !camera
-  ) {
-
-    return;
-
-  }
-
-
-  const distance =
-    18;
-
-
-  const horizontal =
-    Math.cos(
-      pitch
-    ) *
-    distance;
-
-
-  const vertical =
-    Math.sin(
-      pitch
-    ) *
-    distance;
-
-
-  const desired =
-    new THREE.Vector3(
-
-      player.position.x -
-        Math.sin(yaw) *
-        horizontal,
-
-      player.position.y +
-        5 +
-        vertical,
-
-      player.position.z -
-        Math.cos(yaw) *
-        horizontal
-
-    );
-
-
-  camera.position.lerp(
-    desired,
-    0.12
-  );
-
-
-  camera.lookAt(
-
-    player.position.x,
-
-    player.position.y +
-      4.5,
-
-    player.position.z
-
-  );
-
-}
-
 
 /* =========================================================
    COMBATE
@@ -4133,173 +4363,123 @@ function updateCamera() {
 
 function setupCombat() {
 
-  document
-    .querySelectorAll(
-      "[data-spell]"
-    )
-    .forEach(
-      (button) => {
+  const abilities =
+    [
+      $("ability0"),
+      $("ability1"),
+      $("ability2")
+    ];
 
-        button.addEventListener(
-          "click",
-          () => {
+  abilities.forEach(
+    (button, index) => {
 
-            castSpell(
-              button.dataset.spell
-            );
+      if (!button) return;
 
-          }
-        );
+      const cast =
+        e => {
 
-      }
-    );
+          e.preventDefault();
+          e.stopPropagation();
 
-
-  for (
-    let i = 0;
-    i < 3;
-    i++
-  ) {
-
-    $(`ability${i}`)
-      ?.addEventListener(
-        "click",
-        () => {
-
-          castSpell(
-            String(i)
+          castAbility(
+            index
           );
+        };
 
-        }
+      button.addEventListener(
+        "click",
+        cast
       );
 
-  }
-
+      button.addEventListener(
+        "touchend",
+        cast,
+        {
+          passive: false
+        }
+      );
+    }
+  );
 }
 
+function castAbility(index) {
 
-function castSpell(
-  spell
-) {
+  const costs = [
+    15,
+    25,
+    40
+  ];
 
-  const costs = {
-
-    "0": 12,
-
-    "1": 20,
-
-    "2": 30,
-
-    fire: 12,
-
-    water: 18,
-
-    nature: 15,
-
-    shadow: 25
-
-  };
-
+  const damages = [
+    15,
+    28,
+    50
+  ];
 
   const cost =
-    costs[spell] ||
-    10;
-
+    costs[index] ||
+    15;
 
   if (
     mana < cost
   ) {
 
     showToast(
-      "💧 No tienes suficiente maná."
+      "🔵 No tienes suficiente maná"
     );
 
     return;
-
   }
 
-
-  mana -=
-    cost;
-
+  mana -= cost;
 
   updateBars();
 
-
   createSpellEffect(
-    spell
+    index
   );
 
+  showToast(
+    `✨ Hechizo lanzado — ${damages[index]} daño`
+  );
 
-  if (
-    socket
-  ) {
+  if (socket) {
 
     socket.emit(
       "system",
       `${state.username} lanzó un hechizo.`
     );
-
   }
-
 }
 
-
 function createSpellEffect(
-  spell
+  index
 ) {
 
-  if (
-    !player
-  ) {
+  if (!player) return;
 
-    return;
-
-  }
-
-
-  const colors = {
-
-    "0": 0x8c7cff,
-
-    "1": 0x43d9ff,
-
-    "2": 0xffb84d,
-
-    fire: 0xff5b3d,
-
-    water: 0x3db9ff,
-
-    nature: 0x72dc6b,
-
-    shadow: 0x9b5cff
-
-  };
-
+  const colors = [
+    0x75bfff,
+    0xb777ff,
+    0xff83d0
+  ];
 
   const geometry =
     new THREE.SphereGeometry(
-      0.55,
+      0.22 +
+        index * 0.12,
       16,
       16
     );
 
-
   const material =
     new THREE.MeshBasicMaterial({
-
       color:
-        colors[spell] ||
-        0xc084ff,
-
-      transparent:
-        true,
-
-      opacity:
-        0.9
-
+        colors[index] ||
+        0xffffff,
+      transparent: true,
+      opacity: 0.9
     });
-
 
   const effect =
     new THREE.Mesh(
@@ -4307,174 +4487,71 @@ function createSpellEffect(
       material
     );
 
-
   effect.position.copy(
     player.position
   );
 
-
   effect.position.y +=
-    3.5;
+    2.5;
 
+  effect.userData.life =
+    0.65;
 
-  scene.add(
-    effect
-  );
+  effect.userData.magicEffect =
+    true;
 
+  scene.add(effect);
 
-  const start =
-    performance.now();
-
-
-  function animateEffect(
-    now
+  for (
+    let i = 0;
+    i < 8;
+    i++
   ) {
 
-    const elapsed =
-      now - start;
+    const spark =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          0.07,
+          8,
+          8
+        ),
 
+        new THREE.MeshBasicMaterial({
+          color:
+            colors[index] ||
+            0xffffff
+        })
+      );
 
-    effect.position.y +=
-      0.025;
-
-
-    effect.scale.setScalar(
-
-      1 +
-      Math.sin(
-        elapsed * 0.012
-      ) *
-      0.35
-
+    spark.position.copy(
+      effect.position
     );
 
+    spark.userData.velocity =
+      new THREE.Vector3(
+        (Math.random() - 0.5) *
+          5,
 
-    effect.material.opacity =
-      Math.max(
-        0,
-        1 -
-          elapsed / 1000
+        Math.random() * 4,
+
+        (Math.random() - 0.5) *
+          5
       );
 
+    spark.userData.life =
+      0.8;
 
-    if (
-      elapsed < 1000
-    ) {
+    spark.userData.magicEffect =
+      true;
 
-      requestAnimationFrame(
-        animateEffect
-      );
-
-    } else {
-
-      scene.remove(
-        effect
-      );
-
-
-      geometry.dispose();
-
-      material.dispose();
-
-    }
-
-  }
-
-
-  requestAnimationFrame(
-    animateEffect
-  );
-
-}
-
-
-/* =========================================================
-   VIDA Y MANÁ
-========================================================= */
-
-function updateBars() {
-
-  if (
-    $("hpBar")
-  ) {
-
-    $("hpBar").style.width =
-      `${Math.max(0, hp)}%`;
-
-  }
-
-
-  if (
-    $("manaBar")
-  ) {
-
-    $("manaBar").style.width =
-      `${Math.max(0, mana)}%`;
-
-  }
-
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function showToast(
-  message
-) {
-
-  const toast =
-    $("gameToast") ||
-    $("toast");
-
-
-  if (
-    !toast
-  ) {
-
-    return;
-
-  }
-
-
-  toast.textContent =
-    message;
-
-
-  toast.hidden =
-    false;
-
-
-  toast.style.display =
-    "block";
-
-
-  clearTimeout(
-    toastTimer
-  );
-
-
-  toastTimer =
-    setTimeout(
-      () => {
-
-        toast.hidden =
-          true;
-
-
-        toast.style.display =
-          "none";
-
-      },
-      2600
+    scene.add(
+      spark
     );
-
+  }
 }
 
-
 /* =========================================================
-   CHAT — ABRIR / CERRAR
+   CHAT — SISTEMA ROBUSTO PARA IPHONE
 ========================================================= */
 
 function setupChat() {
@@ -4482,153 +4559,260 @@ function setupChat() {
   const chat =
     $("chat");
 
+  if (!chat) {
+    console.warn(
+      "⚠️ No existe #chat"
+    );
+    return;
+  }
+
+  const toggle =
+    $("chatToggle");
 
   const form =
     $("chatForm") ||
-    $("form");
-
+    chat.querySelector(
+      "form"
+    );
 
   const input =
     $("chatInput") ||
-    $("input");
-
-
-  const messages =
-    $("chatMessages") ||
-    $("msgs");
-
-
-  if (
-    !chat
-  ) {
-
-    return;
-
-  }
-
-
-  /*
-     BOTÓN X
-  */
-
-  const closeButton =
     chat.querySelector(
-      ".close-chat"
-    ) ||
-    chat.querySelector(
-      "[data-close-chat]"
+      "input"
     );
 
+  /*
+   * Ocultamos inicialmente
+   * el chat.
+   */
 
-  closeButton?.addEventListener(
-    "click",
-    (event) => {
+  chat.hidden = true;
 
-      event.preventDefault();
+  chat.style.display =
+    "none";
 
-      event.stopPropagation();
+  chat.style.pointerEvents =
+    "none";
+
+  /*
+   * Creamos una X propia.
+   * No dependemos del HTML.
+   */
+
+  let closeButton =
+    chat.querySelector(
+      ".magic-chat-close"
+    );
+
+  if (!closeButton) {
+
+    closeButton =
+      document.createElement(
+        "button"
+      );
+
+    closeButton.className =
+      "magic-chat-close";
+
+    closeButton.type =
+      "button";
+
+    closeButton.textContent =
+      "×";
+
+    chat.prepend(
+      closeButton
+    );
+  }
+
+  closeButton.style.position =
+    "absolute";
+
+  closeButton.style.top =
+    "8px";
+
+  closeButton.style.right =
+    "8px";
+
+  closeButton.style.width =
+    "36px";
+
+  closeButton.style.height =
+    "36px";
+
+  closeButton.style.zIndex =
+    "1000000";
+
+  closeButton.style.display =
+    "flex";
+
+  closeButton.style.alignItems =
+    "center";
+
+  closeButton.style.justifyContent =
+    "center";
+
+  closeButton.style.border =
+    "0";
+
+  closeButton.style.borderRadius =
+    "50%";
+
+  closeButton.style.background =
+    "rgba(0,0,0,.65)";
+
+  closeButton.style.color =
+    "#fff";
+
+  closeButton.style.fontSize =
+    "28px";
+
+  closeButton.style.lineHeight =
+    "1";
+
+  closeButton.style.pointerEvents =
+    "auto";
+
+  closeButton.style.touchAction =
+    "manipulation";
+
+  function openChat() {
+
+    chat.hidden =
+      false;
+
+    chat.style.display =
+      "flex";
+
+    chat.style.visibility =
+      "visible";
+
+    chat.style.opacity =
+      "1";
+
+    chat.style.pointerEvents =
+      "auto";
+
+    chat.style.zIndex =
+      "999999";
+
+    if (input) {
+
+      setTimeout(
+        () => input.focus(),
+        80
+      );
+    }
+  }
+
+  function closeChat() {
+
+    chat.hidden =
+      true;
+
+    chat.style.display =
+      "none";
+
+    chat.style.visibility =
+      "hidden";
+
+    chat.style.opacity =
+      "0";
+
+    chat.style.pointerEvents =
+      "none";
+
+    if (input) {
+      input.blur();
+    }
+  }
+
+  function toggleChat(
+    e
+  ) {
+
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    const isOpen =
+      !chat.hidden &&
+      chat.style.display !==
+        "none";
+
+    if (isOpen) {
 
       closeChat();
 
+    } else {
+
+      openChat();
+    }
+  }
+
+  if (toggle) {
+
+    toggle.addEventListener(
+      "click",
+      toggleChat
+    );
+
+    toggle.addEventListener(
+      "touchend",
+      toggleChat,
+      {
+        passive: false
+      }
+    );
+  }
+
+  closeButton.addEventListener(
+    "click",
+    e => {
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      closeChat();
     }
   );
 
+  closeButton.addEventListener(
+    "touchend",
+    e => {
 
-  /*
-     Si el HTML usa un botón
-     específico con texto X.
-  */
+      e.preventDefault();
+      e.stopPropagation();
 
-  chat
-    .querySelectorAll(
-      "button"
-    )
-    .forEach(
-      (button) => {
+      closeChat();
+    },
+    {
+      passive: false
+    }
+  );
 
-        const text =
-          (
-            button.textContent ||
-            ""
-          ).trim();
-
-
-        if (
-          text === "×" ||
-          text === "✕" ||
-          text === "X"
-        ) {
-
-          button.addEventListener(
-            "click",
-            (event) => {
-
-              event.preventDefault();
-
-              event.stopPropagation();
-
-              closeChat();
-
-            }
-          );
-
-        }
-
-      }
-    );
-
-
-  /*
-     BOTÓN PRINCIPAL DEL CHAT
-  */
-
-  $("chatToggle")
-    ?.addEventListener(
-      "click",
-      (event) => {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        toggleChat();
-
-      }
-    );
-
-
-  /*
-     ENVIAR MENSAJES
-  */
-
-  if (
-    form &&
-    input
-  ) {
+  if (form) {
 
     form.addEventListener(
       "submit",
-      (event) => {
+      e => {
 
-        event.preventDefault();
-
+        e.preventDefault();
 
         const text =
-          input.value.trim();
+          input
+            ?.value
+            ?.trim();
 
-
-        if (
-          !text
-        ) {
-
+        if (!text) {
           return;
-
         }
 
+        addChatMessage(
+          state.username,
+          text
+        );
 
-        if (
-          socket
-        ) {
+        if (socket) {
 
           socket.emit(
             "chat",
@@ -4636,1408 +4820,452 @@ function setupChat() {
               username:
                 state.username,
 
-              message:
-                text
+              text
             }
           );
-
-        } else {
-
-          addChatMessage(
-            state.username,
-            text
-          );
-
         }
 
-
-        input.value =
-          "";
-
+        input.value = "";
       }
     );
-
   }
 
-
-  /*
-     MENSAJES RECIBIDOS
-  */
-
-  if (
-    socket
-  ) {
+  if (socket) {
 
     socket.on(
       "chat",
-      (data) => {
+      data => {
 
-        if (
-          typeof data ===
-          "string"
-        ) {
-
-          addChatMessage(
-            "Jugador",
-            data
-          );
-
-          return;
-
-        }
-
+        if (!data) return;
 
         addChatMessage(
-
-          data?.username ||
+          data.username ||
             "Jugador",
-
-          data?.message ||
+          data.text ||
             ""
-
         );
-
       }
     );
-
 
     socket.on(
       "system",
-      (message) => {
+      text => {
 
         addChatMessage(
-          "✨ Sistema",
-          message
+          "🌎 Sistema",
+          text
         );
-
       }
     );
-
   }
-
 }
-
-
-function closeChat() {
-
-  const chat =
-    $("chat");
-
-
-  if (
-    !chat
-  ) {
-
-    return;
-
-  }
-
-
-  chat.hidden =
-    true;
-
-
-  chat.style.display =
-    "none";
-
-
-  chat.classList.add(
-    "chat-closed"
-  );
-
-}
-
-
-function openChat() {
-
-  const chat =
-    $("chat");
-
-
-  if (
-    !chat
-  ) {
-
-    return;
-
-  }
-
-
-  chat.hidden =
-    false;
-
-
-  chat.style.display =
-    "";
-
-
-  chat.classList.remove(
-    "chat-closed"
-  );
-
-}
-
-
-function toggleChat() {
-
-  const chat =
-    $("chat");
-
-
-  if (
-    !chat
-  ) {
-
-    return;
-
-  }
-
-
-  const closed =
-    chat.hidden ||
-    chat.classList.contains(
-      "chat-closed"
-    ) ||
-    getComputedStyle(
-      chat
-    ).display ===
-      "none";
-
-
-  if (
-    closed
-  ) {
-
-    openChat();
-
-  } else {
-
-    closeChat();
-
-  }
-
-}
-
 
 function addChatMessage(
   username,
-  message
+  text
 ) {
 
-  const messages =
-    $("chatMessages") ||
-    $("msgs");
+  const container =
+    $("chatMessages");
 
+  if (!container) return;
 
-  if (
-    !messages
-  ) {
-
-    return;
-
-  }
-
-
-  const row =
+  const message =
     document.createElement(
       "div"
     );
 
-
-  row.className =
+  message.className =
     "chat-message";
-
 
   const name =
     document.createElement(
       "strong"
     );
 
-
   name.textContent =
-    `${username}: `;
+    username + ": ";
 
-
-  const text =
+  const content =
     document.createElement(
       "span"
     );
 
+  content.textContent =
+    text;
 
-  text.textContent =
-    message;
-
-
-  row.appendChild(
+  message.appendChild(
     name
   );
 
-
-  row.appendChild(
-    text
+  message.appendChild(
+    content
   );
 
-
-  messages.appendChild(
-    row
+  container.appendChild(
+    message
   );
 
-
-  while (
-    messages.children.length >
-    80
-  ) {
-
-    messages.removeChild(
-      messages.firstChild
-    );
-
-  }
-
-
-  messages.scrollTop =
-    messages.scrollHeight;
-
+  container.scrollTop =
+    container.scrollHeight;
 }
 
-
 /* =========================================================
-   MAPA — ABRIR / CERRAR
+   MAPA — APERTURA Y CIERRE FORZADOS
 ========================================================= */
 
 function setupMap() {
 
-  const button =
-    $("mapButton") ||
-    $("mapBtn");
+  const mapButton =
+    $("mapButton");
 
-
-  const map =
+  let map =
     $("sideMap") ||
     $("map");
 
-
-  if (
-    !button ||
-    !map
-  ) {
+  if (!mapButton) {
 
     console.warn(
-      "⚠️ No se encontró el mapa."
+      "⚠️ No existe #mapButton"
     );
 
     return;
-
   }
 
+  /*
+   * Si no existe el mapa,
+   * lo creamos automáticamente.
+   */
 
-  button.addEventListener(
+  if (!map) {
+
+    map =
+      document.createElement(
+        "div"
+      );
+
+    map.id =
+      "sideMap";
+
+    document.body.appendChild(
+      map
+    );
+
+    map.innerHTML = `
+      <div class="magic-map-header">
+        <strong>🗺️ MAPA DEL REINO</strong>
+        <button type="button"
+                class="magic-map-close">
+          ×
+        </button>
+      </div>
+
+      <div class="magic-map-body">
+        <div class="magic-map-land">
+          <div class="magic-map-village">
+            🏘️
+          </div>
+
+          <div class="magic-map-castle">
+            🏰
+          </div>
+
+          <div class="magic-map-lake">
+            💧
+          </div>
+
+          <div id="playerMarker">
+            🔵
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /*
+   * Estilos directos para evitar
+   * problemas del CSS anterior.
+   */
+
+  map.style.position =
+    "fixed";
+
+  map.style.top =
+    "0";
+
+  map.style.right =
+    "0";
+
+  map.style.width =
+    "min(92vw, 420px)";
+
+  map.style.height =
+    "100vh";
+
+  map.style.background =
+    "rgba(18,23,38,.97)";
+
+  map.style.zIndex =
+    "999990";
+
+  map.style.boxSizing =
+    "border-box";
+
+  map.style.padding =
+    "18px";
+
+  map.style.overflow =
+    "hidden";
+
+  map.style.pointerEvents =
+    "auto";
+
+  map.style.touchAction =
+    "manipulation";
+
+  map.style.display =
+    "none";
+
+  map.hidden =
+    true;
+
+  /*
+   * X del mapa.
+   */
+
+  let close =
+    map.querySelector(
+      ".magic-map-close"
+    );
+
+  if (!close) {
+
+    close =
+      document.createElement(
+        "button"
+      );
+
+    close.className =
+      "magic-map-close";
+
+    close.textContent =
+      "×";
+
+    close.type =
+      "button";
+
+    map.prepend(
+      close
+    );
+  }
+
+  close.style.position =
+    "absolute";
+
+  close.style.top =
+    "12px";
+
+  close.style.right =
+    "12px";
+
+  close.style.zIndex =
+    "1000001";
+
+  close.style.width =
+    "38px";
+
+  close.style.height =
+    "38px";
+
+  close.style.border =
+    "0";
+
+  close.style.borderRadius =
+    "50%";
+
+  close.style.background =
+    "rgba(0,0,0,.7)";
+
+  close.style.color =
+    "#fff";
+
+  close.style.fontSize =
+    "28px";
+
+  close.style.pointerEvents =
+    "auto";
+
+  function openMap() {
+
+    map.hidden =
+      false;
+
+    map.style.display =
+      "block";
+
+    map.style.visibility =
+      "visible";
+
+    map.style.opacity =
+      "1";
+
+    map.style.pointerEvents =
+      "auto";
+
+    updateMapMarker();
+  }
+
+  function closeMap() {
+
+    map.hidden =
+      true;
+
+    map.style.display =
+      "none";
+
+    map.style.visibility =
+      "hidden";
+
+    map.style.opacity =
+      "0";
+
+    map.style.pointerEvents =
+      "none";
+  }
+
+  function toggleMap(e) {
+
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    const opened =
+      !map.hidden &&
+      map.style.display !==
+        "none";
+
+    if (opened) {
+
+      closeMap();
+
+    } else {
+
+      openMap();
+    }
+  }
+
+  mapButton.addEventListener(
     "click",
-    (event) => {
+    toggleMap
+  );
 
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      const isClosed =
-        map.hidden ||
-        getComputedStyle(
-          map
-        ).display ===
-          "none";
-
-
-      if (
-        isClosed
-      ) {
-
-        map.hidden =
-          false;
-
-
-        map.style.display =
-          "block";
-
-
-        map.classList.remove(
-          "hidden"
-        );
-
-
-        updatePlayerMarker();
-
-      } else {
-
-        map.hidden =
-          true;
-
-
-        map.style.display =
-          "none";
-
-
-        map.classList.add(
-          "hidden"
-        );
-
-      }
-
+  mapButton.addEventListener(
+    "touchend",
+    toggleMap,
+    {
+      passive: false
     }
   );
 
+  close.addEventListener(
+    "click",
+    e => {
 
-  $("closeMap")
-    ?.addEventListener(
-      "click",
-      (event) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-        event.preventDefault();
+      closeMap();
+    }
+  );
 
-        event.stopPropagation();
+  close.addEventListener(
+    "touchend",
+    e => {
 
+      e.preventDefault();
+      e.stopPropagation();
 
-        map.hidden =
-          true;
-
-
-        map.style.display =
-          "none";
-
-      }
-    );
-
+      closeMap();
+    },
+    {
+      passive: false
+    }
+  );
 }
 
-
-function updatePlayerMarker() {
+function updateMapMarker() {
 
   const marker =
     $("playerMarker");
-
 
   if (
     !marker ||
     !player
   ) {
-
     return;
-
   }
 
+  /*
+   * Convertimos la posición
+   * del mundo a un pequeño mapa.
+   */
 
-  const percentageX =
-    (
-      player.position.x +
-      350
-    ) /
-    700;
+  const x =
+    THREE.MathUtils.clamp(
+      player.position.x /
+        350,
 
+      -1,
+      1
+    );
 
-  const percentageZ =
-    (
-      player.position.z +
-      350
-    ) /
-    700;
+  const z =
+    THREE.MathUtils.clamp(
+      player.position.z /
+        350,
 
+      -1,
+      1
+    );
+
+  marker.style.position =
+    "absolute";
 
   marker.style.left =
-    `${Math.max(
-      0,
-      Math.min(
-        100,
-        percentageX * 100
-      )
-    )}%`;
-
+    `${50 + x * 43}%`;
 
   marker.style.top =
-    `${Math.max(
-      0,
-      Math.min(
-        100,
-        percentageZ * 100
-      )
-    )}%`;
+    `${50 + z * 43}%`;
 
-}
-/* =========================================================
-   CASAS E INTERIORES
-========================================================= */
+  marker.style.fontSize =
+    "24px";
 
-function setupHouse() {
-
-  const enterButton =
-    $("enterHouse");
-
-  const exitButton =
-    $("exitHouse");
-
-
-  if (enterButton) {
-
-    enterButton.hidden =
-      true;
-
-    enterButton.style.display =
-      "none";
-
-
-    enterButton.addEventListener(
-      "click",
-      (event) => {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        enterNearestHouse();
-
-      }
-    );
-
-  }
-
-
-  if (exitButton) {
-
-    exitButton.hidden =
-      true;
-
-    exitButton.style.display =
-      "none";
-
-
-    exitButton.addEventListener(
-      "click",
-      (event) => {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        exitHouse();
-
-      }
-    );
-
-  }
-
+  marker.style.transform =
+    "translate(-50%, -50%)";
 }
 
-
 /* =========================================================
-   DETECTAR CASA CERCANA
-========================================================= */
-
-function getNearestHouse() {
-
-  if (
-    !player
-  ) {
-
-    return {
-      house: null,
-      distance: Infinity
-    };
-
-  }
-
-
-  let nearest =
-    null;
-
-
-  let nearestDistance =
-    Infinity;
-
-
-  for (
-    const house of houses
-  ) {
-
-    const dx =
-      player.position.x -
-      house.position.x;
-
-
-    const dz =
-      player.position.z -
-      house.position.z;
-
-
-    const distance =
-      Math.sqrt(
-        dx * dx +
-        dz * dz
-      );
-
-
-    if (
-      distance <
-      nearestDistance
-    ) {
-
-      nearestDistance =
-        distance;
-
-      nearest =
-        house;
-
-    }
-
-  }
-
-
-  return {
-
-    house:
-      nearest,
-
-    distance:
-      nearestDistance
-
-  };
-
-}
-
-
-/* =========================================================
-   MOSTRAR BOTÓN DE CASA
-========================================================= */
-
-function updateHouseButton() {
-
-  const enterButton =
-    $("enterHouse");
-
-
-  const exitButton =
-    $("exitHouse");
-
-
-  if (
-    !enterButton ||
-    !player
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    state.insideHouse
-  ) {
-
-    enterButton.hidden =
-      true;
-
-    enterButton.style.display =
-      "none";
-
-
-    if (
-      exitButton
-    ) {
-
-      exitButton.hidden =
-        false;
-
-      exitButton.style.display =
-        "block";
-
-    }
-
-
-    return;
-
-  }
-
-
-  const nearest =
-    getNearestHouse();
-
-
-  if (
-    nearest.house &&
-    nearest.distance <
-      22
-  ) {
-
-    enterButton.hidden =
-      false;
-
-    enterButton.style.display =
-      "block";
-
-
-    enterButton.textContent =
-      "🏠 ENTRAR";
-
-
-  } else {
-
-    enterButton.hidden =
-      true;
-
-    enterButton.style.display =
-      "none";
-
-  }
-
-
-  if (
-    exitButton
-  ) {
-
-    exitButton.hidden =
-      true;
-
-    exitButton.style.display =
-      "none";
-
-  }
-
-}
-
-
-/* =========================================================
-   ENTRAR EN CASA
-========================================================= */
-
-function enterNearestHouse() {
-
-  if (
-    !player ||
-    state.insideHouse
-  ) {
-
-    return;
-
-  }
-
-
-  const nearest =
-    getNearestHouse();
-
-
-  if (
-    !nearest.house ||
-    nearest.distance >
-      24
-  ) {
-
-    showToast(
-      "🏠 Acércate a una casa para entrar."
-    );
-
-    return;
-
-  }
-
-
-  currentHouse =
-    nearest.house;
-
-
-  createInterior();
-
-
-  state.insideHouse =
-    true;
-
-
-  /*
-     Teletransportar al interior.
-  */
-
-  player.position.set(
-    0,
-    0,
-    5
-  );
-
-
-  player.rotation.y =
-    Math.PI;
-
-
-  const enterButton =
-    $("enterHouse");
-
-
-  const exitButton =
-    $("exitHouse");
-
-
-  if (
-    enterButton
-  ) {
-
-    enterButton.hidden =
-      true;
-
-    enterButton.style.display =
-      "none";
-
-  }
-
-
-  if (
-    exitButton
-  ) {
-
-    exitButton.hidden =
-      false;
-
-    exitButton.style.display =
-      "block";
-
-    exitButton.textContent =
-      "🚪 SALIR";
-
-  }
-
-
-  showToast(
-    "🏠 Entraste a la casa."
-  );
-
-}
-
-
-/* =========================================================
-   CREAR INTERIOR
-========================================================= */
-
-function createInterior() {
-
-  if (
-    interior
-  ) {
-
-    scene.remove(
-      interior
-    );
-
-  }
-
-
-  interior =
-    new THREE.Group();
-
-
-  interior.name =
-    "houseInterior";
-
-
-  /*
-     PISO
-  */
-
-  const floorMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x72523c,
-
-      roughness: 0.95
-
-    });
-
-
-  const floor =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        34,
-        0.5,
-        28
-      ),
-
-      floorMaterial
-
-    );
-
-
-  floor.position.y =
-    -0.25;
-
-
-  floor.receiveShadow =
-    true;
-
-
-  interior.add(
-    floor
-  );
-
-
-  /*
-     PAREDES
-  */
-
-  const wallMaterial =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x9d7353,
-
-      roughness: 0.9
-
-    });
-
-
-  const backWall =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        34,
-        12,
-        0.6
-      ),
-
-      wallMaterial
-
-    );
-
-
-  backWall.position.set(
-    0,
-    6,
-    -14
-  );
-
-
-  interior.add(
-    backWall
-  );
-
-
-  const leftWall =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        0.6,
-        12,
-        28
-      ),
-
-      wallMaterial
-
-    );
-
-
-  leftWall.position.set(
-    -17,
-    6,
-    0
-  );
-
-
-  interior.add(
-    leftWall
-  );
-
-
-  const rightWall =
-    leftWall.clone();
-
-
-  rightWall.position.x =
-    17;
-
-
-  interior.add(
-    rightWall
-  );
-
-
-  /*
-     PARED DEL FRENTE
-     CON ABERTURA CENTRAL
-  */
-
-  const frontLeft =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        13,
-        12,
-        0.6
-      ),
-
-      wallMaterial
-
-    );
-
-
-  frontLeft.position.set(
-    -10.5,
-    6,
-    14
-  );
-
-
-  interior.add(
-    frontLeft
-  );
-
-
-  const frontRight =
-    frontLeft.clone();
-
-
-  frontRight.position.x =
-    10.5;
-
-
-  interior.add(
-    frontRight
-  );
-
-
-  /*
-     TECHO
-  */
-
-  const ceiling =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        34,
-        0.5,
-        28
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x49352c,
-
-        roughness: 1
-
-      })
-
-    );
-
-
-  ceiling.position.y =
-    12;
-
-
-  interior.add(
-    ceiling
-  );
-
-
-  /*
-     CHIMENEA
-  */
-
-  const fireplace =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        7,
-        7,
-        2
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x554640,
-
-        roughness: 1
-
-      })
-
-    );
-
-
-  fireplace.position.set(
-    0,
-    3.5,
-    -13.2
-  );
-
-
-  interior.add(
-    fireplace
-  );
-
-
-  /*
-     FUEGO
-  */
-
-  const fire =
-    new THREE.Mesh(
-
-      new THREE.SphereGeometry(
-        1.2,
-        16,
-        16
-      ),
-
-      new THREE.MeshBasicMaterial({
-
-        color: 0xff7138
-
-      })
-
-    );
-
-
-  fire.position.set(
-    0,
-    2,
-    -12
-  );
-
-
-  interior.add(
-    fire
-  );
-
-
-  const fireLight =
-    new THREE.PointLight(
-      0xff8a4a,
-      8,
-      28
-    );
-
-
-  fireLight.position.set(
-    0,
-    3,
-    -10
-  );
-
-
-  interior.add(
-    fireLight
-  );
-
-
-  /*
-     MESA
-  */
-
-  const wood =
-    new THREE.MeshStandardMaterial({
-
-      color: 0x513525,
-
-      roughness: 0.9
-
-    });
-
-
-  const table =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        7,
-        0.7,
-        3.5
-      ),
-
-      wood
-
-    );
-
-
-  table.position.y =
-    3.5;
-
-
-  interior.add(
-    table
-  );
-
-
-  /*
-     PATAS
-  */
-
-  for (
-    const x of [-2.8, 2.8]
-  ) {
-
-    for (
-      const z of [-1.2, 1.2]
-    ) {
-
-      const leg =
-        new THREE.Mesh(
-
-          new THREE.BoxGeometry(
-            0.45,
-            3,
-            0.45
-          ),
-
-          wood
-
-        );
-
-
-      leg.position.set(
-        x,
-        1.5,
-        z
-      );
-
-
-      interior.add(
-        leg
-      );
-
-    }
-
-  }
-
-
-  /*
-     BANCOS
-  */
-
-  for (
-    const z of [-3, 3]
-  ) {
-
-    const bench =
-      new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          7,
-          1,
-          1.3
-        ),
-
-        wood
-
-      );
-
-
-    bench.position.set(
-      0,
-      1.2,
-      z
-    );
-
-
-    interior.add(
-      bench
-    );
-
-  }
-
-
-  /*
-     CAMA
-  */
-
-  const bed =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        7,
-        1.2,
-        4
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x58405f,
-
-        roughness: 0.85
-
-      })
-
-    );
-
-
-  bed.position.set(
-    -10,
-    1,
-    -5
-  );
-
-
-  interior.add(
-    bed
-  );
-
-
-  /*
-     ALMOHADA
-  */
-
-  const pillow =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        2.5,
-        0.6,
-        3
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0xd8cde0,
-
-        roughness: 0.9
-
-      })
-
-    );
-
-
-  pillow.position.set(
-    -11.8,
-    1.8,
-    -5
-  );
-
-
-  interior.add(
-    pillow
-  );
-
-
-  /*
-     LUZ
-  */
-
-  const light =
-    new THREE.PointLight(
-      0xffc17d,
-      7,
-      35
-    );
-
-
-  light.position.set(
-    0,
-    9,
-    0
-  );
-
-
-  interior.add(
-    light
-  );
-
-
-  scene.add(
-    interior
-  );
-
-}
-
-
-/* =========================================================
-   SALIR DE CASA
-========================================================= */
-
-function exitHouse() {
-
-  if (
-    !state.insideHouse ||
-    !player
-  ) {
-
-    return;
-
-  }
-
-
-  state.insideHouse =
-    false;
-
-
-  if (
-    interior
-  ) {
-
-    scene.remove(
-      interior
-    );
-
-    interior =
-      null;
-
-  }
-
-
-  if (
-    currentHouse
-  ) {
-
-    player.position.set(
-
-      currentHouse.position.x,
-
-      0,
-
-      currentHouse.position.z +
-        19
-
-    );
-
-  }
-
-
-  const exitButton =
-    $("exitHouse");
-
-
-  if (
-    exitButton
-  ) {
-
-    exitButton.hidden =
-      true;
-
-    exitButton.style.display =
-      "none";
-
-  }
-
-
-  currentHouse =
-    null;
-
-
-  showToast(
-    "🚪 Saliste de la casa."
-  );
-
-}
-
-
-/* =========================================================
-   CABELLO / ROPA / ACCESORIOS
+   CREACIÓN DE PERSONAJE
 ========================================================= */
 
 function setupCharacterCreator() {
-
-  /*
-     RAZAS
-  */
 
   document
     .querySelectorAll(
       ".race-button"
     )
     .forEach(
-      (button) => {
+      button => {
 
-        button.addEventListener(
-          "click",
-          () => {
+        const selectRace =
+          e => {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            selectedRace =
+              button.dataset.race ||
+              "humano";
 
             document
               .querySelectorAll(
@@ -6050,206 +5278,62 @@ function setupCharacterCreator() {
                   )
               );
 
-
             button.classList.add(
               "selected"
             );
 
+            updateRacePreview();
 
-            selectedRace =
-              (
-                button.dataset.race ||
-                "humano"
-              ).toLowerCase();
+            showToast(
+              `✨ Raza: ${selectedRace}`
+            );
+          };
 
-
-            if (
-              $("playerRace")
-            ) {
-
-              $("playerRace")
-                .textContent =
-                selectedRace;
-
-            }
-
-
-            applyCharacterVisuals();
-
-            updateAbilities();
-
-          }
+        button.addEventListener(
+          "click",
+          selectRace
         );
 
+        button.addEventListener(
+          "touchend",
+          selectRace,
+          {
+            passive: false
+          }
+        );
       }
     );
-
-
-  /*
-     BOTONES DE APARIENCIA
-  */
-
-  document
-    .querySelectorAll(
-      ".appearance-button"
-    )
-    .forEach(
-      connectAppearanceButton
-    );
-
-
-  /*
-     BOTÓN TERMINAR
-  */
-
-  $("finishCharacter")
-    ?.addEventListener(
-      "click",
-      saveCharacter
-    );
-
-
-  /*
-     CREAR NUESTRO PROPIO
-     SELECTOR DE APARIENCIA
-  */
 
   createAppearanceMenu();
 
-}
+  const finish =
+    $("finishCharacter");
 
+  if (finish) {
 
-/* =========================================================
-   CONECTAR BOTÓN APARIENCIA
-========================================================= */
+    const finishCharacter =
+      e => {
 
-function connectAppearanceButton(
-  button
-) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  if (
-    button.dataset.connected ===
-    "true"
-  ) {
+        saveCharacter();
+      };
 
-    return;
+    finish.addEventListener(
+      "click",
+      finishCharacter
+    );
 
+    finish.addEventListener(
+      "touchend",
+      finishCharacter,
+      {
+        passive: false
+      }
+    );
   }
-
-
-  button.dataset.connected =
-    "true";
-
-
-  button.addEventListener(
-    "click",
-    (event) => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      const type =
-        (
-          button.dataset.type ||
-          button.dataset.appearanceType ||
-          ""
-        ).toLowerCase();
-
-
-      const value =
-        button.dataset.value ||
-        button.dataset.appearance ||
-        button.textContent.trim();
-
-
-      if (
-        type.includes(
-          "cabello"
-        ) ||
-        value.toLowerCase().includes(
-          "cabello"
-        )
-      ) {
-
-        selectedAppearance.cabello =
-          value;
-
-      }
-
-
-      else if (
-        type.includes(
-          "ropa"
-        ) ||
-        value.toLowerCase().includes(
-          "ropa"
-        )
-      ) {
-
-        selectedAppearance.ropa =
-          value;
-
-      }
-
-
-      else if (
-        type.includes(
-          "accesorio"
-        ) ||
-        value.toLowerCase().includes(
-          "accesorio"
-        )
-      ) {
-
-        selectedAppearance.accesorios =
-          value;
-
-      }
-
-
-      document
-        .querySelectorAll(
-          ".appearance-button"
-        )
-        .forEach(
-          b =>
-            b.classList.remove(
-              "selected"
-            )
-        );
-
-
-      document
-        .querySelectorAll(
-          ".appearance-choice"
-        )
-        .forEach(
-          b =>
-            b.classList.remove(
-              "selected"
-            )
-        );
-
-
-      button.classList.add(
-        "selected"
-      );
-
-
-      applyCharacterVisuals();
-
-
-      showToast(
-        `✨ ${value} seleccionado`
-      );
-
-    }
-  );
-
 }
-
 
 /* =========================================================
    MENÚ DE APARIENCIA
@@ -6260,169 +5344,160 @@ function createAppearanceMenu() {
   const creator =
     $("characterCreator");
 
-
-  if (
-    !creator
-  ) {
-
-    return;
-
-  }
-
-
-  let menu =
-    creator.querySelector(
-      ".appearance-menu"
-    );
-
-
-  if (
-    !menu
-  ) {
-
-    menu =
-      document.createElement(
-        "div"
-      );
-
-
-    menu.className =
-      "appearance-menu";
-
-
-    menu.innerHTML = `
-
-      <div class="appearance-menu-card">
-
-        <h3>✨ Personalización</h3>
-
-        <div class="appearance-section">
-
-          <strong>💇 Cabello</strong>
-
-          <div class="appearance-choice-grid">
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="cabello"
-              data-value="Cabello corto">
-
-              Cabello corto
-
-            </button>
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="cabello"
-              data-value="Cabello largo">
-
-              Cabello largo
-
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div class="appearance-section">
-
-          <strong>👕 Ropa</strong>
-
-          <div class="appearance-choice-grid">
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="ropa"
-              data-value="Ropa de guerrero">
-
-              ⚔️ Guerrero
-
-            </button>
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="ropa"
-              data-value="Ropa de mago">
-
-              🪄 Mago
-
-            </button>
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="ropa"
-              data-value="Ropa noble">
-
-              👑 Noble
-
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div class="appearance-section">
-
-          <strong>💎 Accesorios</strong>
-
-          <div class="appearance-choice-grid">
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="accesorios"
-              data-value="Capa">
-
-              🧥 Capa
-
-            </button>
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="accesorios"
-              data-value="Corona">
-
-              👑 Corona
-
-            </button>
-
-            <button
-              type="button"
-              class="appearance-choice"
-              data-type="accesorios"
-              data-value="Ninguno">
-
-              ❌ Ninguno
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    `;
-
-
-    creator.appendChild(
-      menu
-    );
-
-  }
-
+  if (!creator) return;
 
   /*
-     Conectar botones dinámicos.
-  */
+   * Si ya existe un menú generado,
+   * lo eliminamos para evitar
+   * duplicados.
+   */
+
+  creator
+    .querySelector(
+      ".magic-appearance-menu"
+    )
+    ?.remove();
+
+  const menu =
+    document.createElement(
+      "div"
+    );
+
+  menu.className =
+    "magic-appearance-menu";
+
+  menu.innerHTML = `
+    <div class="appearance-menu-card">
+
+      <h3>💇 APARIENCIA</h3>
+
+      <div class="appearance-section">
+        <strong>Cabello</strong>
+
+        <div class="appearance-choice-grid"
+             data-type="cabello">
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Corto">
+            💇 Corto
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Largo">
+            💇 Largo
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Medio">
+            💇 Medio
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Rapado">
+            💇 Rapado
+          </button>
+
+        </div>
+      </div>
+
+      <div class="appearance-section">
+        <strong>Ropa</strong>
+
+        <div class="appearance-choice-grid"
+             data-type="ropa">
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Guerrero">
+            ⚔️ Guerrero
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Mago">
+            🔮 Mago
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Noble">
+            👑 Noble
+          </button>
+
+        </div>
+      </div>
+
+      <div class="appearance-section">
+        <strong>Accesorios</strong>
+
+        <div class="appearance-choice-grid"
+             data-type="accesorios">
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Ninguno">
+            ❌ Ninguno
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Capa">
+            🧥 Capa
+          </button>
+
+          <button type="button"
+                  class="appearance-choice"
+                  data-value="Corona">
+            👑 Corona
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  creator.appendChild(
+    menu
+  );
+
+  /*
+   * ESTILOS DIRECTOS
+   *
+   * Esto es importante porque
+   * el CSS anterior no tenía
+   * todas estas clases.
+   */
+
+  menu.style.position =
+    "relative";
+
+  menu.style.zIndex =
+    "999999";
+
+  menu.style.pointerEvents =
+    "auto";
+
+  menu.style.touchAction =
+    "manipulation";
+
+  const card =
+    menu.querySelector(
+      ".appearance-menu-card"
+    );
+
+  if (card) {
+
+    card.style.pointerEvents =
+      "auto";
+
+    card.style.touchAction =
+      "manipulation";
+  }
 
   menu
     .querySelectorAll(
@@ -6431,73 +5506,44 @@ function createAppearanceMenu() {
     .forEach(
       button => {
 
-        if (
-          button.dataset.connected ===
-          "true"
-        ) {
+        button.style.pointerEvents =
+          "auto";
 
-          return;
+        button.style.touchAction =
+          "manipulation";
 
-        }
+        button.style.cursor =
+          "pointer";
 
+        const type =
+          button
+            .parentElement
+            ?.dataset
+            ?.type;
 
-        button.dataset.connected =
-          "true";
+        const value =
+          button.dataset.value;
 
+        const select =
+          e => {
 
-        button.addEventListener(
-          "click",
-          (event) => {
+            e.preventDefault();
 
-            event.preventDefault();
-
-            event.stopPropagation();
-
-
-            const type =
-              button.dataset.type;
-
-
-            const value =
-              button.dataset.value;
-
+            e.stopPropagation();
 
             if (
-              type ===
-              "cabello"
+              type &&
+              value
             ) {
 
-              selectedAppearance.cabello =
-                value;
-
+              selectedAppearance[
+                type
+              ] = value;
             }
-
-
-            if (
-              type ===
-              "ropa"
-            ) {
-
-              selectedAppearance.ropa =
-                value;
-
-            }
-
-
-            if (
-              type ===
-              "accesorios"
-            ) {
-
-              selectedAppearance.accesorios =
-                value;
-
-            }
-
 
             menu
               .querySelectorAll(
-                ".appearance-choice"
+                `.appearance-choice-grid[data-type="${type}"] .appearance-choice`
               )
               .forEach(
                 b =>
@@ -6506,167 +5552,313 @@ function createAppearanceMenu() {
                   )
               );
 
-
             button.classList.add(
               "selected"
             );
 
-
-            applyCharacterVisuals();
-
+            updateAppearancePreview();
 
             showToast(
-              `✨ ${value} seleccionado`
+              `${type}: ${value}`
             );
+          };
 
-          }
+        button.addEventListener(
+          "click",
+          select
         );
 
+        button.addEventListener(
+          "touchend",
+          select,
+          {
+            passive: false
+          }
+        );
       }
     );
 
+  updateAppearanceButtons();
 }
 
+function updateAppearanceButtons() {
+
+  document
+    .querySelectorAll(
+      ".appearance-choice"
+    )
+    .forEach(
+      button => {
+
+        const type =
+          button
+            .parentElement
+            ?.dataset
+            ?.type;
+
+        if (
+          selectedAppearance[type] ===
+          button.dataset.value
+        ) {
+
+          button.classList.add(
+            "selected"
+          );
+
+        } else {
+
+          button.classList.remove(
+            "selected"
+          );
+        }
+      }
+    );
+}
 
 /* =========================================================
-   GUARDAR PERSONAJE
+   PREVISUALIZACIÓN
 ========================================================= */
 
-async function saveCharacter() {
+function updateRacePreview() {
 
-  const character = {
+  updateRaceDetails();
 
-    race:
-      selectedRace,
-
-    appearance:
-      {
-        ...selectedAppearance
-      }
-
-  };
-
-
-  state.character =
-    character;
-
-
-  /*
-     GUARDADO LOCAL
-  */
-
-  try {
-
-    const saved =
-      JSON.parse(
-        localStorage.getItem(
-          "universo_magico_user"
-        ) || "{}"
-      );
-
-
-    saved.username =
-      state.username;
-
-
-    saved.character =
-      character;
-
-
-    localStorage.setItem(
-      "universo_magico_user",
-      JSON.stringify(
-        saved
-      )
-    );
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      error
-    );
-
-  }
-
-
-  /*
-     GUARDADO SERVIDOR
-  */
-
-  try {
-
-    await fetch(
-      "/api/character",
-      {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify({
-
-            username:
-              state.username,
-
-            character
-
-          })
-
-      }
-    );
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      "No se pudo guardar remotamente:",
-      error
-    );
-
-  }
-
-
-  const creator =
-    $("characterCreator");
-
-
-  if (
-    creator
-  ) {
-
-    creator.hidden =
-      true;
-
-  }
-
-
-  if (
-    $("playerRace")
-  ) {
-
-    $("playerRace")
-      .textContent =
-      selectedRace;
-
-  }
-
-
-  showToast(
-    "✨ Personaje guardado."
-  );
-
+  updateHUDRace();
 }
 
+function updateAppearancePreview() {
+
+  updateAppearanceButtons();
+
+  applyClothingVisuals();
+}
+
+function applyClothingVisuals() {
+
+  if (!player) return;
+
+  /*
+   * No reemplazamos el modelo entero.
+   * Cambiamos materiales y añadimos
+   * detalles visuales.
+   */
+
+  const clothing =
+    selectedAppearance.ropa;
+
+  let clothingColor =
+    0x3f5c83;
+
+  if (
+    clothing ===
+    "Mago"
+  ) {
+
+    clothingColor =
+      0x573f86;
+
+  } else if (
+    clothing ===
+    "Noble"
+  ) {
+
+    clothingColor =
+      0x9a7937;
+  }
+
+  player.traverse(
+    object => {
+
+      if (
+        !object.isMesh ||
+        !object.material
+      ) {
+        return;
+      }
+
+      const name =
+        (
+          object.name ||
+          ""
+        ).toLowerCase();
+
+      /*
+       * Solamente intentamos
+       * colorear partes que parecen
+       * pertenecer a la ropa.
+       */
+
+      if (
+        name.includes("cloth") ||
+        name.includes("shirt") ||
+        name.includes("armor") ||
+        name.includes("outfit") ||
+        name.includes("torso") ||
+        name.includes("chest") ||
+        name.includes("pants") ||
+        name.includes("boot")
+      ) {
+
+        object.material =
+          object.material.clone();
+
+        object.material.color.setHex(
+          clothingColor
+        );
+      }
+    }
+  );
+
+  updateAccessoryDetails();
+}
+
+function updateAccessoryDetails() {
+
+  if (!player) return;
+
+  let group =
+    player.getObjectByName(
+      "appearanceDetails"
+    );
+
+  if (!group) {
+
+    group =
+      new THREE.Group();
+
+    group.name =
+      "appearanceDetails";
+
+    player.add(
+      group
+    );
+  }
+
+  while (
+    group.children.length
+  ) {
+
+    group.remove(
+      group.children[0]
+    );
+  }
+
+  /*
+   * CAPA
+   */
+
+  if (
+    selectedAppearance.accesorios ===
+    "Capa"
+  ) {
+
+    const cape =
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          1.8,
+          2.8
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x4c1d5c,
+          side: THREE.DoubleSide,
+          roughness: 0.8
+        })
+      );
+
+    cape.position.set(
+      0,
+      1.9,
+      0.45
+    );
+
+    cape.rotation.x =
+      -0.05;
+
+    group.add(
+      cape
+    );
+  }
+
+  /*
+   * CORONA
+   */
+
+  if (
+    selectedAppearance.accesorios ===
+    "Corona"
+  ) {
+
+    const crown =
+      new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.5,
+          0.62,
+          0.45,
+          6
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0xd9aa32,
+          metalness: 0.7,
+          roughness: 0.3
+        })
+      );
+
+    crown.position.set(
+      0,
+      3.45,
+      0
+    );
+
+    group.add(
+      crown
+    );
+
+    for (
+      let i = 0;
+      i < 6;
+      i++
+    ) {
+
+      const jewel =
+        new THREE.Mesh(
+          new THREE.SphereGeometry(
+            0.08,
+            10,
+            10
+          ),
+
+          new THREE.MeshBasicMaterial({
+            color: 0x8ee8ff
+          })
+        );
+
+      const angle =
+        i /
+        6 *
+        Math.PI *
+        2;
+
+      jewel.position.set(
+        Math.cos(angle) *
+          0.42,
+
+        3.7,
+
+        Math.sin(angle) *
+          0.42
+      );
+
+      group.add(
+        jewel
+      );
+    }
+  }
+}
 
 /* =========================================================
-   ABRIR CREADOR
+   CREATOR
 ========================================================= */
 
 function openCharacterCreator(
@@ -6676,235 +5868,592 @@ function openCharacterCreator(
   const creator =
     $("characterCreator");
 
-
-  if (
-    !creator
-  ) {
-
+  if (!creator) {
     return;
-
   }
-
 
   if (
     savedCharacter
   ) {
 
-    selectedRace =
-      (
-        savedCharacter.race ||
-        "humano"
-      ).toLowerCase();
+    state.character =
+      savedCharacter;
 
+    selectedRace =
+      savedCharacter.race ||
+      "humano";
 
     selectedAppearance =
       {
+        ...selectedAppearance,
 
-        cabello:
-          savedCharacter
-            .appearance
-            ?.cabello ||
-          "Cabello corto",
-
-        ropa:
-          savedCharacter
-            .appearance
-            ?.ropa ||
-          "Ropa de guerrero",
-
-        accesorios:
-          savedCharacter
-            .appearance
-            ?.accesorios ||
-          "Ninguno"
-
+        ...(savedCharacter.appearance ||
+          {})
       };
-
-
-    if (
-      $("playerRace")
-    ) {
-
-      $("playerRace")
-        .textContent =
-        selectedRace;
-
-    }
-
-
-    applyCharacterVisuals();
-
-    updateAbilities();
-
 
     creator.hidden =
       true;
 
+    applyCharacterVisuals();
+    applyClothingVisuals();
+
+    updateHUDRace();
 
     return;
-
   }
-
 
   creator.hidden =
     false;
 
+  creator.style.display =
+    "block";
 
-  createAppearanceMenu();
-
-  updateAbilities();
-
+  updateRacePreview();
+  updateAppearancePreview();
 }
 
+function saveCharacter() {
 
-/* =========================================================
-   HABILIDADES
-========================================================= */
+  const character = {
+    race:
+      selectedRace,
 
-function updateAbilities() {
-
-  const abilities = {
-
-    humano: [
-      "Golpe de energía",
-      "Escudo arcano",
-      "Luz sagrada"
-    ],
-
-    elfo: [
-      "Flecha natural",
-      "Curación",
-      "Tormenta verde"
-    ],
-
-    enano: [
-      "Martillazo",
-      "Piel de piedra",
-      "Terremoto"
-    ],
-
-    orco: [
-      "Furia",
-      "Golpe brutal",
-      "Rugido oscuro"
-    ],
-
-    hada: [
-      "Polvo mágico",
-      "Curación feérica",
-      "Lluvia de estrellas"
-    ],
-
-    vampiro: [
-      "Mordida",
-      "Sombra",
-      "Drenaje vital"
-    ]
-
+    appearance:
+      {
+        ...selectedAppearance
+      }
   };
 
+  state.character =
+    character;
 
-  const list =
-    abilities[
-      selectedRace
-    ] ||
-    abilities.humano;
+  localStorage.setItem(
+    "universo_magico_character",
+    JSON.stringify(
+      character
+    )
+  );
 
+  fetch(
+    "/api/character",
+    {
+      method: "POST",
 
-  list.forEach(
-    (name, index) => {
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
 
-      const button =
-        $(`ability${index}`);
+      body: JSON.stringify({
+        username:
+          state.username,
 
+        character
+      })
+    }
+  )
+    .catch(
+      error =>
+        console.warn(
+          "No se pudo guardar en servidor:",
+          error
+        )
+    );
+
+  if (player) {
+
+    applyCharacterVisuals();
+    applyClothingVisuals();
+  }
+
+  const creator =
+    $("characterCreator");
+
+  if (creator) {
+
+    creator.hidden =
+      true;
+
+    creator.style.display =
+      "none";
+  }
+
+  updateHUDRace();
+
+  showToast(
+    "✨ Tu personaje ha sido creado"
+  );
+}
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function updateHUDRace() {
+
+  const race =
+    $("playerRace");
+
+  if (!race) return;
+
+  const names = {
+    humano: "Humano",
+    hada: "Hada",
+    elfo: "Elfo",
+    demonio: "Demonio"
+  };
+
+  race.textContent =
+    names[selectedRace] ||
+    selectedRace;
+}
+
+function updateBars() {
+
+  const hpBar =
+    $("hpBar");
+
+  const manaBar =
+    $("manaBar");
+
+  if (hpBar) {
+
+    hpBar.style.width =
+      `${Math.max(
+        0,
+        Math.min(
+          100,
+          hp
+        )
+      )}%`;
+  }
+
+  if (manaBar) {
+
+    manaBar.style.width =
+      `${Math.max(
+        0,
+        Math.min(
+          100,
+          mana
+        )
+      )}%`;
+  }
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(
+  message
+) {
+
+  const toast =
+    $("gameToast");
+
+  if (!toast) {
+    console.log(
+      message
+    );
+    return;
+  }
+
+  toast.textContent =
+    message;
+
+  toast.hidden =
+    false;
+
+  toast.style.display =
+    "block";
+
+  clearTimeout(
+    toastTimer
+  );
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        toast.hidden =
+          true;
+
+        toast.style.display =
+          "none";
+
+      },
+      2200
+    );
+}
+
+/* =========================================================
+   FÍSICA Y EFECTOS
+========================================================= */
+
+function updateEffects(
+  delta
+) {
+
+  if (!scene) return;
+
+  const remove = [];
+
+  scene.traverse(
+    object => {
 
       if (
-        !button
+        object.userData
+          ?.magicEffect
       ) {
 
-        return;
+        object.userData.life -=
+          delta;
 
-      }
+        if (
+          object.userData
+            .velocity
+        ) {
 
+          object.position.addScaledVector(
+            object.userData
+              .velocity,
 
-      const label =
-        button.querySelector(
-          ".ability-name"
+            delta
+          );
+
+          object.userData
+            .velocity.y -=
+            5 * delta;
+        }
+
+        object.scale.multiplyScalar(
+          1 + delta * 1.8
         );
 
+        object.material.opacity =
+          Math.max(
+            0,
+            object.userData.life
+          );
 
-      if (
-        label
-      ) {
+        if (
+          object.userData.life <=
+          0
+        ) {
 
-        label.textContent =
-          name;
-
-      } else {
-
-        button.title =
-          name;
-
+          remove.push(
+            object
+          );
+        }
       }
 
+      if (
+        object.userData
+          ?.fire
+      ) {
+
+        const pulse =
+          1 +
+          Math.sin(
+            performance.now() *
+              0.012
+          ) *
+          0.12;
+
+        object.scale.set(
+          pulse,
+          pulse *
+            (0.9 +
+              Math.random() *
+              0.12),
+          pulse
+        );
+      }
+
+      if (
+        object.userData
+          ?.flame
+      ) {
+
+        const pulse =
+          1 +
+          Math.sin(
+            performance.now() *
+              0.018
+          ) *
+          0.18;
+
+        object.scale.set(
+          pulse,
+          pulse * 1.5,
+          pulse
+        );
+      }
+
+      if (
+        object.userData
+          ?.fireLight
+      ) {
+
+        object.intensity =
+          2.5 +
+          Math.sin(
+            performance.now() *
+              0.014
+          ) *
+          0.5;
+      }
+
+      if (
+        object.userData
+          ?.candleLight
+      ) {
+
+        object.intensity =
+          0.6 +
+          Math.sin(
+            performance.now() *
+              0.02
+          ) *
+          0.15;
+      }
     }
   );
 
+  remove.forEach(
+    object => {
 
-  if (
-    $("abilityRace")
-  ) {
-
-    $("abilityRace")
-      .textContent =
-      selectedRace;
-
-  }
-
-}
-
-
-/* =========================================================
-   SESIÓN
-========================================================= */
-
-function restoreSession() {
-
-  try {
-
-    const saved =
-      JSON.parse(
-        localStorage.getItem(
-          "universo_magico_user"
-        ) || "null"
+      scene.remove(
+        object
       );
 
+      object.geometry
+        ?.dispose();
 
-    if (
-      saved?.username &&
-      $("username")
-    ) {
-
-      $("username").value =
-        saved.username;
-
+      object.material
+        ?.dispose();
     }
-
-  } catch (
-    error
-  ) {
-
-    console.warn(
-      error
-    );
-
-  }
-
+  );
 }
 
+/* =========================================================
+   ALAS DE HADA — ANIMACIÓN
+========================================================= */
+
+function animateFairyWings() {
+
+  if (
+    !player ||
+    selectedRace !==
+      "hada"
+  ) {
+    return;
+  }
+
+  const details =
+    player.getObjectByName(
+      "raceDetails"
+    );
+
+  if (!details) return;
+
+  const time =
+    performance.now() *
+    0.004;
+
+  details.children
+    .forEach(
+      (wing, index) => {
+
+        if (
+          wing.isMesh
+        ) {
+
+          const direction =
+            wing.position.x <
+            0
+              ? -1
+              : 1;
+
+          wing.rotation.z =
+            direction *
+            (
+              0.28 +
+              Math.sin(
+                time +
+                  index
+              ) *
+              0.08
+            );
+
+          wing.rotation.y =
+            Math.sin(
+              time * 0.7 +
+                index
+            ) *
+            0.12;
+        }
+      }
+    );
+}
 
 /* =========================================================
-   LOOP
+   MOVIMIENTO DE ÁRBOLES
+========================================================= */
+
+function animateTrees() {
+
+  const time =
+    performance.now() *
+    0.001;
+
+  trees.forEach(
+    tree => {
+
+      const phase =
+        tree.userData.phase ||
+        0;
+
+      tree.rotation.z =
+        Math.sin(
+          time * 0.7 +
+            phase
+        ) *
+        0.018;
+
+      tree.rotation.x =
+        Math.cos(
+          time * 0.55 +
+            phase
+        ) *
+        0.012;
+    }
+  );
+}
+
+/* =========================================================
+   ACTUALIZAR CÁMARA DENTRO DE CASA
+========================================================= */
+
+function updateInteriorCamera() {
+
+  if (
+    !state.insideHouse ||
+    !interior ||
+    !player
+  ) {
+    return;
+  }
+
+  /*
+   * Limitar la posición del jugador.
+   */
+
+  const minX =
+    interior.worldX -
+    interior.width / 2 +
+    1.4;
+
+  const maxX =
+    interior.worldX +
+    interior.width / 2 -
+    1.4;
+
+  const minZ =
+    interior.worldZ -
+    interior.depth / 2 +
+    1.4;
+
+  const maxZ =
+    interior.worldZ +
+    interior.depth / 2 -
+    1.4;
+
+  player.position.x =
+    THREE.MathUtils.clamp(
+      player.position.x,
+      minX,
+      maxX
+    );
+
+  player.position.z =
+    THREE.MathUtils.clamp(
+      player.position.z,
+      minZ,
+      maxZ
+    );
+
+  /*
+   * Cámara todavía más controlada
+   * para que el exterior nunca
+   * aparezca.
+   */
+
+  const distance =
+    6.5;
+
+  const cameraHeight =
+    3.4;
+
+  const offset =
+    new THREE.Vector3(
+      Math.sin(yaw) *
+        distance,
+
+      cameraHeight,
+
+      Math.cos(yaw) *
+        distance
+    );
+
+  const target =
+    player.position.clone();
+
+  target.y += 2.3;
+
+  const desired =
+    target.clone()
+      .add(offset);
+
+  /*
+   * Limitamos la cámara a las
+   * dimensiones del interior.
+   */
+
+  desired.x =
+    THREE.MathUtils.clamp(
+      desired.x,
+      minX + 0.5,
+      maxX - 0.5
+    );
+
+  desired.z =
+    THREE.MathUtils.clamp(
+      desired.z,
+      minZ + 0.5,
+      maxZ - 0.5
+    );
+
+  desired.y =
+    THREE.MathUtils.clamp(
+      desired.y,
+      1.5,
+      interior.height - 0.8
+    );
+
+  camera.position.lerp(
+    desired,
+    0.22
+  );
+
+  camera.lookAt(
+    target
+  );
+}
+
+/* =========================================================
+   LOOP PRINCIPAL
 ========================================================= */
 
 function animate() {
@@ -6913,17 +6462,9 @@ function animate() {
     animate
   );
 
-
-  if (
-    !renderer ||
-    !scene ||
-    !camera
-  ) {
-
+  if (!renderer || !scene) {
     return;
-
   }
-
 
   const delta =
     Math.min(
@@ -6931,173 +6472,85 @@ function animate() {
       0.05
     );
 
-
-  if (
-    mixer
-  ) {
-
-    mixer.update(
-      delta
-    );
-
-  }
-
-
-  updateMovement(
+  updatePlayer(
     delta
   );
 
-
-  updateCamera();
-
-
-  /*
-     Alas de hada flotando
-  */
-
   if (
-    player &&
-    selectedRace ===
-      "hada"
+    state.insideHouse
   ) {
 
-    const wings =
-      player.getObjectByName(
-        "raceDetails"
-      );
+    updateInteriorCamera();
 
+  } else {
 
-    if (
-      wings
-    ) {
-
-      wings.rotation.y =
-        Math.sin(
-          performance.now() *
-          0.0015
-        ) *
-        0.08;
-
-      wings.position.y =
-        Math.sin(
-          performance.now() *
-          0.003
-        ) *
-        0.08;
-
-    }
-
+    updateCamera();
   }
 
-
-  /*
-     Actualizar botones
-  */
-
-  updateHouseButton();
-
-  updatePlayerMarker();
-
-
-  /*
-     Animación de partículas
-  */
-
-  scene.traverse(
-    (object) => {
-
-      if (
-        object.userData?.magic
-      ) {
-
-        object.rotation.y +=
-          delta * 0.08;
-
-      }
-
-    }
+  updateEffects(
+    delta
   );
 
+  animateFairyWings();
+
+  animateTrees();
+
+  updateMapMarker();
+
+  /*
+   * Regeneración suave de maná.
+   */
+
+  if (
+    mana < 100
+  ) {
+
+    mana =
+      Math.min(
+        100,
+        mana +
+          delta * 3
+      );
+
+    updateBars();
+  }
+
+  /*
+   * Agua animada.
+   */
+
+  if (scene) {
+
+    scene.traverse(
+      object => {
+
+        if (
+          object.isMesh &&
+          object.material &&
+          object.material
+            .isMeshPhysicalMaterial &&
+          object.geometry &&
+          object.geometry
+            .type ===
+            "CircleGeometry"
+        ) {
+
+          object.rotation.z +=
+            delta * 0.015;
+        }
+      }
+    );
+  }
 
   renderer.render(
     scene,
     camera
   );
-
 }
 
-
 /* =========================================================
-   RESIZE
+   INICIALIZACIÓN EXTRA
 ========================================================= */
-
-function resize() {
-
-  if (
-    !camera ||
-    !renderer
-  ) {
-
-    return;
-
-  }
-
-
-  camera.aspect =
-    window.innerWidth /
-    window.innerHeight;
-
-
-  camera.updateProjectionMatrix();
-
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-
-}
-
-
-/* =========================================================
-   ACTUALIZACIÓN DEL MAPA
-========================================================= */
-
-setInterval(
-  () => {
-
-    updatePlayerMarker();
-
-    updateHouseButton();
-
-  },
-  250
-);
-
-
-/* =========================================================
-   ERRORES
-========================================================= */
-
-window.addEventListener(
-  "error",
-  (event) => {
-
-    console.error(
-      "Error del juego:",
-      event.error ||
-      event.message
-    );
-
-  }
-);
-
-
-/* =========================================================
-   INICIO
-========================================================= */
-
-restoreSession();
 
 updateBars();
 
