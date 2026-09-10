@@ -1,16 +1,25 @@
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
+:root{
+  --gold:#f4c96a;
+  --gold2:#ffe9a8;
+  --purple:#8b5cf6;
+  --bg:#03040a;
+  --glass:#090816;
 }
 
-html,body{
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
   width:100%;
   height:100%;
+  margin:0;
   overflow:hidden;
-  background:#03050d;
-  font-family:Georgia,"Times New Roman",serif;
+  background:#03040a;
   color:white;
+  font-family:Inter,Arial,sans-serif;
 }
 
 button,
@@ -18,753 +27,981 @@ input{
   font:inherit;
 }
 
-/* =====================================================
-   MENÚ PRINCIPAL
-===================================================== */
+button{
+  cursor:pointer;
+}
+
+/* =========================================================
+   HOME / MENU PRINCIPAL
+   ========================================================= */
 
 #home{
   position:fixed;
   inset:0;
+  width:100%;
+  height:100%;
   overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#03050d;
+  background:#03040a;
 }
 
-/* =====================================================
-   ESCENARIO FANTÁSTICO
-===================================================== */
-
-.magic-bg{
-  position:absolute;
-  inset:0;
-  overflow:hidden;
-}
-
+/*
+  La ilustración es el menú completo.
+*/
 .fantasy-scene{
-  position:absolute;
-  inset:-3%;
-  background-image:url("/assets/start-menu.png");
-  background-size:cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  transform:scale(1.04);
-  animation:sceneBreath 14s ease-in-out infinite;
-}
-
-@keyframes sceneBreath{
-  0%,100%{
-    transform:scale(1.04);
-  }
-  50%{
-    transform:scale(1.08);
-  }
-}
-
-/* =====================================================
-   ILUMINACIÓN CINEMATOGRÁFICA
-===================================================== */
-
-.scene-overlay{
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(2,4,15,.18) 0%,
-      rgba(4,5,18,.08) 35%,
-      rgba(3,4,14,.40) 72%,
-      rgba(2,3,10,.86) 100%
-    );
-}
-
-.magic-light{
-  position:absolute;
-  width:45vw;
-  height:45vw;
-  max-width:600px;
-  max-height:600px;
-  top:-10%;
-  right:-5%;
-  border-radius:50%;
-  background:radial-gradient(
-    circle,
-    rgba(235,225,255,.32) 0%,
-    rgba(153,125,255,.15) 30%,
-    transparent 70%
-  );
-  filter:blur(15px);
-  animation:lightPulse 7s ease-in-out infinite;
-}
-
-@keyframes lightPulse{
-  0%,100%{opacity:.65}
-  50%{opacity:1}
-}
-
-/* =====================================================
-   NIEBLA
-===================================================== */
-
-.fog{
-  position:absolute;
-  left:-20%;
-  width:140%;
-  border-radius:50%;
-  pointer-events:none;
-  filter:blur(28px);
-  background:rgba(205,215,255,.13);
-}
-
-.fog-one{
-  height:18%;
-  bottom:7%;
-  animation:fogMoveOne 18s ease-in-out infinite;
-}
-
-.fog-two{
-  height:12%;
-  bottom:24%;
-  opacity:.65;
-  animation:fogMoveTwo 23s ease-in-out infinite;
-}
-
-.fog-three{
-  height:10%;
-  bottom:40%;
-  opacity:.35;
-  animation:fogMoveOne 28s ease-in-out infinite reverse;
-}
-
-@keyframes fogMoveOne{
-  0%,100%{
-    transform:translateX(-5%);
-  }
-  50%{
-    transform:translateX(8%);
-  }
-}
-
-@keyframes fogMoveTwo{
-  0%,100%{
-    transform:translateX(7%);
-  }
-  50%{
-    transform:translateX(-8%);
-  }
-}
-
-/* =====================================================
-   PARTÍCULAS MÁGICAS
-===================================================== */
-
-.particles{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-
-.particles span{
-  position:absolute;
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:#ffe8a0;
-  box-shadow:
-    0 0 7px #fff2b8,
-    0 0 18px rgba(255,200,80,.8);
-  animation:particleFloat linear infinite;
-}
-
-.particles span:nth-child(1){
-  left:7%;
-  bottom:-5%;
-  animation-duration:8s;
-  animation-delay:0s;
-}
-
-.particles span:nth-child(2){
-  left:16%;
-  bottom:-5%;
-  animation-duration:11s;
-  animation-delay:2s;
-}
-
-.particles span:nth-child(3){
-  left:28%;
-  bottom:-5%;
-  animation-duration:9s;
-  animation-delay:4s;
-}
-
-.particles span:nth-child(4){
-  left:39%;
-  bottom:-5%;
-  animation-duration:13s;
-  animation-delay:1s;
-}
-
-.particles span:nth-child(5){
-  left:51%;
-  bottom:-5%;
-  animation-duration:10s;
-  animation-delay:5s;
-}
-
-.particles span:nth-child(6){
-  left:63%;
-  bottom:-5%;
-  animation-duration:12s;
-  animation-delay:3s;
-}
-
-.particles span:nth-child(7){
-  left:72%;
-  bottom:-5%;
-  animation-duration:9s;
-  animation-delay:6s;
-}
-
-.particles span:nth-child(8){
-  left:81%;
-  bottom:-5%;
-  animation-duration:14s;
-  animation-delay:1s;
-}
-
-.particles span:nth-child(9){
-  left:91%;
-  bottom:-5%;
-  animation-duration:10s;
-  animation-delay:4s;
-}
-
-.particles span:nth-child(10){
-  left:23%;
-  bottom:-5%;
-  animation-duration:15s;
-  animation-delay:7s;
-}
-
-.particles span:nth-child(11){
-  left:58%;
-  bottom:-5%;
-  animation-duration:11s;
-  animation-delay:8s;
-}
-
-.particles span:nth-child(12){
-  left:86%;
-  bottom:-5%;
-  animation-duration:13s;
-  animation-delay:5s;
-}
-
-@keyframes particleFloat{
-  0%{
-    transform:translateY(0) scale(.4);
-    opacity:0;
-  }
-
-  15%{
-    opacity:1;
-  }
-
-  70%{
-    opacity:.9;
-  }
-
-  100%{
-    transform:translateY(-115vh) translateX(35px) scale(1.5);
-    opacity:0;
-  }
-}
-
-/* =====================================================
-   ORBES
-===================================================== */
-
-.magic-orb{
-  position:absolute;
-  border-radius:50%;
-  pointer-events:none;
-  animation:orbFloat 7s ease-in-out infinite;
-}
-
-.orb-one{
-  width:80px;
-  height:80px;
-  left:7%;
-  top:25%;
-  background:radial-gradient(
-    circle,
-    #fff3bd 0%,
-    #d99b3d 25%,
-    transparent 72%
-  );
-  filter:blur(2px);
-  box-shadow:0 0 50px rgba(255,190,70,.55);
-}
-
-.orb-two{
-  width:45px;
-  height:45px;
-  right:15%;
-  bottom:27%;
-  background:radial-gradient(
-    circle,
-    #c7ffff,
-    #50bde5 35%,
-    transparent 72%
-  );
-  box-shadow:0 0 40px rgba(70,220,255,.7);
-  animation-delay:2s;
-}
-
-.orb-three{
-  width:32px;
-  height:32px;
-  left:13%;
-  bottom:20%;
-  background:radial-gradient(
-    circle,
-    #ffe6ff,
-    #bb55e6 35%,
-    transparent 72%
-  );
-  box-shadow:0 0 35px rgba(190,70,235,.6);
-  animation-delay:4s;
-}
-
-@keyframes orbFloat{
-  0%,100%{
-    transform:translateY(0);
-  }
-
-  50%{
-    transform:translateY(-25px);
-  }
-}
-
-/* =====================================================
-   CONTENIDO
-===================================================== */
-
-.home-content{
-  position:relative;
-  z-index:10;
-  width:min(92vw,520px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-  transform:translateY(-1vh);
-}
-
-/* =====================================================
-   LOGO
-===================================================== */
-
-.logo{
-  margin-bottom:22px;
-  animation:logoReveal 1.5s ease both;
-}
-
-.logo-small{
-  color:#f4e4aa;
-  font-size:clamp(14px,3.5vw,22px);
-  letter-spacing:9px;
-  margin-bottom:4px;
-  text-shadow:
-    0 2px 5px #000,
-    0 0 20px rgba(255,215,120,.6);
-}
-
-.logo h1{
-  font-size:clamp(58px,15vw,105px);
-  line-height:.82;
-  letter-spacing:3px;
-  font-weight:900;
-
-  background:linear-gradient(
-    180deg,
-    #fff4b0 0%,
-    #f0c45c 28%,
-    #b77920 62%,
-    #ffe79b 100%
-  );
-
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-
-  filter:
-    drop-shadow(0 5px 3px rgba(0,0,0,.9))
-    drop-shadow(0 0 14px rgba(255,190,60,.55));
-}
-
-.logo-subtitle{
-  margin-top:13px;
-  color:#f0ead7;
-  font-size:clamp(13px,3.5vw,19px);
-  letter-spacing:6px;
-  text-shadow:
-    0 3px 7px #000,
-    0 0 14px rgba(255,255,255,.25);
-}
-
-@keyframes logoReveal{
-  from{
-    opacity:0;
-    transform:translateY(-35px) scale(.9);
-  }
-
-  to{
-    opacity:1;
-    transform:translateY(0) scale(1);
-  }
-}
-
-/* =====================================================
-   PANEL
-===================================================== */
-
-.auth-card{
-  width:100%;
-  padding:23px;
-  border:1px solid rgba(237,204,111,.7);
-  border-radius:24px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(10,10,27,.76),
-      rgba(19,13,35,.68)
-    );
-
-  backdrop-filter:blur(13px);
-  -webkit-backdrop-filter:blur(13px);
-
-  box-shadow:
-    0 20px 70px rgba(0,0,0,.7),
-    0 0 40px rgba(213,164,58,.12),
-    inset 0 0 35px rgba(255,255,255,.025);
-
-  animation:panelReveal 1.3s ease .2s both;
-}
-
-@keyframes panelReveal{
-  from{
-    opacity:0;
-    transform:translateY(35px);
-  }
-
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-
-/* =====================================================
-   PESTAÑAS
-===================================================== */
-
-.auth-tabs{
-  display:flex;
-  gap:9px;
-  margin-bottom:19px;
-}
-
-.auth-tab{
-  flex:1;
-  min-height:50px;
-  border:1px solid rgba(229,194,100,.3);
-  border-radius:13px;
-
-  background:rgba(5,6,18,.55);
-
-  color:#bcb8c5;
-  cursor:pointer;
-
-  transition:
-    transform .25s,
-    border-color .25s,
-    background .25s,
-    color .25s;
-}
-
-.auth-tab.active{
-  color:#ffe69a;
-  border-color:#e3bd5c;
-  background:rgba(205,153,49,.16);
-  box-shadow:
-    inset 0 0 18px rgba(255,210,100,.06),
-    0 0 18px rgba(230,185,75,.08);
-}
-
-.auth-tab:active{
-  transform:scale(.97);
-}
-
-/* =====================================================
-   TEXTO
-===================================================== */
-
-.auth-heading h2{
-  color:#f5d77f;
-  font-size:clamp(20px,5vw,27px);
-  margin-bottom:5px;
-  text-shadow:0 0 15px rgba(255,215,110,.25);
-}
-
-.auth-heading p{
-  color:#bbb6c8;
-  font-size:14px;
-  margin-bottom:20px;
-}
-
-/* =====================================================
-   INPUTS
-===================================================== */
-
-.input-group{
-  text-align:left;
-  margin-bottom:14px;
-}
-
-.input-group label{
-  display:block;
-  color:#d9bd6b;
-  font-size:11px;
-  letter-spacing:3px;
-  margin-bottom:7px;
-}
-
-.input-group input{
-  width:100%;
-  height:54px;
-  padding:0 15px;
-
-  border:1px solid rgba(222,191,106,.35);
-  border-radius:13px;
-
-  outline:none;
-
-  background:rgba(2,4,15,.65);
-  color:white;
-
-  font-size:16px;
-
-  transition:.3s;
-}
-
-.input-group input:focus{
-  border-color:#e6c45f;
-  box-shadow:
-    0 0 20px rgba(227,190,84,.15),
-    inset 0 0 15px rgba(227,190,84,.04);
-}
-
-.input-group input::placeholder{
-  color:#777487;
-}
-
-/* =====================================================
-   BOTÓN
-===================================================== */
-
-#authSubmit{
-  width:100%;
-  min-height:57px;
-  margin-top:5px;
-
-  border:1px solid #f0d078;
-  border-radius:14px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #f3d477 0%,
-      #d59c35 48%,
-      #a96817 100%
-    );
-
-  color:#241606;
-
-  font-weight:bold;
-  letter-spacing:1px;
-
-  cursor:pointer;
-
-  box-shadow:
-    0 7px 25px rgba(211,151,42,.3),
-    inset 0 1px rgba(255,255,255,.8);
-
-  transition:.25s;
-}
-
-#authSubmit:active{
-  transform:translateY(2px);
-}
-
-#authSubmit:disabled{
-  opacity:.6;
-}
-
-/* =====================================================
-   MENSAJE
-===================================================== */
-
-#authMsg{
-  min-height:18px;
-  margin-top:10px;
-  color:#e8d7a3;
-  font-size:12px;
-}
-
-/* =====================================================
-   ESTADO
-===================================================== */
-
-.realm-status{
-  margin-top:13px;
-  color:#a9d5a7;
-  font-size:10px;
-  letter-spacing:3px;
-}
-
-.status-dot{
-  display:inline-block;
-  width:7px;
-  height:7px;
-  margin-right:7px;
-  border-radius:50%;
-  background:#80dc8b;
-  box-shadow:0 0 12px #80dc8b;
-  animation:statusPulse 1.8s infinite;
-}
-
-@keyframes statusPulse{
-  0%,100%{
-    opacity:.45;
-  }
-
-  50%{
-    opacity:1;
-  }
-}
-
-.version{
-  margin-top:12px;
-  color:#ddd4bc;
-  font-size:12px;
-  letter-spacing:3px;
-  text-shadow:0 2px 6px #000;
-}
-
-/* =====================================================
-   JUEGO
-===================================================== */
-
-#game{
-  position:fixed;
-  inset:0;
-  overflow:hidden;
-  background:#080b12;
-}
-
-#scene{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
+
+  background-image:url("/assets/start-menu.png");
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+
+  transform:scale(1.01);
+  animation:sceneBreath 14s ease-in-out infinite;
 }
 
-.game-hud,
-.side-buttons,
-#joystick,
-.combat,
-#chat,
-#map{
+/* Oscurecimiento muy suave para que los elementos funcionales
+   sigan siendo visibles sin tapar la ilustración */
+.fantasy-scene::after{
+  content:"";
   position:absolute;
-  z-index:20;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.05),
+      rgba(0,0,0,.02) 55%,
+      rgba(0,0,0,.28)
+    );
 }
 
-/* =====================================================
-   RESPONSIVE IPHONE
-===================================================== */
-
-@media(max-width:600px){
-
-  .home-content{
-    width:calc(100vw - 28px);
-    transform:translateY(-1vh);
+@keyframes sceneBreath{
+  0%,100%{
+    transform:scale(1.01);
   }
 
-  .logo{
-    margin-bottom:16px;
+  50%{
+    transform:scale(1.035);
+  }
+}
+
+/* =========================================================
+   ELEMENTOS DECORATIVOS
+   ========================================================= */
+
+.magic-bg,
+.scene-overlay,
+.magic-light,
+.fog,
+.fog2,
+.fog3,
+.particles,
+.orb{
+  position:absolute;
+  pointer-events:none;
+}
+
+.magic-bg{
+  inset:0;
+  z-index:2;
+}
+
+.scene-overlay{
+  inset:0;
+  z-index:3;
+  background:transparent;
+}
+
+.magic-light{
+  width:35vw;
+  height:35vw;
+  max-width:420px;
+  max-height:420px;
+  border-radius:50%;
+  background:rgba(180,130,255,.08);
+  filter:blur(70px);
+  top:20%;
+  left:50%;
+  transform:translateX(-50%);
+  animation:lightPulse 6s ease-in-out infinite;
+}
+
+@keyframes lightPulse{
+  0%,100%{
+    opacity:.45;
+    transform:translateX(-50%) scale(.95);
   }
 
-  .logo-small{
-    letter-spacing:6px;
+  50%{
+    opacity:.8;
+    transform:translateX(-50%) scale(1.08);
+  }
+}
+
+.fog{
+  left:-20%;
+  bottom:5%;
+  width:140%;
+  height:25%;
+  background:rgba(255,255,255,.05);
+  filter:blur(35px);
+  animation:fogMove 18s linear infinite;
+}
+
+.fog2{
+  left:-30%;
+  bottom:20%;
+  width:160%;
+  height:18%;
+  background:rgba(139,92,246,.045);
+  filter:blur(40px);
+  animation:fogMove2 24s linear infinite;
+}
+
+.fog3{
+  left:-30%;
+  top:15%;
+  width:160%;
+  height:14%;
+  background:rgba(255,255,255,.035);
+  filter:blur(45px);
+  animation:fogMove3 30s linear infinite;
+}
+
+@keyframes fogMove{
+  0%{
+    transform:translateX(-8%);
+  }
+  50%{
+    transform:translateX(8%);
+  }
+  100%{
+    transform:translateX(-8%);
+  }
+}
+
+@keyframes fogMove2{
+  0%{
+    transform:translateX(10%);
+  }
+  50%{
+    transform:translateX(-10%);
+  }
+  100%{
+    transform:translateX(10%);
+  }
+}
+
+@keyframes fogMove3{
+  0%{
+    transform:translateX(-5%);
+  }
+  50%{
+    transform:translateX(5%);
+  }
+  100%{
+    transform:translateX(-5%);
+  }
+}
+
+/* =========================================================
+   PARTÍCULAS
+   ========================================================= */
+
+.particles{
+  inset:0;
+  z-index:4;
+  background-image:
+    radial-gradient(circle,rgba(255,230,150,.8) 0 1px,transparent 2px),
+    radial-gradient(circle,rgba(190,150,255,.7) 0 1px,transparent 2px),
+    radial-gradient(circle,rgba(255,255,255,.55) 0 1px,transparent 2px);
+  background-size:
+    120px 160px,
+    180px 220px,
+    240px 260px;
+  background-position:
+    10px 30px,
+    60px 90px,
+    120px 20px;
+  opacity:.45;
+  animation:particlesFloat 18s linear infinite;
+}
+
+@keyframes particlesFloat{
+  from{
+    transform:translateY(10px);
   }
 
-  .logo h1{
-    font-size:clamp(52px,16vw,82px);
+  to{
+    transform:translateY(-30px);
+  }
+}
+
+.orb{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#f8dc8a;
+  box-shadow:
+    0 0 10px #f8dc8a,
+    0 0 25px rgba(244,201,106,.65);
+  opacity:.7;
+  z-index:5;
+  animation:orbFloat 5s ease-in-out infinite;
+}
+
+@keyframes orbFloat{
+  0%,100%{
+    transform:translateY(0) scale(.8);
+    opacity:.35;
   }
 
-  .logo-subtitle{
-    letter-spacing:4px;
-    margin-top:10px;
+  50%{
+    transform:translateY(-25px) scale(1.2);
+    opacity:1;
+  }
+}
+
+/* =========================================================
+   AUTENTICACIÓN
+   ========================================================= */
+
+/*
+  IMPORTANTE:
+  El panel ya está dibujado dentro de start-menu.png.
+  Por eso el panel HTML se vuelve invisible.
+*/
+
+.auth-card,
+.auth-panel,
+.auth-box{
+  position:absolute !important;
+  z-index:20 !important;
+
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+
+  color:transparent !important;
+}
+
+/* Títulos y textos HTML: la imagen ya los contiene */
+
+.auth-card h1,
+.auth-card h2,
+.auth-card h3,
+.auth-card p,
+.auth-card label,
+.auth-card small,
+.auth-panel h1,
+.auth-panel h2,
+.auth-panel h3,
+.auth-panel p,
+.auth-panel label,
+.auth-panel small,
+.auth-box h1,
+.auth-box h2,
+.auth-box h3,
+.auth-box p,
+.auth-box label,
+.auth-box small{
+  color:transparent !important;
+  text-shadow:none !important;
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.auth-tabs{
+  display:flex;
+  position:relative;
+  z-index:30;
+}
+
+.auth-tabs button{
+  color:transparent !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* =========================================================
+   FORMULARIO
+   ========================================================= */
+
+#authForm{
+  position:relative;
+  z-index:30;
+}
+
+#username,
+#password{
+  width:100%;
+  background:rgba(0,0,0,.01) !important;
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
+
+  color:white !important;
+  caret-color:#ffe7a0 !important;
+}
+
+/*
+  El texto escrito aparece sobre la imagen.
+*/
+#username::placeholder,
+#password::placeholder{
+  color:transparent !important;
+}
+
+/* Mensaje de error */
+#authMsg{
+  color:#ffd98a !important;
+  text-shadow:0 1px 8px #000;
+  background:transparent !important;
+}
+
+/* Botón funcional invisible encima del botón de la imagen */
+
+#authSubmit{
+  position:relative;
+  z-index:40;
+
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+
+  color:transparent !important;
+  text-shadow:none !important;
+
+  min-height:54px;
+}
+
+#authSubmit:active{
+  transform:scale(.98);
+}
+
+/* Estado */
+
+.status,
+.badges{
+  color:transparent !important;
+  background:transparent !important;
+}
+
+/* =========================================================
+   OCULTAR ELEMENTOS DECORATIVOS HTML ANTIGUOS
+   ========================================================= */
+
+.hero{
+  background:transparent !important;
+}
+
+.crest{
+  display:none !important;
+}
+
+.hero small,
+.hero h1,
+.hero h1 b,
+.hero label,
+.hero p{
+  color:transparent !important;
+}
+
+.hero button{
+  color:transparent !important;
+  background:transparent !important;
+  border:0 !important;
+}
+
+/* =========================================================
+   GAME
+   ========================================================= */
+
+#game{
+  position:fixed;
+  inset:0;
+  display:none;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#070812;
+}
+
+#game[hidden]{
+  display:none !important;
+}
+
+#home[hidden]{
+  display:none !important;
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+
+header{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:64px;
+  z-index:50;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 18px;
+
+  background:rgba(7,8,18,.82);
+  border-bottom:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(12px);
+}
+
+header strong{
+  font-family:Georgia,serif;
+  color:white;
+}
+
+header strong:first-letter{
+  color:var(--gold);
+}
+
+header span{
+  color:#aaa;
+  font-size:11px;
+  letter-spacing:2px;
+}
+
+main{
+  position:absolute;
+  top:64px;
+  left:0;
+  right:0;
+  bottom:0;
+
+  display:grid;
+  grid-template-columns:220px 1fr 290px;
+}
+
+/* =========================================================
+   SIDEBARS
+   ========================================================= */
+
+aside{
+  padding:18px;
+  background:rgba(12,14,29,.88);
+  border-right:1px solid rgba(255,255,255,.12);
+  overflow:auto;
+}
+
+.chat{
+  border-left:1px solid rgba(255,255,255,.12);
+  border-right:0;
+
+  display:flex;
+  flex-direction:column;
+}
+
+h3{
+  margin:8px 0 14px;
+  font:700 13px Georgia,serif;
+  color:var(--gold);
+  letter-spacing:3px;
+}
+
+.card{
+  padding:13px;
+  margin-bottom:10px;
+
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;
+}
+
+.card b{
+  margin-left:8px;
+}
+
+aside p{
+  color:#9da0b4;
+  font-size:12px;
+}
+
+aside p b{
+  float:right;
+  color:var(--gold);
+}
+
+/* =========================================================
+   THREE.JS SCENE
+   ========================================================= */
+
+#scene{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(#11152b,#102019);
+}
+
+#scene canvas{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+#scene:after{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  pointer-events:none;
+
+  background-image:
+    radial-gradient(
+      rgba(139,92,246,.12) 1px,
+      transparent 1px
+    );
+
+  background-size:34px 34px;
+}
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.title{
+  position:absolute;
+  top:18px;
+  left:50%;
+  transform:translateX(-50%);
+
+  z-index:10;
+
+  padding:9px 15px;
+
+  border-radius:99px;
+
+  background:rgba(8,10,19,.8);
+  border:1px solid rgba(255,255,255,.1);
+
+  font:700 11px Georgia,serif;
+  letter-spacing:3px;
+  color:#eadba8;
+
+  backdrop-filter:blur(8px);
+}
+
+/* =========================================================
+   JOYSTICK
+   ========================================================= */
+
+#joystick{
+  position:absolute;
+  left:24px;
+  bottom:24px;
+
+  width:130px;
+  height:130px;
+
+  border-radius:50%;
+
+  background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.16);
+
+  z-index:40;
+
+  touch-action:none;
+}
+
+#stick{
+  position:absolute;
+
+  width:58px;
+  height:58px;
+
+  left:50%;
+  top:50%;
+
+  margin-left:-29px;
+  margin-top:-29px;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(255,255,255,.4),
+      rgba(139,92,246,.65)
+    );
+
+  border:1px solid rgba(255,255,255,.35);
+
+  box-shadow:
+    0 0 20px rgba(139,92,246,.35);
+
+  touch-action:none;
+}
+
+/* =========================================================
+   COMBATE
+   ========================================================= */
+
+.combat{
+  position:absolute;
+  right:24px;
+  bottom:24px;
+
+  z-index:40;
+
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.combat button,
+#game button{
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;
+
+  padding:12px 16px;
+
+  color:white;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245,212,125,.95),
+      rgba(139,92,246,.9)
+    );
+
+  font-weight:800;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,.25);
+
+  backdrop-filter:blur(8px);
+}
+
+.combat button:active,
+#game button:active{
+  transform:scale(.96);
+}
+
+/* =========================================================
+   MAP
+   ========================================================= */
+
+#sideMap{
+  position:absolute;
+  top:78px;
+  right:18px;
+
+  width:270px;
+  height:350px;
+
+  z-index:60;
+
+  padding:14px;
+
+  background:rgba(8,10,20,.94);
+  border:1px solid rgba(244,201,106,.35);
+  border-radius:18px;
+
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+
+  backdrop-filter:blur(16px);
+}
+
+#map{
+  width:100%;
+  height:100%;
+
+  border-radius:12px;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(139,92,246,.35),
+      rgba(5,7,14,.95)
+    );
+
+  border:1px solid rgba(255,255,255,.1);
+}
+
+#mapBtn{
+  z-index:60;
+}
+
+/* =========================================================
+   CHAT
+   ========================================================= */
+
+#chat{
+  min-height:0;
+}
+
+#msgs{
+  flex:1;
+  min-height:0;
+
+  overflow:auto;
+
+  padding:10px;
+
+  color:#ddd;
+  font-size:12px;
+}
+
+#form{
+  display:flex;
+  gap:6px;
+  padding:10px;
+
+  border-top:1px solid rgba(255,255,255,.1);
+}
+
+#input{
+  flex:1;
+
+  min-width:0;
+
+  padding:10px 12px;
+
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+
+  outline:none;
+
+  color:white;
+
+  background:rgba(255,255,255,.06);
+}
+
+#input::placeholder{
+  color:#85899d;
+}
+
+#chatToggle{
+  z-index:70;
+}
+
+/* =========================================================
+   AVATAR
+   ========================================================= */
+
+#avatar{
+  width:38px;
+  height:38px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f4c96a,
+      #8b5cf6
+    );
+
+  color:white;
+  font-weight:900;
+
+  box-shadow:0 0 20px rgba(244,201,106,.25);
+}
+
+/* =========================================================
+   HOUSE
+   ========================================================= */
+
+#enterHouse{
+  position:absolute;
+  z-index:45;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media(max-width:900px){
+
+  main{
+    grid-template-columns:1fr;
   }
 
-  .auth-card{
-    padding:18px;
-    border-radius:20px;
+  main > aside{
+    display:none;
   }
 
-  .auth-tab{
-    min-height:47px;
+  #scene{
+    width:100%;
+    height:100%;
+  }
+
+  header{
+    height:56px;
+    padding:0 12px;
+  }
+
+  .combat{
+    right:12px;
+    bottom:18px;
+    max-width:55%;
+  }
+
+  .combat button{
+    padding:10px 12px;
     font-size:12px;
   }
 
-  .auth-heading h2{
-    font-size:21px;
+  #joystick{
+    left:18px;
+    bottom:18px;
+    width:120px;
+    height:120px;
   }
 
-  .auth-heading p{
-    margin-bottom:14px;
-  }
-
-  .input-group{
-    margin-bottom:11px;
-  }
-
-  .input-group input{
-    height:50px;
-  }
-
-  #authSubmit{
-    min-height:53px;
-  }
-
-  .version{
-    font-size:9px;
+  #sideMap{
+    top:66px;
+    right:10px;
+    width:calc(100vw - 20px);
+    max-width:320px;
+    height:330px;
   }
 }
 
-@media(max-height:720px){
+/* =========================================================
+   IPHONE / PANTALLA VERTICAL
+   ========================================================= */
 
-  .home-content{
-    transform:scale(.88);
+@media(max-width:600px){
+
+  .fantasy-scene{
+    background-size:cover;
+    background-position:center center;
   }
 
-  .logo{
-    margin-bottom:12px;
+  /*
+    El menú visual de la imagen ya contiene el panel
+    aproximadamente en esta zona.
+  */
+
+  .auth-card,
+  .auth-panel,
+  .auth-box{
+    width:100% !important;
+    height:100% !important;
+    inset:0 !important;
+    padding:0 !important;
+    margin:0 !important;
   }
 
-  .auth-card{
-    padding:16px;
+  .auth-tabs{
+    position:absolute;
+    left:8%;
+    right:8%;
+    top:31%;
+    height:9%;
+
+    display:flex;
+    gap:4%;
   }
+
+  .auth-tabs button{
+    flex:1;
+    min-height:50px;
+  }
+
+  #authForm{
+    position:absolute;
+    left:12%;
+    right:12%;
+    top:42%;
+  }
+
+  #username{
+    height:58px;
+  }
+
+  #password{
+    height:58px;
+    margin-top:10px;
+  }
+
+  #authSubmit{
+    width:100%;
+    height:68px;
+    margin-top:18px;
+  }
+
+  /*
+    Ajuste para el fondo en pantallas muy altas.
+  */
+  #home{
+    min-height:100dvh;
+  }
+}
+
+/* =========================================================
+   PANTALLAS MUY ALTAS
+   ========================================================= */
+
+@media(max-width:600px) and (min-height:800px){
+
+  .auth-tabs{
+    top:31%;
+  }
+
+  #authForm{
+    top:43%;
+  }
+}
+
+/* =========================================================
+   ACCESIBILIDAD / TOUCH
+   ========================================================= */
+
+button,
+#joystick,
+#stick,
+input{
+  touch-action:manipulation;
+}
+
+#joystick,
+#stick{
+  touch-action:none;
+}
+
+/* Evita selección accidental durante el juego */
+
+#game,
+#joystick,
+#stick,
+.combat{
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* =========================================================
+   MODALES
+   ========================================================= */
+
+#howModal,
+#map,
+#sideMap{
+  z-index:80;
+}
+
+[hidden]{
+  display:none !important;
 }
