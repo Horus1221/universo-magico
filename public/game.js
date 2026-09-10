@@ -4,17 +4,13 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
 const $ = id => document.getElementById(id);
 const socket = typeof io === "function" ? io() : null;
 
-console.log("✨ UNIVERSO MÁGICO — GAME.JS CARGADO");
+console.log("✨ UNIVERSO MÁGICO: game.js cargado");
 
 const home = $("home");
 const game = $("game");
 const sceneEl = $("scene");
 
-let scene;
-let camera;
-let renderer;
-let clock;
-
+let scene, camera, renderer, clock;
 let player = null;
 let mixer = null;
 let actions = {};
@@ -45,7 +41,6 @@ let selectedAppearance = {
 
 let currentHouse = null;
 let interior = null;
-
 let toastTimer;
 
 const keys = {};
@@ -56,7 +51,8 @@ const trees = [];
 const state = {
   username: "Aventurero",
   character: null,
-  insideHouse: false
+  insideHouse: false,
+  flying: false
 };
 
 const assets = {
@@ -73,31 +69,49 @@ const loader = new GLTFLoader();
    AUTENTICACIÓN
 ========================================================= */
 
-$("tabLogin")?.addEventListener("click", () => {
+$("tabLogin")?.addEventListener(
+  "click",
+  () => {
 
-  registerMode = false;
+    registerMode = false;
 
-  $("tabLogin")?.classList.add("active");
-  $("tabRegister")?.classList.remove("active");
+    $("tabLogin")?.classList.add(
+      "active"
+    );
 
-  if ($("authSubmit")) {
-    $("authSubmit").textContent =
-      "⚡ ENTRAR AL UNIVERSO";
+    $("tabRegister")?.classList.remove(
+      "active"
+    );
+
+    if ($("authSubmit")) {
+
+      $("authSubmit").textContent =
+        "⚡ ENTRAR AL UNIVERSO";
+    }
   }
-});
+);
 
-$("tabRegister")?.addEventListener("click", () => {
+$("tabRegister")?.addEventListener(
+  "click",
+  () => {
 
-  registerMode = true;
+    registerMode = true;
 
-  $("tabRegister")?.classList.add("active");
-  $("tabLogin")?.classList.remove("active");
+    $("tabRegister")?.classList.add(
+      "active"
+    );
 
-  if ($("authSubmit")) {
-    $("authSubmit").textContent =
-      "✨ CREAR PERSONAJE";
+    $("tabLogin")?.classList.remove(
+      "active"
+    );
+
+    if ($("authSubmit")) {
+
+      $("authSubmit").textContent =
+        "✨ CREAR PERSONAJE";
+    }
   }
-});
+);
 
 $("authForm")?.addEventListener(
   "submit",
@@ -106,27 +120,28 @@ $("authForm")?.addEventListener(
     e.preventDefault();
 
     const username =
-      ($("username")?.value || "").trim();
+      ($("username")?.value || "")
+        .trim();
 
     const password =
       $("password")?.value || "";
 
-    if (username.length < 3) {
+    if (
+      username.length < 3
+    ) {
 
-      authMessage(
+      return authMessage(
         "El nombre debe tener al menos 3 caracteres."
       );
-
-      return;
     }
 
-    if (password.length < 6) {
+    if (
+      password.length < 6
+    ) {
 
-      authMessage(
+      return authMessage(
         "La contraseña debe tener al menos 6 caracteres."
       );
-
-      return;
     }
 
     const button =
@@ -168,7 +183,9 @@ $("authForm")?.addEventListener(
       const data =
         await response
           .json()
-          .catch(() => ({}));
+          .catch(
+            () => ({})
+          );
 
       if (!response.ok) {
 
@@ -184,8 +201,11 @@ $("authForm")?.addEventListener(
       );
 
       startGame(
-        data.username || username,
-        data.character || null
+        data.username ||
+          username,
+
+        data.character ||
+          null
       );
 
     } catch (err) {
@@ -201,7 +221,8 @@ $("authForm")?.addEventListener(
 
       if (button) {
 
-        button.disabled = false;
+        button.disabled =
+          false;
 
         button.textContent =
           registerMode
@@ -212,14 +233,20 @@ $("authForm")?.addEventListener(
   }
 );
 
-function authMessage(text) {
+function authMessage(
+  text
+) {
 
-  const el = $("authMsg");
+  const el =
+    $("authMsg");
 
   if (!el) return;
 
-  el.textContent = text;
-  el.hidden = false;
+  el.textContent =
+    text;
+
+  el.hidden =
+    false;
 }
 
 function startGame(
@@ -228,7 +255,8 @@ function startGame(
 ) {
 
   state.username =
-    username || "Aventurero";
+    username ||
+    "Aventurero";
 
   state.character =
     savedCharacter;
@@ -248,34 +276,40 @@ function startGame(
   if ($("avatar")) {
 
     $("avatar").textContent =
-      state.username[0]?.toUpperCase() ||
+      state.username[0]
+        ?.toUpperCase() ||
       "A";
   }
 
   if (home) {
+
     home.hidden = true;
   }
 
   if (game) {
+
     game.hidden = false;
   }
 
   if (!renderer) {
+
     initWorld();
   }
 
   setTimeout(
     () => {
+
       openCharacterCreator(
         savedCharacter
       );
+
     },
     500
   );
 }
 
 /* =========================================================
-   INICIO DEL MUNDO
+   MUNDO 3D
 ========================================================= */
 
 function initWorld() {
@@ -300,8 +334,12 @@ function initWorld() {
   camera =
     new THREE.PerspectiveCamera(
       60,
-      innerWidth / innerHeight,
+
+      innerWidth /
+        innerHeight,
+
       0.1,
+
       1600
     );
 
@@ -314,6 +352,7 @@ function initWorld() {
   renderer =
     new THREE.WebGLRenderer({
       antialias: true,
+
       powerPreference:
         "high-performance"
     });
@@ -353,7 +392,9 @@ function initWorld() {
       1.8
     );
 
-  scene.add(hemi);
+  scene.add(
+    hemi
+  );
 
   const sun =
     new THREE.DirectionalLight(
@@ -367,14 +408,17 @@ function initWorld() {
     90
   );
 
-  sun.castShadow = true;
+  sun.castShadow =
+    true;
 
   sun.shadow.mapSize.set(
     2048,
     2048
   );
 
-  scene.add(sun);
+  scene.add(
+    sun
+  );
 
   createGround();
   createWater();
@@ -432,7 +476,9 @@ function createGround() {
   ground.receiveShadow =
     true;
 
-  scene.add(ground);
+  scene.add(
+    ground
+  );
 
   for (
     let i = 0;
@@ -444,6 +490,7 @@ function createGround() {
       new THREE.Mesh(
         new THREE.PlaneGeometry(
           0.35,
+
           THREE.MathUtils.randFloat(
             0.5,
             1.4
@@ -452,12 +499,14 @@ function createGround() {
 
         new THREE.MeshStandardMaterial({
           color: 0x6fa65a,
+
           side:
             THREE.DoubleSide
         })
       );
 
     grass.position.set(
+
       THREE.MathUtils.randFloat(
         -340,
         340
@@ -475,7 +524,9 @@ function createGround() {
       Math.random() *
       Math.PI;
 
-    scene.add(grass);
+    scene.add(
+      grass
+    );
   }
 }
 
@@ -487,17 +538,27 @@ function createWater() {
 
   const water =
     new THREE.Mesh(
+
       new THREE.CircleGeometry(
         55,
         64
       ),
 
       new THREE.MeshPhysicalMaterial({
+
         color: 0x258ab0,
-        transparent: true,
-        opacity: 0.78,
-        roughness: 0.12,
-        metalness: 0.08
+
+        transparent:
+          true,
+
+        opacity:
+          0.78,
+
+        roughness:
+          0.12,
+
+        metalness:
+          0.08
       })
     );
 
@@ -510,7 +571,9 @@ function createWater() {
     80
   );
 
-  scene.add(water);
+  scene.add(
+    water
+  );
 }
 
 /* =========================================================
@@ -520,15 +583,19 @@ function createWater() {
 function createVillage() {
 
   const positions = [
+
     [-55, -45],
     [-20, -50],
     [20, -50],
     [55, -42],
+
     [-70, 0],
     [65, 5],
+
     [-45, 45],
     [5, 45],
     [55, 45],
+
     [0, 85]
   ];
 
@@ -542,14 +609,19 @@ function createVillage() {
           i
         );
 
-      houses.push(house);
+      houses.push(
+        house
+      );
 
-      scene.add(house);
+      scene.add(
+        house
+      );
     }
   );
 
   const plaza =
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
         42,
         42,
@@ -569,10 +641,13 @@ function createVillage() {
   plaza.receiveShadow =
     true;
 
-  scene.add(plaza);
+  scene.add(
+    plaza
+  );
 
   const fountain =
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
         8,
         10,
@@ -592,11 +667,13 @@ function createVillage() {
   fountain.castShadow =
     true;
 
-  scene.add(fountain);
+  scene.add(
+    fountain
+  );
 }
 
 /* =========================================================
-   CASA EXTERIOR
+   CASAS EXTERIORES
 ========================================================= */
 
 function createHouse(
@@ -616,6 +693,7 @@ function createHouse(
 
   const wall =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         22,
         10,
@@ -623,12 +701,14 @@ function createHouse(
       ),
 
       new THREE.MeshStandardMaterial({
+
         color:
           index % 2
             ? 0x956547
             : 0xa9714d,
 
-        roughness: 0.85
+        roughness:
+          0.85
       })
     );
 
@@ -641,10 +721,13 @@ function createHouse(
   wall.receiveShadow =
     true;
 
-  group.add(wall);
+  group.add(
+    wall
+  );
 
   const roof =
     new THREE.Mesh(
+
       new THREE.ConeGeometry(
         15,
         9,
@@ -652,12 +735,14 @@ function createHouse(
       ),
 
       new THREE.MeshStandardMaterial({
+
         color:
           index % 3
             ? 0x63372d
             : 0x49302b,
 
-        roughness: 0.9
+        roughness:
+          0.9
       })
     );
 
@@ -670,10 +755,13 @@ function createHouse(
   roof.castShadow =
     true;
 
-  group.add(roof);
+  group.add(
+    roof
+  );
 
   const door =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.2,
         5.5,
@@ -681,7 +769,8 @@ function createHouse(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x35231c
+        color:
+          0x35231c
       })
     );
 
@@ -691,20 +780,15 @@ function createHouse(
     9.15
   );
 
-  group.add(door);
+  group.add(
+    door
+  );
 
   group.userData.house =
     true;
 
-  group.userData.houseIndex =
+  group.userData.index =
     index;
-
-  group.userData.worldPosition =
-    new THREE.Vector3(
-      x,
-      0,
-      z
-    );
 
   return group;
 }
@@ -726,6 +810,7 @@ function createForest() {
 
     const trunk =
       new THREE.Mesh(
+
         new THREE.CylinderGeometry(
           0.7,
           1.2,
@@ -734,7 +819,8 @@ function createForest() {
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0x63402a
+          color:
+            0x63402a
         })
       );
 
@@ -744,7 +830,9 @@ function createForest() {
     trunk.castShadow =
       true;
 
-    tree.add(trunk);
+    tree.add(
+      trunk
+    );
 
     for (
       let j = 0;
@@ -754,6 +842,7 @@ function createForest() {
 
       const leaf =
         new THREE.Mesh(
+
           new THREE.IcosahedronGeometry(
             THREE.MathUtils.randFloat(
               2.4,
@@ -763,12 +852,16 @@ function createForest() {
           ),
 
           new THREE.MeshStandardMaterial({
-            color: 0x2f713d,
-            roughness: 1
+            color:
+              0x2f713d,
+
+            roughness:
+              1
           })
         );
 
       leaf.position.set(
+
         THREE.MathUtils.randFloat(
           -2,
           2
@@ -788,7 +881,9 @@ function createForest() {
       leaf.castShadow =
         true;
 
-      tree.add(leaf);
+      tree.add(
+        leaf
+      );
     }
 
     const angle =
@@ -803,6 +898,7 @@ function createForest() {
       );
 
     tree.position.set(
+
       Math.cos(angle) *
         radius,
 
@@ -820,11 +916,16 @@ function createForest() {
     );
 
     tree.userData.phase =
-      Math.random() * 10;
+      Math.random() *
+      10;
 
-    scene.add(tree);
+    scene.add(
+      tree
+    );
 
-    trees.push(tree);
+    trees.push(
+      tree
+    );
   }
 }
 
@@ -841,7 +942,8 @@ function createMountains() {
   ) {
 
     const angle =
-      i / 36 *
+      i /
+      36 *
       Math.PI *
       2;
 
@@ -859,6 +961,7 @@ function createMountains() {
 
     const mountain =
       new THREE.Mesh(
+
         new THREE.ConeGeometry(
           THREE.MathUtils.randFloat(
             24,
@@ -871,12 +974,16 @@ function createMountains() {
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0x4c6257,
-          roughness: 1
+          color:
+            0x4c6257,
+
+          roughness:
+            1
         })
       );
 
     mountain.position.set(
+
       Math.cos(angle) *
         radius,
 
@@ -896,24 +1003,31 @@ function createMountains() {
     mountain.receiveShadow =
       true;
 
-    scene.add(mountain);
+    scene.add(
+      mountain
+    );
 
     const peak =
       new THREE.Mesh(
+
         new THREE.ConeGeometry(
           THREE.MathUtils.randFloat(
             7,
             14
           ),
 
-          height * 0.22,
+          height *
+            0.22,
 
           8
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0xbcc9c6,
-          roughness: 1
+          color:
+            0xbcc9c6,
+
+          roughness:
+            1
         })
       );
 
@@ -922,12 +1036,15 @@ function createMountains() {
     );
 
     peak.position.y +=
-      height * 0.39;
+      height *
+      0.39;
 
     peak.scale.y =
       0.75;
 
-    scene.add(peak);
+    scene.add(
+      peak
+    );
   }
 }
 
@@ -948,23 +1065,31 @@ function createCastle() {
 
   const stone =
     new THREE.MeshStandardMaterial({
-      color: 0x68757d,
-      roughness: 0.9
+      color:
+        0x68757d,
+
+      roughness:
+        0.9
     });
 
   const darkStone =
     new THREE.MeshStandardMaterial({
-      color: 0x4e5961,
-      roughness: 0.95
+      color:
+        0x4e5961,
+
+      roughness:
+        0.95
     });
 
   const keep =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         70,
         28,
         55
       ),
+
       stone
     );
 
@@ -977,7 +1102,9 @@ function createCastle() {
   keep.receiveShadow =
     true;
 
-  castle.add(keep);
+  castle.add(
+    keep
+  );
 
   for (
     const [x, z] of [
@@ -990,12 +1117,14 @@ function createCastle() {
 
     const tower =
       new THREE.Mesh(
+
         new THREE.CylinderGeometry(
           8,
           9,
           38,
           12
         ),
+
         darkStone
       );
 
@@ -1008,10 +1137,13 @@ function createCastle() {
     tower.castShadow =
       true;
 
-    castle.add(tower);
+    castle.add(
+      tower
+    );
 
     const roof =
       new THREE.Mesh(
+
         new THREE.ConeGeometry(
           10,
           12,
@@ -1019,8 +1151,11 @@ function createCastle() {
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0x382a35,
-          roughness: 0.8
+          color:
+            0x382a35,
+
+          roughness:
+            0.8
         })
       );
 
@@ -1030,11 +1165,14 @@ function createCastle() {
       z
     );
 
-    castle.add(roof);
+    castle.add(
+      roof
+    );
   }
 
   const gate =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         18,
         16,
@@ -1042,8 +1180,11 @@ function createCastle() {
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x2e211b,
-        roughness: 0.9
+        color:
+          0x2e211b,
+
+        roughness:
+          0.9
       })
     );
 
@@ -1053,9 +1194,13 @@ function createCastle() {
     28
   );
 
-  castle.add(gate);
+  castle.add(
+    gate
+  );
 
-  scene.add(castle);
+  scene.add(
+    castle
+  );
 }
 /* =========================================================
    PARTÍCULAS MÁGICAS
@@ -1069,33 +1214,18 @@ function createMagicParticles() {
   const count = 350;
 
   const positions =
-    new Float32Array(
-      count * 3
-    );
+    new Float32Array(count * 3);
 
-  for (
-    let i = 0;
-    i < count;
-    i++
-  ) {
+  for (let i = 0; i < count; i++) {
 
     positions[i * 3] =
-      THREE.MathUtils.randFloat(
-        -300,
-        300
-      );
+      THREE.MathUtils.randFloat(-300, 300);
 
     positions[i * 3 + 1] =
-      THREE.MathUtils.randFloat(
-        1,
-        80
-      );
+      THREE.MathUtils.randFloat(1, 80);
 
     positions[i * 3 + 2] =
-      THREE.MathUtils.randFloat(
-        -300,
-        300
-      );
+      THREE.MathUtils.randFloat(-300, 300);
   }
 
   geometry.setAttribute(
@@ -1124,16 +1254,19 @@ function createMagicParticles() {
   particles.userData.magic =
     true;
 
-  scene.add(particles);
+  scene.add(
+    particles
+  );
 }
 
 /* =========================================================
-   JUGADOR
+   CARGAR PERSONAJE REAL
 ========================================================= */
 
 function loadPlayer() {
 
   loader.load(
+
     assets.character,
 
     gltf => {
@@ -1165,17 +1298,45 @@ function loadPlayer() {
 
             object.receiveShadow =
               true;
+
+            if (
+              object.material
+            ) {
+
+              object.material =
+                object.material.clone();
+
+              /*
+               * Evitamos que las texturas
+               * desaparezcan por el color
+               * base del material.
+               */
+
+              object.material.needsUpdate =
+                true;
+            }
           }
         }
       );
 
-      scene.add(player);
+      scene.add(
+        player
+      );
+
+      /*
+       * Aplicamos apariencia inicial.
+       */
 
       applyCharacterVisuals();
+
+      /*
+       * Cargamos animaciones.
+       */
 
       loadAnimations();
 
       updateCamera();
+
     },
 
     undefined,
@@ -1203,6 +1364,7 @@ function createFallbackPlayer() {
 
   const body =
     new THREE.Mesh(
+
       new THREE.CapsuleGeometry(
         0.65,
         1.8,
@@ -1222,10 +1384,13 @@ function createFallbackPlayer() {
   body.castShadow =
     true;
 
-  group.add(body);
+  group.add(
+    body
+  );
 
   const head =
     new THREE.Mesh(
+
       new THREE.SphereGeometry(
         0.62,
         24,
@@ -1244,9 +1409,12 @@ function createFallbackPlayer() {
   head.castShadow =
     true;
 
-  group.add(head);
+  group.add(
+    head
+  );
 
-  player = group;
+  player =
+    group;
 
   player.position.set(
     0,
@@ -1254,26 +1422,35 @@ function createFallbackPlayer() {
     15
   );
 
-  scene.add(player);
+  scene.add(
+    player
+  );
 
   applyCharacterVisuals();
 }
 
 /* =========================================================
-   ANIMACIONES
+   ANIMACIONES UAL
 ========================================================= */
 
 function loadAnimations() {
 
   loader.load(
+
     assets.animations,
 
     gltf => {
 
       if (
         !player ||
-        !gltf.animations
+        !gltf.animations ||
+        !gltf.animations.length
       ) {
+
+        console.warn(
+          "⚠️ El archivo UAL no contiene animaciones."
+        );
+
         return;
       }
 
@@ -1282,8 +1459,20 @@ function loadAnimations() {
           player
         );
 
+      console.log(
+        "🎬 Animaciones encontradas:",
+        gltf.animations.map(
+          clip => clip.name
+        )
+      );
+
       gltf.animations.forEach(
         clip => {
+
+          /*
+           * UAL puede tener nombres
+           * diferentes según la versión.
+           */
 
           const action =
             mixer.clipAction(
@@ -1296,21 +1485,60 @@ function loadAnimations() {
         }
       );
 
+      /*
+       * Buscamos una animación de
+       * reposo.
+       */
+
       const idle =
         findAnimation([
           "Idle",
           "idle",
+          "Idle_01",
+          "Standing",
           "Stand",
-          "Breathing"
+          "Breathing",
+          "Breathing Idle",
+          "UAL_Idle"
         ]);
 
       if (idle) {
+
+        idle.reset();
+
+        idle.fadeIn(
+          0.15
+        );
 
         idle.play();
 
         currentAction =
           idle;
+
+      } else {
+
+        /*
+         * Si no encontramos Idle,
+         * usamos la primera animación.
+         */
+
+        const first =
+          gltf.animations[0];
+
+        if (first) {
+
+          const action =
+            mixer.clipAction(
+              first
+            );
+
+          action.play();
+
+          currentAction =
+            action;
+        }
       }
+
     },
 
     undefined,
@@ -1318,16 +1546,25 @@ function loadAnimations() {
     error => {
 
       console.warn(
-        "⚠️ No se pudieron cargar las animaciones:",
+        "⚠️ No se pudieron cargar las animaciones UAL:",
         error
       );
     }
   );
 }
 
+/* =========================================================
+   BUSCAR ANIMACIÓN
+========================================================= */
+
 function findAnimation(
   names
 ) {
+
+  /*
+   * Primero buscamos coincidencia
+   * exacta.
+   */
 
   for (
     const name of names
@@ -1336,40 +1573,106 @@ function findAnimation(
     if (
       actions[name]
     ) {
+
       return actions[name];
     }
   }
 
-  const keys =
+  /*
+   * Después buscamos coincidencia
+   * ignorando mayúsculas.
+   */
+
+  const actionNames =
     Object.keys(actions);
 
-  if (
-    keys.length > 0
+  for (
+    const wanted of names
   ) {
-    return actions[keys[0]];
+
+    const lower =
+      wanted.toLowerCase();
+
+    const found =
+      actionNames.find(
+        name =>
+          name.toLowerCase() ===
+          lower
+      );
+
+    if (found) {
+
+      return actions[found];
+    }
+  }
+
+  /*
+   * Finalmente buscamos nombres
+   * que contengan la palabra.
+   */
+
+  for (
+    const wanted of names
+  ) {
+
+    const lower =
+      wanted.toLowerCase();
+
+    const found =
+      actionNames.find(
+        name =>
+          name.toLowerCase()
+            .includes(lower)
+      );
+
+    if (found) {
+
+      return actions[found];
+    }
   }
 
   return null;
 }
 
+/* =========================================================
+   REPRODUCIR ANIMACIÓN
+========================================================= */
+
 function playAnimation(
   names
 ) {
 
-  if (!mixer) return;
-
-  const next =
-    findAnimation(names);
-
-  if (!next) return;
-
-  if (
-    currentAction === next
-  ) {
+  if (!mixer) {
     return;
   }
 
-  if (currentAction) {
+  const next =
+    findAnimation(
+      names
+    );
+
+  if (!next) {
+    return;
+  }
+
+  if (
+    currentAction ===
+    next
+  ) {
+
+    if (
+      !next.isRunning()
+    ) {
+
+      next.play();
+    }
+
+    return;
+  }
+
+  if (
+    currentAction
+  ) {
 
     currentAction.fadeOut(
       0.18
@@ -1377,9 +1680,11 @@ function playAnimation(
   }
 
   next.reset();
+
   next.fadeIn(
     0.18
   );
+
   next.play();
 
   currentAction =
@@ -1392,19 +1697,25 @@ function playAnimation(
 
 function applyCharacterVisuals() {
 
-  if (!player) return;
+  if (!player) {
+    return;
+  }
 
   const character =
     state.character;
 
-  if (character?.race) {
+  if (
+    character &&
+    character.race
+  ) {
 
     selectedRace =
       character.race;
   }
 
   if (
-    character?.appearance
+    character &&
+    character.appearance
   ) {
 
     selectedAppearance =
@@ -1414,57 +1725,24 @@ function applyCharacterVisuals() {
       };
   }
 
-  player.traverse(
-    object => {
-
-      if (
-        !object.isMesh
-      ) {
-        return;
-      }
-
-      const name =
-        (
-          object.name ||
-          ""
-        ).toLowerCase();
-
-      if (
-        selectedRace ===
-        "hada"
-      ) {
-
-        if (
-          name.includes("body") ||
-          name.includes("skin") ||
-          name.includes("face") ||
-          name.includes("head") ||
-          name.includes("hand") ||
-          name.includes("arm") ||
-          name.includes("leg") ||
-          name.includes("foot") ||
-          name.includes(
-            "superhero_male"
-          )
-        ) {
-
-          if (
-            object.material
-          ) {
-
-            object.material =
-              object.material.clone();
-
-            object.material.color.set(
-              0xe5b59f
-            );
-          }
-        }
-      }
-    }
-  );
+  /*
+   * Actualizamos los detalles
+   * raciales.
+   */
 
   updateRaceDetails();
+
+  /*
+   * Aplicamos ropa y accesorios.
+   */
+
+  applyClothingVisuals();
+
+  /*
+   * Actualizamos HUD.
+   */
+
+  updateHUDRace();
 }
 
 /* =========================================================
@@ -1473,7 +1751,9 @@ function applyCharacterVisuals() {
 
 function updateRaceDetails() {
 
-  if (!player) return;
+  if (!player) {
+    return;
+  }
 
   let details =
     player.getObjectByName(
@@ -1488,17 +1768,36 @@ function updateRaceDetails() {
     details.name =
       "raceDetails";
 
-    player.add(details);
+    player.add(
+      details
+    );
   }
+
+  /*
+   * Eliminamos detalles anteriores.
+   */
 
   while (
     details.children.length
   ) {
 
+    const child =
+      details.children[
+        0
+      ];
+
     details.remove(
-      details.children[0]
+      child
+    );
+
+    disposeObject(
+      child
     );
   }
+
+  /*
+   * HADA
+   */
 
   if (
     selectedRace ===
@@ -1510,6 +1809,10 @@ function updateRaceDetails() {
     );
   }
 
+  /*
+   * ELFO
+   */
+
   if (
     selectedRace ===
     "elfo"
@@ -1519,6 +1822,10 @@ function updateRaceDetails() {
       details
     );
   }
+
+  /*
+   * DEMONIO
+   */
 
   if (
     selectedRace ===
@@ -1541,27 +1848,37 @@ function createFairyWings(
 
   const wingMaterial =
     new THREE.MeshPhysicalMaterial({
-      color: 0xd9b8ff,
-      transparent: true,
-      opacity: 0.55,
-      transmission: 0.15,
-      roughness: 0.18,
-      side: THREE.DoubleSide,
-      emissive: 0x7b4eb5,
-      emissiveIntensity: 0.45
-    });
 
-  const glowMaterial =
-    new THREE.MeshBasicMaterial({
-      color: 0xe9cfff,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide
+      color:
+        0xd9b8ff,
+
+      transparent:
+        true,
+
+      opacity:
+        0.62,
+
+      roughness:
+        0.18,
+
+      metalness:
+        0.05,
+
+      side:
+        THREE.DoubleSide,
+
+      emissive:
+        0x7b4eb5,
+
+      emissiveIntensity:
+        0.45
     });
 
   const positions = [
+
     [-0.55, 1.7, 0.15],
     [0.55, 1.7, 0.15],
+
     [-0.7, 1.1, 0.18],
     [0.7, 1.1, 0.18]
   ];
@@ -1571,14 +1888,14 @@ function createFairyWings(
 
       const wing =
         new THREE.Mesh(
+
           new THREE.SphereGeometry(
             0.65,
             24,
             16
           ),
-          index < 2
-            ? wingMaterial.clone()
-            : glowMaterial.clone()
+
+          wingMaterial.clone()
         );
 
       wing.position.set(
@@ -1601,17 +1918,22 @@ function createFairyWings(
       wing.rotation.x =
         0.12;
 
-      wing.castShadow =
-        false;
+      wing.userData.fairyWing =
+        true;
 
-      parent.add(wing);
+      wing.userData.wingIndex =
+        index;
+
+      parent.add(
+        wing
+      );
     }
   );
 
   const light =
     new THREE.PointLight(
       0xdcb7ff,
-      0.8,
+      0.9,
       5
     );
 
@@ -1621,11 +1943,16 @@ function createFairyWings(
     0
   );
 
-  parent.add(light);
+  light.userData.fairyLight =
+    true;
+
+  parent.add(
+    light
+  );
 }
 
 /* =========================================================
-   DETALLES ELFOS
+   DETALLES DE ELFO
 ========================================================= */
 
 function createElfDetails(
@@ -1634,17 +1961,22 @@ function createElfDetails(
 
   const material =
     new THREE.MeshStandardMaterial({
-      color: 0x78c99c,
-      roughness: 0.7
+      color:
+        0x78c99c,
+
+      roughness:
+        0.7
     });
 
   const earLeft =
     new THREE.Mesh(
+
       new THREE.ConeGeometry(
         0.16,
         0.65,
         8
       ),
+
       material
     );
 
@@ -1673,10 +2005,31 @@ function createElfDetails(
   parent.add(
     earRight
   );
+
+  /*
+   * Pequeño brillo élfico.
+   */
+
+  const light =
+    new THREE.PointLight(
+      0x7dffb2,
+      0.45,
+      4
+    );
+
+  light.position.set(
+    0,
+    2,
+    0
+  );
+
+  parent.add(
+    light
+  );
 }
 
 /* =========================================================
-   DETALLES DEMONIO
+   DETALLES DE DEMONIO
 ========================================================= */
 
 function createDemonDetails(
@@ -1685,42 +2038,95 @@ function createDemonDetails(
 
   const hornMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0x3b2025,
-      roughness: 0.7
+      color:
+        0x3b2025,
+
+      roughness:
+        0.7
     });
 
   [-0.38, 0.38]
-    .forEach(x => {
+    .forEach(
+      x => {
 
-      const horn =
-        new THREE.Mesh(
-          new THREE.ConeGeometry(
-            0.18,
-            0.85,
-            10
-          ),
-          hornMaterial
+        const horn =
+          new THREE.Mesh(
+
+            new THREE.ConeGeometry(
+              0.18,
+              0.85,
+              10
+            ),
+
+            hornMaterial
+          );
+
+        horn.position.set(
+          x,
+          3.2,
+          0
         );
 
-      horn.position.set(
-        x,
-        3.2,
-        0
-      );
+        horn.rotation.z =
+          x < 0
+            ? -0.28
+            : 0.28;
 
-      horn.rotation.z =
-        x < 0
-          ? -0.28
-          : 0.28;
-
-      parent.add(
-        horn
-      );
-    });
+        parent.add(
+          horn
+        );
+      }
+    );
 }
 
 /* =========================================================
-   MOVIMIENTO
+   DISPOSICIÓN DE OBJETOS
+========================================================= */
+
+function disposeObject(
+  object
+) {
+
+  if (!object) {
+    return;
+  }
+
+  object.traverse(
+    child => {
+
+      if (
+        child.geometry
+      ) {
+
+        child.geometry.dispose();
+      }
+
+      if (
+        child.material
+      ) {
+
+        if (
+          Array.isArray(
+            child.material
+          )
+        ) {
+
+          child.material.forEach(
+            material =>
+              material.dispose()
+          );
+
+        } else {
+
+          child.material.dispose();
+        }
+      }
+    }
+  );
+}
+
+/* =========================================================
+   MOVIMIENTO CON TECLADO
 ========================================================= */
 
 function setupKeyboard() {
@@ -1729,8 +2135,21 @@ function setupKeyboard() {
     "keydown",
     e => {
 
-      keys[e.key.toLowerCase()] =
-        true;
+      keys[
+        e.key.toLowerCase()
+      ] = true;
+
+      /*
+       * Vuelo con F.
+       */
+
+      if (
+        e.key.toLowerCase() ===
+        "f"
+      ) {
+
+        toggleFlight();
+      }
     }
   );
 
@@ -1738,11 +2157,16 @@ function setupKeyboard() {
     "keyup",
     e => {
 
-      keys[e.key.toLowerCase()] =
-        false;
+      keys[
+        e.key.toLowerCase()
+      ] = false;
     }
   );
 }
+
+/* =========================================================
+   INPUT DE MOVIMIENTO
+========================================================= */
 
 function getMovementInput() {
 
@@ -1756,6 +2180,7 @@ function getMovementInput() {
     keys["a"] ||
     keys["arrowleft"]
   ) {
+
     x -= 1;
   }
 
@@ -1763,6 +2188,7 @@ function getMovementInput() {
     keys["d"] ||
     keys["arrowright"]
   ) {
+
     x += 1;
   }
 
@@ -1770,6 +2196,7 @@ function getMovementInput() {
     keys["w"] ||
     keys["arrowup"]
   ) {
+
     y += 1;
   }
 
@@ -1777,6 +2204,7 @@ function getMovementInput() {
     keys["s"] ||
     keys["arrowdown"]
   ) {
+
     y -= 1;
   }
 
@@ -1800,13 +2228,15 @@ function getMovementInput() {
   };
 }
 
+/* =========================================================
+   MOVIMIENTO DEL JUGADOR
+========================================================= */
+
 function updatePlayer(
   delta
 ) {
 
-  if (
-    !player
-  ) {
+  if (!player) {
     return;
   }
 
@@ -1819,12 +2249,61 @@ function updatePlayer(
     Math.abs(input.y) >
       0.03;
 
+  /*
+   * MOVIMIENTO EN VUELO
+   */
+
+  if (
+    state.flying &&
+    (
+      keys[" "] ||
+      keys["arrowup"]
+    )
+  ) {
+
+    player.position.y +=
+      8 * delta;
+  }
+
+  if (
+    state.flying &&
+    keys["shift"]
+  ) {
+
+    player.position.y -=
+      8 * delta;
+  }
+
+  /*
+   * Altura mínima y máxima
+   * durante el vuelo.
+   */
+
+  if (
+    state.flying
+  ) {
+
+    player.position.y =
+      THREE.MathUtils.clamp(
+        player.position.y,
+        0,
+        35
+      );
+
+  } else {
+
+    player.position.y =
+      0;
+  }
+
   if (moving) {
 
     const speed =
-      state.insideHouse
-        ? 7
-        : 9;
+      state.flying
+        ? 12
+        : state.insideHouse
+          ? 7
+          : 9;
 
     const forward =
       new THREE.Vector3(
@@ -1854,8 +2333,8 @@ function updatePlayer(
     );
 
     if (
-      direction.lengthSq()
-        > 0
+      direction.lengthSq() >
+      0
     ) {
 
       direction.normalize();
@@ -1896,25 +2375,54 @@ function updatePlayer(
         );
     }
 
-    playAnimation([
-      "Walk",
-      "Walking",
-      "Run",
-      "Running"
-    ]);
+    if (
+      state.flying
+    ) {
+
+      playAnimation([
+        "Fly",
+        "Flying",
+        "Flight",
+        "Glide",
+        "Run"
+      ]);
+
+    } else {
+
+      playAnimation([
+        "Walk",
+        "Walking",
+        "Run",
+        "Running"
+      ]);
+    }
 
   } else {
 
-    playAnimation([
-      "Idle",
-      "idle",
-      "Stand"
-    ]);
+    if (
+      state.flying
+    ) {
+
+      playAnimation([
+        "Fly",
+        "Flying",
+        "Flight",
+        "Glide",
+        "Idle"
+      ]);
+
+    } else {
+
+      playAnimation([
+        "Idle",
+        "idle",
+        "Stand",
+        "Breathing"
+      ]);
+    }
   }
 
-  if (
-    mixer
-  ) {
+  if (mixer) {
 
     mixer.update(
       delta
@@ -1923,12 +2431,18 @@ function updatePlayer(
 }
 
 /* =========================================================
-   COLISIONES GENERALES
+   COLISIONES
 ========================================================= */
 
 function canMoveTo(
   position
 ) {
+
+  /*
+   * Dentro de una casa:
+   * solamente existen las paredes
+   * interiores.
+   */
 
   if (
     state.insideHouse
@@ -1939,6 +2453,12 @@ function canMoveTo(
     );
   }
 
+  /*
+   * Durante el vuelo no chocamos
+   * contra las casas desde arriba,
+   * pero mantenemos el límite del mapa.
+   */
+
   const boundary =
     Math.hypot(
       position.x,
@@ -1948,25 +2468,32 @@ function canMoveTo(
   if (
     boundary > 292
   ) {
+
     return false;
   }
+
+  /*
+   * Colisiones de casas.
+   */
 
   for (
     const house of houses
   ) {
 
-    const hp =
-      house.position;
-
     const dx =
-      position.x - hp.x;
+      position.x -
+      house.position.x;
 
     const dz =
-      position.z - hp.z;
+      position.z -
+      house.position.z;
 
     if (
-      Math.abs(dx) < 13 &&
-      Math.abs(dz) < 11
+      Math.abs(dx) <
+        13 &&
+
+      Math.abs(dz) <
+        11
     ) {
 
       return false;
@@ -1979,9 +2506,15 @@ function canMoveTo(
    INTERIOR DE LAS CASAS
 ========================================================= */
 
-function canMoveInsideHouse(position) {
+function canMoveInsideHouse(
+  position
+) {
 
-  if (!state.insideHouse || !interior) {
+  if (
+    !state.insideHouse ||
+    !interior
+  ) {
+
     return true;
   }
 
@@ -1994,10 +2527,17 @@ function canMoveInsideHouse(position) {
     interior.worldZ;
 
   const limitX =
-    interior.width / 2 - 1.3;
+    interior.width / 2 -
+    1.35;
 
   const limitZ =
-    interior.depth / 2 - 1.3;
+    interior.depth / 2 -
+    1.35;
+
+  /*
+   * Nunca dejamos al jugador
+   * tocar las paredes.
+   */
 
   return (
     localX > -limitX &&
@@ -2007,74 +2547,104 @@ function canMoveInsideHouse(position) {
   );
 }
 
-function enterHouse(house) {
+/* =========================================================
+   ENTRAR A CASA
+========================================================= */
+
+function enterHouse(
+  house
+) {
 
   if (
     !house ||
+    !player ||
     state.insideHouse
   ) {
+
     return;
   }
+
+  /*
+   * Guardamos la posición exterior.
+   */
 
   currentHouse =
     house;
 
+  house.userData
+    .outsidePosition =
+      player.position.clone();
+
   state.insideHouse =
     true;
 
-  /*
-   * Guardamos la posición exterior.
-   * Esto permite volver exactamente
-   * al lugar donde estaba el jugador.
-   */
-  house.userData.previousPlayerPosition =
-    player
-      ? player.position.clone()
-      : null;
+  state.flying =
+    false;
 
   /*
-   * Ocultamos completamente
-   * el exterior de la casa.
+   * Ocultamos COMPLETAMENTE
+   * la casa exterior.
    */
+
   house.visible =
     false;
+
+  /*
+   * Creamos el interior.
+   */
 
   createHouseInterior(
     house
   );
 
   /*
-   * Posición inicial del jugador
-   * dentro del interior.
+   * Aparecemos dentro,
+   * frente a la puerta.
    */
-  if (player) {
 
-    player.position.set(
-      house.position.x,
-      0,
-      house.position.z + 4
-    );
+  player.position.set(
 
-    player.rotation.y =
-      Math.PI;
-  }
+    house.position.x,
+
+    0,
+
+    house.position.z + 3.5
+  );
+
+  player.rotation.y =
+    Math.PI;
 
   /*
-   * Cámara cercana.
+   * Reiniciamos cámara.
    */
-  yaw = 0;
-  pitch = 0.35;
 
-  updateCamera();
+  yaw = 0;
+
+  pitch =
+    0.32;
+
+  updateInteriorCamera();
+
+  /*
+   * Botones.
+   */
+
+  updateEnterButton(
+    false
+  );
 
   showExitHouseButton(
     true
   );
 
   showToast(
-    "🏠 Entraste a tu casa"
+    "🏠 Entraste a la casa"
   );
 }
+
+/* =========================================================
+   SALIR DE CASA
+========================================================= */
 
 function exitHouse() {
 
@@ -2082,86 +2652,96 @@ function exitHouse() {
     !state.insideHouse ||
     !currentHouse
   ) {
+
     return;
   }
 
+  const house =
+    currentHouse;
+
+  const outside =
+    house.userData
+      .outsidePosition;
+
   /*
-   * Guardamos la posición
-   * exterior antes de destruir
+   * Primero destruimos
    * el interior.
    */
-  const exitPosition =
-    currentHouse
-      .userData
-      .previousPlayerPosition;
 
   removeHouseInterior();
 
-  currentHouse.visible =
+  /*
+   * Volvemos a mostrar
+   * la casa exterior.
+   */
+
+  house.visible =
     true;
 
   state.insideHouse =
     false;
 
+  state.flying =
+    false;
+
+  /*
+   * Sacamos al jugador
+   * claramente fuera de la pared.
+   */
+
   if (
-    player
+    outside
   ) {
 
-    if (
-      exitPosition
-    ) {
+    player.position.copy(
+      outside
+    );
 
-      player.position.copy(
-        exitPosition
-      );
+    player.position.z +=
+      4.5;
 
-      /*
-       * Lo desplazamos un poco
-       * hacia afuera para evitar
-       * quedar dentro de la pared.
-       */
-      const direction =
-        new THREE.Vector3(
-          0,
-          0,
-          1
-        );
+  } else {
 
-      direction.applyEuler(
-        currentHouse.rotation
-      );
+    player.position.set(
 
-      player.position.addScaledVector(
-        direction,
-        3
-      );
+      house.position.x,
 
-    } else {
+      0,
 
-      player.position.set(
-        currentHouse.position.x,
-        0,
-        currentHouse.position.z + 14
-      );
-    }
+      house.position.z +
+        15
+    );
   }
 
   currentHouse =
     null;
 
+  /*
+   * Cámara exterior.
+   */
+
+  yaw = 0;
+
+  pitch =
+    0.48;
+
+  updateCamera();
+
   showExitHouseButton(
     false
   );
 
-  updateCamera();
+  updateEnterButton(
+    false
+  );
 
   showToast(
-    "🌿 Volviste a la aldea"
+    "🌿 Saliste de la casa"
   );
 }
 
 /* =========================================================
-   CREACIÓN DEL INTERIOR
+   CREAR INTERIOR
 ========================================================= */
 
 function createHouseInterior(
@@ -2170,16 +2750,24 @@ function createHouseInterior(
 
   removeHouseInterior();
 
-  const width = 20;
-  const depth = 16;
-  const height = 8;
+  const width =
+    20;
+
+  const depth =
+    16;
+
+  const height =
+    8;
 
   interior = {
+
     group:
       new THREE.Group(),
 
     width,
+
     depth,
+
     height,
 
     worldX:
@@ -2198,9 +2786,6 @@ function createHouseInterior(
     house.position.z
   );
 
-  group.userData.interior =
-    true;
-
   /*
    * =====================================================
    * PISO
@@ -2209,6 +2794,7 @@ function createHouseInterior(
 
   const floor =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         width,
         0.35,
@@ -2216,8 +2802,12 @@ function createHouseInterior(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x765139,
-        roughness: 0.88
+
+        color:
+          0x765139,
+
+        roughness:
+          0.88
       })
     );
 
@@ -2227,7 +2817,9 @@ function createHouseInterior(
   floor.receiveShadow =
     true;
 
-  group.add(floor);
+  group.add(
+    floor
+  );
 
   /*
    * =====================================================
@@ -2237,6 +2829,7 @@ function createHouseInterior(
 
   const carpet =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         7,
         0.12,
@@ -2244,8 +2837,12 @@ function createHouseInterior(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x713e58,
-        roughness: 0.95
+
+        color:
+          0x713e58,
+
+        roughness:
+          0.95
       })
     );
 
@@ -2258,30 +2855,44 @@ function createHouseInterior(
   carpet.receiveShadow =
     true;
 
-  group.add(carpet);
+  group.add(
+    carpet
+  );
 
   /*
    * =====================================================
-   * PAREDES
-   *
-   * Son cerradas completamente.
-   * No tienen ventanas abiertas.
+   * MATERIAL DE PAREDES
    * =====================================================
    */
 
   const wallMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0x9b6848,
-      roughness: 0.9
+
+      color:
+        0x936246,
+
+      roughness:
+        0.9,
+
+      side:
+        THREE.FrontSide
     });
+
+  /*
+   * =====================================================
+   * PARED TRASERA
+   * =====================================================
+   */
 
   const backWall =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         width,
         height,
         0.5
       ),
+
       wallMaterial
     );
 
@@ -2294,15 +2905,25 @@ function createHouseInterior(
   backWall.receiveShadow =
     true;
 
-  group.add(backWall);
+  group.add(
+    backWall
+  );
+
+  /*
+   * =====================================================
+   * PARED IZQUIERDA
+   * =====================================================
+   */
 
   const leftWall =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         0.5,
         height,
         depth
       ),
+
       wallMaterial
     );
 
@@ -2315,7 +2936,15 @@ function createHouseInterior(
   leftWall.receiveShadow =
     true;
 
-  group.add(leftWall);
+  group.add(
+    leftWall
+  );
+
+  /*
+   * =====================================================
+   * PARED DERECHA
+   * =====================================================
+   */
 
   const rightWall =
     leftWall.clone();
@@ -2327,13 +2956,25 @@ function createHouseInterior(
     rightWall
   );
 
+  /*
+   * =====================================================
+   * PARED FRONTAL
+   *
+   * Cerrada. La puerta es solamente
+   * decorativa porque para salir
+   * usamos el botón.
+   * =====================================================
+   */
+
   const frontWall =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         width,
         height,
         0.5
       ),
+
       wallMaterial
     );
 
@@ -2346,19 +2987,22 @@ function createHouseInterior(
   frontWall.receiveShadow =
     true;
 
-  group.add(frontWall);
+  group.add(
+    frontWall
+  );
 
   /*
    * =====================================================
-   * TECHO
+   * TECHO COMPLETO
    *
-   * Es sólido para que la cámara
-   * nunca pueda mirar al exterior.
+   * Esto evita que la cámara pueda
+   * mirar hacia el exterior.
    * =====================================================
    */
 
   const ceiling =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         width + 1,
         0.5,
@@ -2366,8 +3010,15 @@ function createHouseInterior(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x5b4031,
-        roughness: 1
+
+        color:
+          0x50372b,
+
+        roughness:
+          1,
+
+        side:
+          THREE.FrontSide
       })
     );
 
@@ -2377,16 +3028,19 @@ function createHouseInterior(
   ceiling.receiveShadow =
     true;
 
-  group.add(ceiling);
+  group.add(
+    ceiling
+  );
 
   /*
    * =====================================================
-   * PUERTA INTERIOR
+   * PUERTA DECORATIVA
    * =====================================================
    */
 
   const door =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.2,
         5.2,
@@ -2394,38 +3048,51 @@ function createHouseInterior(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x38251c,
-        roughness: 0.75
+
+        color:
+          0x38251c,
+
+        roughness:
+          0.75
       })
     );
 
   door.position.set(
     0,
     2.6,
-    depth / 2 + 0.05
+    depth / 2 +
+      0.05
   );
 
-  group.add(door);
+  group.add(
+    door
+  );
 
   /*
    * =====================================================
-   * MARCO DE PUERTA
+   * MARCO
    * =====================================================
    */
 
   const frameMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0x3e271d,
-      roughness: 0.8
+
+      color:
+        0x3e271d,
+
+      roughness:
+        0.8
     });
 
   const frameLeft =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         0.35,
         5.8,
         0.55
       ),
+
       frameMaterial
     );
 
@@ -2451,11 +3118,13 @@ function createHouseInterior(
 
   const frameTop =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.8,
         0.35,
         0.55
       ),
+
       frameMaterial
     );
 
@@ -2478,7 +3147,7 @@ function createHouseInterior(
   createFireplace(
     group,
     -6.8,
-    4.2
+    -7.2
   );
 
   /*
@@ -2490,7 +3159,7 @@ function createHouseInterior(
   createBed(
     group,
     5.8,
-    -5
+    -4.7
   );
 
   /*
@@ -2502,7 +3171,7 @@ function createHouseInterior(
   createTable(
     group,
     0,
-    -3.5
+    -2.5
   );
 
   /*
@@ -2513,14 +3182,14 @@ function createHouseInterior(
 
   createChair(
     group,
-    -2.8,
-    -3.5
+    -3,
+    -2.5
   );
 
   createChair(
     group,
-    2.8,
-    -3.5
+    3,
+    -2.5
   );
 
   /*
@@ -2531,8 +3200,8 @@ function createHouseInterior(
 
   createBookshelf(
     group,
-    -7.5,
-    -5
+    -7.4,
+    -3.7
   );
 
   /*
@@ -2556,33 +3225,33 @@ function createHouseInterior(
   createCandle(
     group,
     -2.5,
-    0
+    -2.5
   );
 
   createCandle(
     group,
-    3,
-    -3.5
+    2.7,
+    -2.5
   );
 
   /*
    * =====================================================
-   * LÁMPARAS
+   * LUCES
    * =====================================================
    */
 
   createInteriorLight(
     group,
     0,
-    4.8,
+    5.7,
     0
   );
 
   createInteriorLight(
     group,
-    -6,
-    3.5,
-    4
+    -5,
+    3.7,
+    2
   );
 
   /*
@@ -2612,17 +3281,23 @@ function createFireplace(
 
   const stoneMaterial =
     new THREE.MeshStandardMaterial({
-      color: 0x514b49,
-      roughness: 0.95
+
+      color:
+        0x514b49,
+
+      roughness:
+        0.95
     });
 
   const base =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         5,
         0.8,
         2
       ),
+
       stoneMaterial
     );
 
@@ -2644,18 +3319,24 @@ function createFireplace(
 
     const stone =
       new THREE.Mesh(
+
         new THREE.BoxGeometry(
           0.9,
           0.65,
           0.8
         ),
+
         stoneMaterial
       );
 
     stone.position.set(
-      x - 1.8 +
+
+      x -
+        1.8 +
         i * 0.9,
+
       0.75,
+
       z
     );
 
@@ -2671,6 +3352,7 @@ function createFireplace(
 
   const fire =
     new THREE.Mesh(
+
       new THREE.ConeGeometry(
         0.9,
         2.3,
@@ -2678,9 +3360,15 @@ function createFireplace(
       ),
 
       new THREE.MeshBasicMaterial({
-        color: 0xff6b19,
-        transparent: true,
-        opacity: 0.82
+
+        color:
+          0xff6b19,
+
+        transparent:
+          true,
+
+        opacity:
+          0.82
       })
     );
 
@@ -2730,17 +3418,23 @@ function createBed(
 
   const wood =
     new THREE.MeshStandardMaterial({
-      color: 0x563525,
-      roughness: 0.82
+
+      color:
+        0x563525,
+
+      roughness:
+        0.82
     });
 
   const frame =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         4.2,
         0.9,
         7
       ),
+
       wood
     );
 
@@ -2759,6 +3453,7 @@ function createBed(
 
   const mattress =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.8,
         0.65,
@@ -2766,8 +3461,12 @@ function createBed(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0xd9d0c4,
-        roughness: 0.9
+
+        color:
+          0xd9d0c4,
+
+        roughness:
+          0.9
       })
     );
 
@@ -2783,6 +3482,7 @@ function createBed(
 
   const blanket =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.85,
         0.15,
@@ -2790,8 +3490,12 @@ function createBed(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x596b86,
-        roughness: 0.9
+
+        color:
+          0x596b86,
+
+        roughness:
+          0.9
       })
     );
 
@@ -2807,6 +3511,7 @@ function createBed(
 
   const pillow =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.3,
         0.35,
@@ -2814,8 +3519,12 @@ function createBed(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0xf2e9dc,
-        roughness: 0.9
+
+        color:
+          0xf2e9dc,
+
+        roughness:
+          0.9
       })
     );
 
@@ -2828,33 +3537,6 @@ function createBed(
   group.add(
     pillow
   );
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const post =
-      new THREE.Mesh(
-        new THREE.CylinderGeometry(
-          0.16,
-          0.16,
-          2.5,
-          10
-        ),
-        wood
-      );
-
-    post.position.set(
-      x +
-        side * 1.8,
-      1.7,
-      z - 2.8
-    );
-
-    group.add(
-      post
-    );
-  }
 }
 
 /* =========================================================
@@ -2869,17 +3551,23 @@ function createTable(
 
   const wood =
     new THREE.MeshStandardMaterial({
-      color: 0x674329,
-      roughness: 0.85
+
+      color:
+        0x674329,
+
+      roughness:
+        0.85
     });
 
   const top =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         5,
         0.45,
         2.6
       ),
+
       wood
     );
 
@@ -2897,20 +3585,28 @@ function createTable(
   );
 
   for (
-    const dx of [-1.9, 1.9]
+    const dx of [
+      -1.9,
+      1.9
+    ]
   ) {
 
     for (
-      const dz of [-0.8, 0.8]
+      const dz of [
+        -0.8,
+        0.8
+      ]
     ) {
 
       const leg =
         new THREE.Mesh(
+
           new THREE.BoxGeometry(
             0.35,
             2,
             0.35
           ),
+
           wood
         );
 
@@ -2926,12 +3622,9 @@ function createTable(
     }
   }
 
-  /*
-   * Pequeños objetos sobre la mesa.
-   */
-
   const book =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         1.1,
         0.18,
@@ -2939,8 +3632,12 @@ function createTable(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0x8b3042,
-        roughness: 0.8
+
+        color:
+          0x8b3042,
+
+        roughness:
+          0.8
       })
     );
 
@@ -2950,15 +3647,13 @@ function createTable(
     z
   );
 
-  book.rotation.y =
-    -0.18;
-
   group.add(
     book
   );
 
   const cup =
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
         0.22,
         0.18,
@@ -2967,8 +3662,12 @@ function createTable(
       ),
 
       new THREE.MeshStandardMaterial({
-        color: 0xd8c8a8,
-        roughness: 0.7
+
+        color:
+          0xd8c8a8,
+
+        roughness:
+          0.7
       })
     );
 
@@ -2995,17 +3694,23 @@ function createChair(
 
   const material =
     new THREE.MeshStandardMaterial({
-      color: 0x5b3925,
-      roughness: 0.85
+
+      color:
+        0x5b3925,
+
+      roughness:
+        0.85
     });
 
   const seat =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         1.7,
         0.35,
         1.7
       ),
+
       material
     );
 
@@ -3020,20 +3725,28 @@ function createChair(
   );
 
   for (
-    const dx of [-0.55, 0.55]
+    const dx of [
+      -0.55,
+      0.55
+    ]
   ) {
 
     for (
-      const dz of [-0.55, 0.55]
+      const dz of [
+        -0.55,
+        0.55
+      ]
     ) {
 
       const leg =
         new THREE.Mesh(
+
           new THREE.BoxGeometry(
             0.2,
             1.2,
             0.2
           ),
+
           material
         );
 
@@ -3051,11 +3764,13 @@ function createChair(
 
   const back =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         1.7,
         2,
         0.25
       ),
+
       material
     );
 
@@ -3069,37 +3784,51 @@ function createChair(
     back
   );
 }
+
 /* =========================================================
    ESTANTERÍA
 ========================================================= */
 
-function createBookshelf(group, x, z) {
+function createBookshelf(
+  group,
+  x,
+  z
+) {
 
   const wood =
     new THREE.MeshStandardMaterial({
-      color: 0x543522,
-      roughness: 0.9
+
+      color:
+        0x543522,
+
+      roughness:
+        0.9
     });
 
-  const shelf =
+  const body =
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         3.2,
         6,
         0.7
       ),
+
       wood
     );
 
-  shelf.position.set(
+  body.position.set(
     x,
     3.2,
     z
   );
 
-  shelf.castShadow = true;
+  body.castShadow =
+    true;
 
-  group.add(shelf);
+  group.add(
+    body
+  );
 
   for (
     let i = 0;
@@ -3109,24 +3838,32 @@ function createBookshelf(group, x, z) {
 
     const board =
       new THREE.Mesh(
+
         new THREE.BoxGeometry(
           3.6,
           0.18,
           0.9
         ),
+
         wood
       );
 
     board.position.set(
+
       x,
-      1.2 + i * 1.35,
+
+      1.2 +
+        i * 1.35,
+
       z + 0.42
     );
 
-    group.add(board);
+    group.add(
+      board
+    );
   }
 
-  const bookColors = [
+  const colors = [
     0x7e3040,
     0x365b78,
     0x8b6b35,
@@ -3143,11 +3880,9 @@ function createBookshelf(group, x, z) {
 
     const book =
       new THREE.Mesh(
+
         new THREE.BoxGeometry(
-          THREE.MathUtils.randFloat(
-            0.28,
-            0.55
-          ),
+          0.35,
           THREE.MathUtils.randFloat(
             0.75,
             1.15
@@ -3156,24 +3891,31 @@ function createBookshelf(group, x, z) {
         ),
 
         new THREE.MeshStandardMaterial({
+
           color:
-            bookColors[
+            colors[
               i %
-              bookColors.length
+              colors.length
             ],
-          roughness: 0.85
+
+          roughness:
+            0.85
         })
       );
 
     const row =
-      Math.floor(i / 6);
+      Math.floor(
+        i / 6
+      );
 
-    const column =
+    const col =
       i % 6;
 
     book.position.set(
-      x - 1.15 +
-        column * 0.42,
+
+      x -
+        1.15 +
+        col * 0.42,
 
       1.45 +
         row * 1.35,
@@ -3181,14 +3923,11 @@ function createBookshelf(group, x, z) {
       z + 0.55
     );
 
-    book.rotation.z =
-      (Math.random() - 0.5) *
-      0.12;
-
-    group.add(book);
+    group.add(
+      book
+    );
   }
 }
-
 /* =========================================================
    BAÚL
 ========================================================= */
@@ -3266,7 +4005,7 @@ function createChest(group, x, z) {
 }
 
 /* =========================================================
-   VELA
+   VELAS
 ========================================================= */
 
 function createCandle(group, x, z) {
@@ -3279,7 +4018,6 @@ function createCandle(group, x, z) {
         0.7,
         12
       ),
-
       new THREE.MeshStandardMaterial({
         color: 0xe9dfc4,
         roughness: 0.75
@@ -3301,14 +4039,12 @@ function createCandle(group, x, z) {
         12,
         12
       ),
-
       new THREE.MeshBasicMaterial({
         color: 0xffb52e
       })
     );
 
-  flame.scale.y =
-    1.7;
+  flame.scale.y = 1.7;
 
   flame.position.set(
     x,
@@ -3316,8 +4052,7 @@ function createCandle(group, x, z) {
     z
   );
 
-  flame.userData.flame =
-    true;
+  flame.userData.flame = true;
 
   group.add(flame);
 
@@ -3341,7 +4076,7 @@ function createCandle(group, x, z) {
 }
 
 /* =========================================================
-   LUZ INTERIOR
+   LUCES INTERIORES
 ========================================================= */
 
 function createInteriorLight(
@@ -3358,7 +4093,6 @@ function createInteriorLight(
         16,
         16
       ),
-
       new THREE.MeshBasicMaterial({
         color: 0xffd98a
       })
@@ -3389,16 +4123,12 @@ function createInteriorLight(
 }
 
 /* =========================================================
-   DECORACIONES INTERIORES
+   DECORACIÓN
 ========================================================= */
 
 function createInteriorDecorations(
   group
 ) {
-
-  /*
-   * Cuadro 1
-   */
 
   const frame =
     new THREE.Mesh(
@@ -3407,7 +4137,6 @@ function createInteriorDecorations(
         2.2,
         0.18
       ),
-
       new THREE.MeshStandardMaterial({
         color: 0x4a2c20
       })
@@ -3428,7 +4157,6 @@ function createInteriorDecorations(
         1.65,
         0.08
       ),
-
       new THREE.MeshStandardMaterial({
         color: 0x5c7890,
         roughness: 0.8
@@ -3443,10 +4171,6 @@ function createInteriorDecorations(
 
   group.add(painting);
 
-  /*
-   * Jarrón
-   */
-
   const vase =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
@@ -3455,7 +4179,6 @@ function createInteriorDecorations(
         1.1,
         16
       ),
-
       new THREE.MeshStandardMaterial({
         color: 0x6f547e,
         roughness: 0.6
@@ -3470,10 +4193,6 @@ function createInteriorDecorations(
 
   group.add(vase);
 
-  /*
-   * Planta
-   */
-
   for (
     let i = 0;
     i < 5;
@@ -3487,7 +4206,6 @@ function createInteriorDecorations(
           12,
           12
         ),
-
         new THREE.MeshStandardMaterial({
           color: 0x3c7c4a,
           roughness: 0.85
@@ -3496,15 +4214,11 @@ function createInteriorDecorations(
 
     leaf.position.set(
       -3 +
-        Math.cos(i) *
-        0.35,
-
+        Math.cos(i) * 0.35,
       1.8 +
         i * 0.12,
-
       -5 +
-        Math.sin(i) *
-        0.35
+        Math.sin(i) * 0.35
     );
 
     leaf.scale.set(
@@ -3516,10 +4230,6 @@ function createInteriorDecorations(
     group.add(leaf);
   }
 
-  /*
-   * Barril
-   */
-
   const barrel =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
@@ -3528,7 +4238,6 @@ function createInteriorDecorations(
         1.8,
         18
       ),
-
       new THREE.MeshStandardMaterial({
         color: 0x69442b,
         roughness: 0.9
@@ -3545,20 +4254,13 @@ function createInteriorDecorations(
 }
 
 /* =========================================================
-   BOTÓN DE SALIDA
+   SALIDA DE CASA — BOTÓN SIEMPRE VISIBLE
 ========================================================= */
 
-function showExitHouseButton(
-  visible
-) {
+function createExitButton() {
 
   let button =
     $("exitHouse");
-
-  /*
-   * Si no existe en el HTML,
-   * lo creamos automáticamente.
-   */
 
   if (!button) {
 
@@ -3570,38 +4272,16 @@ function showExitHouseButton(
     button.id =
       "exitHouse";
 
-    button.textContent =
-      "🚪 SALIR DE LA CASA";
-
     document.body.appendChild(
       button
     );
-
-    button.addEventListener(
-      "click",
-      e => {
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        exitHouse();
-      }
-    );
-
-    button.addEventListener(
-      "touchend",
-      e => {
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        exitHouse();
-      },
-      {
-        passive: false
-      }
-    );
   }
+
+  button.type =
+    "button";
+
+  button.textContent =
+    "🚪 SALIR DE LA CASA";
 
   button.style.position =
     "fixed";
@@ -3610,25 +4290,25 @@ function showExitHouseButton(
     "50%";
 
   button.style.bottom =
-    "25px";
+    "24px";
 
   button.style.transform =
     "translateX(-50%)";
 
   button.style.zIndex =
-    "999999";
+    "2147483647";
 
   button.style.padding =
-    "14px 22px";
+    "15px 24px";
+
+  button.style.border =
+    "2px solid rgba(255,255,255,.65)";
 
   button.style.borderRadius =
     "18px";
 
-  button.style.border =
-    "2px solid rgba(255,255,255,.55)";
-
   button.style.background =
-    "rgba(40,25,20,.92)";
+    "rgba(35,20,16,.95)";
 
   button.style.color =
     "#fff";
@@ -3637,15 +4317,66 @@ function showExitHouseButton(
     "16px";
 
   button.style.fontWeight =
-    "700";
+    "800";
 
   button.style.boxShadow =
-    "0 5px 25px rgba(0,0,0,.45)";
+    "0 5px 25px rgba(0,0,0,.55)";
 
   button.style.pointerEvents =
-    visible
-      ? "auto"
-      : "none";
+    "auto";
+
+  button.style.touchAction =
+    "manipulation";
+
+  button.style.display =
+    "none";
+
+  /*
+   * Eliminamos listeners anteriores
+   * reemplazando el nodo.
+   */
+
+  const newButton =
+    button.cloneNode(true);
+
+  button.replaceWith(
+    newButton
+  );
+
+  button =
+    newButton;
+
+  const exit =
+    e => {
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      exitHouse();
+    };
+
+  button.addEventListener(
+    "click",
+    exit
+  );
+
+  button.addEventListener(
+    "touchend",
+    exit,
+    {
+      passive: false
+    }
+  );
+
+  return button;
+}
+
+function showExitHouseButton(
+  visible
+) {
+
+  const button =
+    createExitButton();
 
   button.style.display =
     visible
@@ -3654,13 +4385,18 @@ function showExitHouseButton(
 
   button.hidden =
     !visible;
+
+  button.style.pointerEvents =
+    visible
+      ? "auto"
+      : "none";
 }
 
 /* =========================================================
    BOTÓN ENTRAR
 ========================================================= */
 
-function ensureEnterHouseButton() {
+function createEnterButton() {
 
   let button =
     $("enterHouse");
@@ -3675,13 +4411,16 @@ function ensureEnterHouseButton() {
     button.id =
       "enterHouse";
 
-    button.textContent =
-      "🏠 ENTRAR";
-
     document.body.appendChild(
       button
     );
   }
+
+  button.type =
+    "button";
+
+  button.textContent =
+    "🏠 ENTRAR A LA CASA";
 
   button.style.position =
     "fixed";
@@ -3690,25 +4429,25 @@ function ensureEnterHouseButton() {
     "50%";
 
   button.style.bottom =
-    "95px";
+    "90px";
 
   button.style.transform =
     "translateX(-50%)";
 
   button.style.zIndex =
-    "999998";
+    "2147483646";
 
   button.style.padding =
-    "13px 25px";
+    "14px 23px";
+
+  button.style.border =
+    "2px solid rgba(255,255,255,.6)";
 
   button.style.borderRadius =
     "18px";
 
-  button.style.border =
-    "2px solid rgba(255,255,255,.55)";
-
   button.style.background =
-    "rgba(57,35,24,.94)";
+    "rgba(48,29,20,.95)";
 
   button.style.color =
     "#fff";
@@ -3720,42 +4459,32 @@ function ensureEnterHouseButton() {
     "800";
 
   button.style.boxShadow =
-    "0 5px 25px rgba(0,0,0,.4)";
+    "0 5px 25px rgba(0,0,0,.5)";
+
+  button.style.pointerEvents =
+    "auto";
+
+  button.style.touchAction =
+    "manipulation";
 
   button.style.display =
     "none";
 
-  button.style.pointerEvents =
-    "none";
-
-  /*
-   * Limpiamos listeners anteriores
-   * reemplazando el botón.
-   */
-
-  const fresh =
+  const newButton =
     button.cloneNode(true);
 
   button.replaceWith(
-    fresh
+    newButton
   );
 
-  button = fresh;
+  button =
+    newButton;
 
-  const activate = e => {
+  const enter =
+    e => {
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (
-      currentHouse
-    ) {
-
-      enterHouse(
-        currentHouse
-      );
-
-    } else {
+      e.preventDefault();
+      e.stopPropagation();
 
       const nearest =
         findNearestHouse();
@@ -3766,17 +4495,16 @@ function ensureEnterHouseButton() {
           nearest
         );
       }
-    }
-  };
+    };
 
   button.addEventListener(
     "click",
-    activate
+    enter
   );
 
   button.addEventListener(
     "touchend",
-    activate,
+    enter,
     {
       passive: false
     }
@@ -3795,39 +4523,47 @@ function findNearestHouse() {
     !player ||
     state.insideHouse
   ) {
+
     return null;
   }
 
   let nearest =
     null;
 
-  let distance =
+  let nearestDistance =
     Infinity;
 
-  houses.forEach(
-    house => {
+  for (
+    const house of houses
+  ) {
 
-      const d =
-        player.position.distanceTo(
-          house.position
-        );
+    const distance =
+      player.position.distanceTo(
+        house.position
+      );
 
-      if (
-        d < distance
-      ) {
+    if (
+      distance <
+      nearestDistance
+    ) {
 
-        distance =
-          d;
+      nearestDistance =
+        distance;
 
-        nearest =
-          house;
-      }
+      nearest =
+        house;
     }
-  );
+  }
 
-  return distance <= 18
-    ? nearest
-    : null;
+  if (
+    nearestDistance <=
+    18
+  ) {
+
+    return nearest;
+  }
+
+  return null;
 }
 
 /* =========================================================
@@ -3837,57 +4573,24 @@ function findNearestHouse() {
 function setupHouse() {
 
   const enterButton =
-    ensureEnterHouseButton();
+    createEnterButton();
+
+  createExitButton();
 
   /*
-   * Botón de salida.
-   */
-
-  showExitHouseButton(
-    false
-  );
-
-  /*
-   * Compatibilidad con HTML
-   * antiguo.
-   */
-
-  const oldEnter =
-    $("enterHouse");
-
-  if (
-    oldEnter &&
-    oldEnter !== enterButton
-  ) {
-
-    oldEnter.addEventListener(
-      "click",
-      e => {
-
-        e.preventDefault();
-
-        const house =
-          findNearestHouse();
-
-        if (house) {
-          enterHouse(
-            house
-          );
-        }
-      }
-    );
-  }
-
-  /*
-   * Revisamos continuamente
-   * si hay una casa cerca.
+   * Revisamos cada 100 ms.
    */
 
   setInterval(
     () => {
 
       if (
-        !player ||
+        !player
+      ) {
+        return;
+      }
+
+      if (
         state.insideHouse
       ) {
 
@@ -3905,43 +4608,34 @@ function setupHouse() {
 
       if (nearest) {
 
-        currentHouse =
-          nearest;
-
-        enterButton.textContent =
-          "🏠 ENTRAR A LA CASA";
-
         enterButton.style.display =
           "block";
-
-        enterButton.style.pointerEvents =
-          "auto";
 
         enterButton.hidden =
           false;
 
-      } else {
+        enterButton.style.pointerEvents =
+          "auto";
 
-        currentHouse =
-          null;
+      } else {
 
         enterButton.style.display =
           "none";
 
-        enterButton.style.pointerEvents =
-          "none";
-
         enterButton.hidden =
           true;
+
+        enterButton.style.pointerEvents =
+          "none";
       }
 
     },
-    120
+    100
   );
 }
 
 /* =========================================================
-   ELIMINAR INTERIOR
+   CREAR INTERIOR
 ========================================================= */
 
 function removeHouseInterior() {
@@ -3949,54 +4643,428 @@ function removeHouseInterior() {
   if (
     !interior
   ) {
+
     return;
   }
 
   if (
-    interior.group &&
-    scene
+    interior.group
   ) {
 
     scene.remove(
       interior.group
     );
 
-    interior.group.traverse(
-      object => {
-
-        if (
-          object.geometry
-        ) {
-
-          object.geometry.dispose();
-        }
-
-        if (
-          object.material
-        ) {
-
-          if (
-            Array.isArray(
-              object.material
-            )
-          ) {
-
-            object.material.forEach(
-              material =>
-                material.dispose()
-            );
-
-          } else {
-
-            object.material.dispose();
-          }
-        }
-      }
+    disposeObject(
+      interior.group
     );
   }
 
   interior =
     null;
+}
+
+function createHouseInterior(
+  house
+) {
+
+  removeHouseInterior();
+
+  const width =
+    20;
+
+  const depth =
+    16;
+
+  const height =
+    8;
+
+  interior = {
+
+    group:
+      new THREE.Group(),
+
+    width,
+
+    depth,
+
+    height,
+
+    worldX:
+      house.position.x,
+
+    worldZ:
+      house.position.z
+  };
+
+  const group =
+    interior.group;
+
+  group.position.set(
+    house.position.x,
+    0,
+    house.position.z
+  );
+
+  /*
+   * Piso.
+   */
+
+  const floor =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        width,
+        0.35,
+        depth
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:
+          0x765139,
+
+        roughness:
+          0.88
+      })
+    );
+
+  floor.position.y =
+    0.05;
+
+  floor.receiveShadow =
+    true;
+
+  group.add(
+    floor
+  );
+
+  /*
+   * Alfombra.
+   */
+
+  const carpet =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        7,
+        0.12,
+        5
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:
+          0x713e58,
+
+        roughness:
+          0.95
+      })
+    );
+
+  carpet.position.set(
+    0,
+    0.28,
+    1
+  );
+
+  group.add(
+    carpet
+  );
+
+  /*
+   * Material de paredes.
+   */
+
+  const wallMaterial =
+    new THREE.MeshStandardMaterial({
+
+      color:
+        0x936246,
+
+      roughness:
+        0.9
+    });
+
+  /*
+   * Pared trasera.
+   */
+
+  const back =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        width,
+        height,
+        0.5
+      ),
+
+      wallMaterial
+    );
+
+  back.position.set(
+    0,
+    height / 2,
+    -depth / 2
+  );
+
+  group.add(
+    back
+  );
+
+  /*
+   * Pared izquierda.
+   */
+
+  const left =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        0.5,
+        height,
+        depth
+      ),
+
+      wallMaterial
+    );
+
+  left.position.set(
+    -width / 2,
+    height / 2,
+    0
+  );
+
+  group.add(
+    left
+  );
+
+  /*
+   * Pared derecha.
+   */
+
+  const right =
+    left.clone();
+
+  right.position.x =
+    width / 2;
+
+  group.add(
+    right
+  );
+
+  /*
+   * Pared frontal completamente cerrada.
+   */
+
+  const front =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        width,
+        height,
+        0.5
+      ),
+
+      wallMaterial
+    );
+
+  front.position.set(
+    0,
+    height / 2,
+    depth / 2
+  );
+
+  group.add(
+    front
+  );
+
+  /*
+   * Techo completamente sólido.
+   */
+
+  const ceiling =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        width + 1,
+        0.5,
+        depth + 1
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color:
+          0x50372b,
+
+        roughness:
+          1
+      })
+    );
+
+  ceiling.position.y =
+    height;
+
+  group.add(
+    ceiling
+  );
+
+  /*
+   * Puerta decorativa.
+   */
+
+  const door =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        3.2,
+        5.2,
+        0.35
+      ),
+
+      new THREE.MeshStandardMaterial({
+
+        color:
+          0x38251c,
+
+        roughness:
+          0.75
+      })
+    );
+
+  door.position.set(
+    0,
+    2.6,
+    depth / 2 +
+      0.05
+  );
+
+  group.add(
+    door
+  );
+
+  /*
+   * Marco.
+   */
+
+  const frameMaterial =
+    new THREE.MeshStandardMaterial({
+
+      color:
+        0x3e271d,
+
+      roughness:
+        0.8
+    });
+
+  const frameLeft =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        0.35,
+        5.8,
+        0.55
+      ),
+
+      frameMaterial
+    );
+
+  frameLeft.position.set(
+    -1.75,
+    2.9,
+    depth / 2
+  );
+
+  group.add(
+    frameLeft
+  );
+
+  const frameRight =
+    frameLeft.clone();
+
+  frameRight.position.x =
+    1.75;
+
+  group.add(
+    frameRight
+  );
+
+  /*
+   * Decoración.
+   */
+
+  createFireplace(
+    group,
+    -6.8,
+    -7.2
+  );
+
+  createBed(
+    group,
+    5.8,
+    -4.7
+  );
+
+  createTable(
+    group,
+    0,
+    -2.5
+  );
+
+  createChair(
+    group,
+    -3,
+    -2.5
+  );
+
+  createChair(
+    group,
+    3,
+    -2.5
+  );
+
+  createBookshelf(
+    group,
+    -7.4,
+    -3.7
+  );
+
+  createChest(
+    group,
+    7,
+    2.8
+  );
+
+  createCandle(
+    group,
+    -2.5,
+    -2.5
+  );
+
+  createCandle(
+    group,
+    2.7,
+    -2.5
+  );
+
+  createInteriorLight(
+    group,
+    0,
+    5.7,
+    0
+  );
+
+  createInteriorLight(
+    group,
+    -5,
+    3.7,
+    2
+  );
+
+  createInteriorDecorations(
+    group
+  );
+
+  scene.add(
+    group
+  );
 }
 
 /* =========================================================
@@ -4012,29 +5080,24 @@ function updateCamera() {
     return;
   }
 
-  let distance;
-  let height;
-
   if (
     state.insideHouse
   ) {
 
-    /*
-     * Cámara corta dentro
-     * del interior.
-     */
+    updateInteriorCamera();
 
-    distance = 7;
-    height = 3.6;
-
-  } else {
-
-    distance = 18;
-    height = 8;
+    return;
   }
+
+  const distance =
+    18;
+
+  const height =
+    8;
 
   const offset =
     new THREE.Vector3(
+
       Math.sin(yaw) *
         distance,
 
@@ -4047,16 +5110,132 @@ function updateCamera() {
     );
 
   const target =
-    player.position
-      .clone();
+    player.position.clone();
 
-  target.y += 3;
+  target.y +=
+    3;
+
+  const desired =
+    target.clone()
+      .add(offset);
 
   camera.position.lerp(
-    target.clone().add(
-      offset
-    ),
+    desired,
     0.15
+  );
+
+  camera.lookAt(
+    target
+  );
+}
+
+/* =========================================================
+   CÁMARA DEL INTERIOR
+========================================================= */
+
+function updateInteriorCamera() {
+
+  if (
+    !state.insideHouse ||
+    !interior ||
+    !player
+  ) {
+    return;
+  }
+
+  const minX =
+    interior.worldX -
+    interior.width / 2 +
+    1.6;
+
+  const maxX =
+    interior.worldX +
+    interior.width / 2 -
+    1.6;
+
+  const minZ =
+    interior.worldZ -
+    interior.depth / 2 +
+    1.6;
+
+  const maxZ =
+    interior.worldZ +
+    interior.depth / 2 -
+    1.6;
+
+  /*
+   * El jugador no puede salir.
+   */
+
+  player.position.x =
+    THREE.MathUtils.clamp(
+      player.position.x,
+      minX,
+      maxX
+    );
+
+  player.position.z =
+    THREE.MathUtils.clamp(
+      player.position.z,
+      minZ,
+      maxZ
+    );
+
+  const distance =
+    5.8;
+
+  const target =
+    player.position.clone();
+
+  target.y +=
+    2.4;
+
+  const offset =
+    new THREE.Vector3(
+
+      Math.sin(yaw) *
+        distance,
+
+      3.2,
+
+      Math.cos(yaw) *
+        distance
+    );
+
+  const desired =
+    target.clone()
+      .add(offset);
+
+  /*
+   * La cámara también queda
+   * dentro de las paredes.
+   */
+
+  desired.x =
+    THREE.MathUtils.clamp(
+      desired.x,
+      minX + 0.4,
+      maxX - 0.4
+    );
+
+  desired.z =
+    THREE.MathUtils.clamp(
+      desired.z,
+      minZ + 0.4,
+      maxZ - 0.4
+    );
+
+  desired.y =
+    THREE.MathUtils.clamp(
+      desired.y,
+      1.5,
+      interior.height -
+        0.8
+    );
+
+  camera.position.lerp(
+    desired,
+    0.25
   );
 
   camera.lookAt(
@@ -4070,7 +5249,9 @@ function updateCamera() {
 
 function setupCameraTouch() {
 
-  if (!renderer) return;
+  if (!renderer) {
+    return;
+  }
 
   const canvas =
     renderer.domElement;
@@ -4085,11 +5266,6 @@ function setupCameraTouch() {
         return;
       }
 
-      /*
-       * No mover cámara si el dedo
-       * está sobre controles.
-       */
-
       const target =
         e.target;
 
@@ -4101,10 +5277,13 @@ function setupCameraTouch() {
           "#chat"
         ) ||
         target.closest(
+          "#chatToggle"
+        ) ||
+        target.closest(
           "#sideMap"
         ) ||
         target.closest(
-          "#map"
+          "#mapPanel"
         ) ||
         target.closest(
           "button"
@@ -4118,11 +5297,12 @@ function setupCameraTouch() {
         true;
 
       lastTouchX =
-        e.touches[0].clientX;
+        e.touches[0]
+          .clientX;
 
       lastTouchY =
-        e.touches[0].clientY;
-
+        e.touches[0]
+          .clientY;
     },
     {
       passive: true
@@ -4170,8 +5350,16 @@ function setupCameraTouch() {
           0.8
         );
 
-      updateCamera();
+      if (
+        state.insideHouse
+      ) {
 
+        updateInteriorCamera();
+
+      } else {
+
+        updateCamera();
+      }
     },
     {
       passive: true
@@ -4184,7 +5372,6 @@ function setupCameraTouch() {
 
       draggingCamera =
         false;
-
     }
   );
 }
@@ -4214,472 +5401,466 @@ function resize() {
   );
 }
 /* =========================================================
-   JOYSTICK
+   VUELO — HADAS Y ELFOS
 ========================================================= */
 
-function setupJoystick() {
+function canFly() {
 
-  const joystick =
-    $("joystick");
-
-  if (!joystick) return;
-
-  const stick =
-    joystick.querySelector(
-      ".stick"
-    );
-
-  if (!stick) return;
-
-  let active = false;
-
-  function updateStick(
-    clientX,
-    clientY
-  ) {
-
-    const rect =
-      joystick.getBoundingClientRect();
-
-    const centerX =
-      rect.left +
-      rect.width / 2;
-
-    const centerY =
-      rect.top +
-      rect.height / 2;
-
-    let dx =
-      clientX - centerX;
-
-    let dy =
-      clientY - centerY;
-
-    const max =
-      rect.width * 0.32;
-
-    const distance =
-      Math.hypot(
-        dx,
-        dy
-      );
-
-    if (
-      distance > max
-    ) {
-
-      dx =
-        dx / distance * max;
-
-      dy =
-        dy / distance * max;
-    }
-
-    moveX =
-      dx / max;
-
-    moveY =
-      -dy / max;
-
-    stick.style.transform =
-      `translate(${dx}px, ${dy}px)`;
-  }
-
-  function resetStick() {
-
-    active = false;
-
-    moveX = 0;
-    moveY = 0;
-
-    stick.style.transform =
-      "translate(0px, 0px)";
-  }
-
-  joystick.addEventListener(
-    "touchstart",
-    e => {
-
-      e.preventDefault();
-
-      active = true;
-
-      const touch =
-        e.touches[0];
-
-      updateStick(
-        touch.clientX,
-        touch.clientY
-      );
-    },
-    {
-      passive: false
-    }
-  );
-
-  joystick.addEventListener(
-    "touchmove",
-    e => {
-
-      if (!active) return;
-
-      e.preventDefault();
-
-      const touch =
-        e.touches[0];
-
-      updateStick(
-        touch.clientX,
-        touch.clientY
-      );
-    },
-    {
-      passive: false
-    }
-  );
-
-  joystick.addEventListener(
-    "touchend",
-    e => {
-
-      e.preventDefault();
-
-      resetStick();
-    },
-    {
-      passive: false
-    }
-  );
-
-  joystick.addEventListener(
-    "touchcancel",
-    resetStick
+  return (
+    selectedRace === "hada" ||
+    selectedRace === "elfo"
   );
 }
 
-/* =========================================================
-   COMBATE
-========================================================= */
+function toggleFlight() {
 
-function setupCombat() {
-
-  const abilities =
-    [
-      $("ability0"),
-      $("ability1"),
-      $("ability2")
-    ];
-
-  abilities.forEach(
-    (button, index) => {
-
-      if (!button) return;
-
-      const cast =
-        e => {
-
-          e.preventDefault();
-          e.stopPropagation();
-
-          castAbility(
-            index
-          );
-        };
-
-      button.addEventListener(
-        "click",
-        cast
-      );
-
-      button.addEventListener(
-        "touchend",
-        cast,
-        {
-          passive: false
-        }
-      );
-    }
-  );
-}
-
-function castAbility(index) {
-
-  const costs = [
-    15,
-    25,
-    40
-  ];
-
-  const damages = [
-    15,
-    28,
-    50
-  ];
-
-  const cost =
-    costs[index] ||
-    15;
-
-  if (
-    mana < cost
-  ) {
+  if (!canFly()) {
 
     showToast(
-      "🔵 No tienes suficiente maná"
+      "🪽 Solo las Hadas y los Elfos pueden volar"
     );
 
     return;
   }
 
-  mana -= cost;
+  state.flying =
+    !state.flying;
 
-  updateBars();
-
-  createSpellEffect(
-    index
-  );
-
-  showToast(
-    `✨ Hechizo lanzado — ${damages[index]} daño`
-  );
-
-  if (socket) {
-
-    socket.emit(
-      "system",
-      `${state.username} lanzó un hechizo.`
-    );
-  }
-}
-
-function createSpellEffect(
-  index
-) {
-
-  if (!player) return;
-
-  const colors = [
-    0x75bfff,
-    0xb777ff,
-    0xff83d0
-  ];
-
-  const geometry =
-    new THREE.SphereGeometry(
-      0.22 +
-        index * 0.12,
-      16,
-      16
-    );
-
-  const material =
-    new THREE.MeshBasicMaterial({
-      color:
-        colors[index] ||
-        0xffffff,
-      transparent: true,
-      opacity: 0.9
-    });
-
-  const effect =
-    new THREE.Mesh(
-      geometry,
-      material
-    );
-
-  effect.position.copy(
-    player.position
-  );
-
-  effect.position.y +=
-    2.5;
-
-  effect.userData.life =
-    0.65;
-
-  effect.userData.magicEffect =
-    true;
-
-  scene.add(effect);
-
-  for (
-    let i = 0;
-    i < 8;
-    i++
+  if (
+    state.flying
   ) {
 
-    const spark =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          0.07,
-          8,
-          8
-        ),
-
-        new THREE.MeshBasicMaterial({
-          color:
-            colors[index] ||
-            0xffffff
-        })
+    player.position.y =
+      Math.max(
+        player.position.y,
+        4
       );
 
-    spark.position.copy(
-      effect.position
+    showToast(
+      selectedRace === "hada"
+        ? "🧚 ¡Has comenzado a volar!"
+        : "🧝 ¡Elfo en vuelo!"
     );
 
-    spark.userData.velocity =
-      new THREE.Vector3(
-        (Math.random() - 0.5) *
-          5,
+  } else {
 
-        Math.random() * 4,
+    player.position.y =
+      0;
 
-        (Math.random() - 0.5) *
-          5
-      );
-
-    spark.userData.life =
-      0.8;
-
-    spark.userData.magicEffect =
-      true;
-
-    scene.add(
-      spark
+    showToast(
+      "🌿 Has aterrizado"
     );
   }
+
+  updateFlightButton();
 }
 
 /* =========================================================
-   CHAT — SISTEMA ROBUSTO PARA IPHONE
+   BOTÓN DE VUELO PARA IPHONE
 ========================================================= */
 
-function setupChat() {
+function createFlightButton() {
 
-  const chat =
-    $("chat");
+  let button =
+    $("flightButton");
 
-  if (!chat) {
-    console.warn(
-      "⚠️ No existe #chat"
-    );
-    return;
-  }
+  if (!button) {
 
-  const toggle =
-    $("chatToggle");
-
-  const form =
-    $("chatForm") ||
-    chat.querySelector(
-      "form"
-    );
-
-  const input =
-    $("chatInput") ||
-    chat.querySelector(
-      "input"
-    );
-
-  /*
-   * Ocultamos inicialmente
-   * el chat.
-   */
-
-  chat.hidden = true;
-
-  chat.style.display =
-    "none";
-
-  chat.style.pointerEvents =
-    "none";
-
-  /*
-   * Creamos una X propia.
-   * No dependemos del HTML.
-   */
-
-  let closeButton =
-    chat.querySelector(
-      ".magic-chat-close"
-    );
-
-  if (!closeButton) {
-
-    closeButton =
+    button =
       document.createElement(
         "button"
       );
 
-    closeButton.className =
-      "magic-chat-close";
+    button.id =
+      "flightButton";
 
-    closeButton.type =
-      "button";
-
-    closeButton.textContent =
-      "×";
-
-    chat.prepend(
-      closeButton
+    document.body.appendChild(
+      button
     );
   }
 
-  closeButton.style.position =
-    "absolute";
+  button.type =
+    "button";
 
-  closeButton.style.top =
-    "8px";
+  button.style.position =
+    "fixed";
 
-  closeButton.style.right =
-    "8px";
+  button.style.right =
+    "20px";
 
-  closeButton.style.width =
-    "36px";
+  button.style.bottom =
+    "25px";
 
-  closeButton.style.height =
-    "36px";
+  button.style.zIndex =
+    "2147483645";
 
-  closeButton.style.zIndex =
-    "1000000";
+  button.style.padding =
+    "13px 18px";
 
-  closeButton.style.display =
-    "flex";
+  button.style.border =
+    "2px solid rgba(255,255,255,.55)";
 
-  closeButton.style.alignItems =
-    "center";
+  button.style.borderRadius =
+    "18px";
 
-  closeButton.style.justifyContent =
-    "center";
+  button.style.background =
+    "rgba(52,35,80,.94)";
 
-  closeButton.style.border =
-    "0";
-
-  closeButton.style.borderRadius =
-    "50%";
-
-  closeButton.style.background =
-    "rgba(0,0,0,.65)";
-
-  closeButton.style.color =
+  button.style.color =
     "#fff";
 
-  closeButton.style.fontSize =
-    "28px";
+  button.style.fontSize =
+    "15px";
 
-  closeButton.style.lineHeight =
-    "1";
+  button.style.fontWeight =
+    "800";
 
-  closeButton.style.pointerEvents =
+  button.style.boxShadow =
+    "0 5px 25px rgba(0,0,0,.45)";
+
+  button.style.touchAction =
+    "manipulation";
+
+  const newButton =
+    button.cloneNode(true);
+
+  button.replaceWith(
+    newButton
+  );
+
+  button =
+    newButton;
+
+  const activate =
+    e => {
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      toggleFlight();
+    };
+
+  button.addEventListener(
+    "click",
+    activate
+  );
+
+  button.addEventListener(
+    "touchend",
+    activate,
+    {
+      passive: false
+    }
+  );
+
+  updateFlightButton();
+
+  return button;
+}
+
+function updateFlightButton() {
+
+  const button =
+    $("flightButton");
+
+  if (!button) {
+    return;
+  }
+
+  if (!canFly()) {
+
+    button.style.display =
+      "none";
+
+    return;
+  }
+
+  button.style.display =
+    "block";
+
+  button.textContent =
+    state.flying
+      ? "🪽 ATERRIZAR"
+      : "🪽 VOLAR";
+}
+
+/* =========================================================
+   CHAT — TOTALMENTE INDEPENDIENTE
+========================================================= */
+
+function setupChat() {
+
+  let chat =
+    $("chat");
+
+  let toggle =
+    $("chatToggle");
+
+  /*
+   * Si el HTML no tiene botón,
+   * creamos uno.
+   */
+
+  if (!toggle) {
+
+    toggle =
+      document.createElement(
+        "button"
+      );
+
+    toggle.id =
+      "chatToggle";
+
+    toggle.type =
+      "button";
+
+    toggle.textContent =
+      "💬";
+
+    document.body.appendChild(
+      toggle
+    );
+  }
+
+  /*
+   * Si no existe el panel,
+   * lo creamos.
+   */
+
+  if (!chat) {
+
+    chat =
+      document.createElement(
+        "div"
+      );
+
+    chat.id =
+      "chat";
+
+    chat.innerHTML = `
+      <div class="magic-chat-header">
+        <strong>💬 CHAT DEL REINO</strong>
+        <button
+          type="button"
+          id="magicChatClose">
+          ×
+        </button>
+      </div>
+
+      <div id="chatMessages"></div>
+
+      <form id="chatForm">
+        <input
+          id="chatInput"
+          type="text"
+          autocomplete="off"
+          placeholder="Escribe un mensaje..."
+        />
+
+        <button type="submit">
+          ➤
+        </button>
+      </form>
+    `;
+
+    document.body.appendChild(
+      chat
+    );
+  }
+
+  /*
+   * BOTÓN FLOTANTE
+   */
+
+  toggle.style.position =
+    "fixed";
+
+  toggle.style.right =
+    "20px";
+
+  toggle.style.bottom =
+    "145px";
+
+  toggle.style.zIndex =
+    "2147483640";
+
+  toggle.style.width =
+    "55px";
+
+  toggle.style.height =
+    "55px";
+
+  toggle.style.border =
+    "2px solid rgba(255,255,255,.55)";
+
+  toggle.style.borderRadius =
+    "50%";
+
+  toggle.style.background =
+    "rgba(35,40,75,.95)";
+
+  toggle.style.color =
+    "#fff";
+
+  toggle.style.fontSize =
+    "25px";
+
+  toggle.style.pointerEvents =
     "auto";
 
-  closeButton.style.touchAction =
+  toggle.style.touchAction =
+    "manipulation";
+
+  /*
+   * PANEL
+   */
+
+  chat.style.position =
+    "fixed";
+
+  chat.style.right =
+    "15px";
+
+  chat.style.bottom =
+    "80px";
+
+  chat.style.width =
+    "min(88vw, 360px)";
+
+  chat.style.height =
+    "min(65vh, 470px)";
+
+  chat.style.zIndex =
+    "2147483641";
+
+  chat.style.background =
+    "rgba(20,25,43,.97)";
+
+  chat.style.border =
+    "2px solid rgba(255,255,255,.18)";
+
+  chat.style.borderRadius =
+    "20px";
+
+  chat.style.boxShadow =
+    "0 10px 45px rgba(0,0,0,.55)";
+
+  chat.style.display =
+    "none";
+
+  chat.style.flexDirection =
+    "column";
+
+  chat.style.overflow =
+    "hidden";
+
+  chat.style.pointerEvents =
+    "auto";
+
+  chat.style.touchAction =
+    "manipulation";
+
+  /*
+   * HEADER
+   */
+
+  let header =
+    chat.querySelector(
+      ".magic-chat-header"
+    );
+
+  if (!header) {
+
+    header =
+      document.createElement(
+        "div"
+      );
+
+    header.className =
+      "magic-chat-header";
+
+    chat.prepend(
+      header
+    );
+  }
+
+  header.style.height =
+    "52px";
+
+  header.style.display =
+    "flex";
+
+  header.style.alignItems =
+    "center";
+
+  header.style.justifyContent =
+    "space-between";
+
+  header.style.padding =
+    "0 12px 0 16px";
+
+  header.style.color =
+    "#fff";
+
+  /*
+   * BOTÓN X
+   */
+
+  let close =
+    $("magicChatClose") ||
+    chat.querySelector(
+      ".magic-chat-close"
+    );
+
+  if (!close) {
+
+    close =
+      document.createElement(
+        "button"
+      );
+
+    close.id =
+      "magicChatClose";
+
+    close.textContent =
+      "×";
+
+    close.type =
+      "button";
+
+    header.appendChild(
+      close
+    );
+  }
+
+  close.style.width =
+    "38px";
+
+  close.style.height =
+    "38px";
+
+  close.style.border =
+    "0";
+
+  close.style.borderRadius =
+    "50%";
+
+  close.style.background =
+    "rgba(0,0,0,.6)";
+
+  close.style.color =
+    "#fff";
+
+  close.style.fontSize =
+    "27px";
+
+  close.style.pointerEvents =
+    "auto";
+
+  close.style.touchAction =
     "manipulation";
 
   function openChat() {
-
-    chat.hidden =
-      false;
 
     chat.style.display =
       "flex";
@@ -4693,22 +5874,11 @@ function setupChat() {
     chat.style.pointerEvents =
       "auto";
 
-    chat.style.zIndex =
-      "999999";
-
-    if (input) {
-
-      setTimeout(
-        () => input.focus(),
-        80
-      );
-    }
+    chat.hidden =
+      false;
   }
 
   function closeChat() {
-
-    chat.hidden =
-      true;
 
     chat.style.display =
       "none";
@@ -4722,125 +5892,241 @@ function setupChat() {
     chat.style.pointerEvents =
       "none";
 
-    if (input) {
-      input.blur();
-    }
+    chat.hidden =
+      true;
+
+    document.activeElement
+      ?.blur();
   }
 
-  function toggleChat(
-    e
-  ) {
-
-    e?.preventDefault();
-    e?.stopPropagation();
-
-    const isOpen =
-      !chat.hidden &&
-      chat.style.display !==
-        "none";
-
-    if (isOpen) {
-
-      closeChat();
-
-    } else {
-
-      openChat();
-    }
-  }
-
-  if (toggle) {
-
-    toggle.addEventListener(
-      "click",
-      toggleChat
-    );
-
-    toggle.addEventListener(
-      "touchend",
-      toggleChat,
-      {
-        passive: false
-      }
-    );
-  }
-
-  closeButton.addEventListener(
-    "click",
+  const toggleChat =
     e => {
 
       e.preventDefault();
       e.stopPropagation();
 
-      closeChat();
-    }
+      if (
+        chat.style.display ===
+        "none"
+      ) {
+
+        openChat();
+
+      } else {
+
+        closeChat();
+      }
+    };
+
+  /*
+   * Evitamos registrar el mismo
+   * evento dos veces.
+   */
+
+  toggle.onclick =
+    null;
+
+  toggle.ontouchend =
+    null;
+
+  toggle.addEventListener(
+    "click",
+    toggleChat
   );
 
-  closeButton.addEventListener(
+  toggle.addEventListener(
     "touchend",
-    e => {
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      closeChat();
-    },
+    toggleChat,
     {
       passive: false
     }
   );
 
-  if (form) {
+  const closeChatEvent =
+    e => {
 
-    form.addEventListener(
-      "submit",
-      e => {
+      e.preventDefault();
+      e.stopPropagation();
 
-        e.preventDefault();
+      closeChat();
+    };
 
-        const text =
-          input
-            ?.value
-            ?.trim();
+  close.addEventListener(
+    "click",
+    closeChatEvent
+  );
 
-        if (!text) {
-          return;
-        }
+  close.addEventListener(
+    "touchend",
+    closeChatEvent,
+    {
+      passive: false
+    }
+  );
 
-        addChatMessage(
-          state.username,
-          text
-        );
+  /*
+   * MENSAJES
+   */
 
-        if (socket) {
+  let messages =
+    $("chatMessages");
 
-          socket.emit(
-            "chat",
-            {
-              username:
-                state.username,
+  if (!messages) {
 
-              text
-            }
-          );
-        }
+    messages =
+      document.createElement(
+        "div"
+      );
 
-        input.value = "";
-      }
+    messages.id =
+      "chatMessages";
+
+    chat.appendChild(
+      messages
     );
   }
 
-  if (socket) {
+  messages.style.flex =
+    "1";
+
+  messages.style.overflowY =
+    "auto";
+
+  messages.style.padding =
+    "12px";
+
+  messages.style.color =
+    "#fff";
+
+  /*
+   * FORMULARIO
+   */
+
+  let form =
+    $("chatForm");
+
+  let input =
+    $("chatInput");
+
+  if (!form) {
+
+    form =
+      document.createElement(
+        "form"
+      );
+
+    form.id =
+      "chatForm";
+
+    chat.appendChild(
+      form
+    );
+  }
+
+  if (!input) {
+
+    input =
+      document.createElement(
+        "input"
+      );
+
+    input.id =
+      "chatInput";
+
+    input.type =
+      "text";
+
+    input.placeholder =
+      "Escribe un mensaje...";
+
+    form.appendChild(
+      input
+    );
+  }
+
+  input.style.flex =
+    "1";
+
+  input.style.minWidth =
+    "0";
+
+  input.style.padding =
+    "11px";
+
+  input.style.borderRadius =
+    "12px";
+
+  input.style.border =
+    "1px solid rgba(255,255,255,.2)";
+
+  input.style.background =
+    "rgba(255,255,255,.08)";
+
+  input.style.color =
+    "#fff";
+
+  /*
+   * FORM SUBMIT
+   */
+
+  form.onsubmit =
+    e => {
+
+      e.preventDefault();
+
+      const text =
+        input.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+      addChatMessage(
+        state.username,
+        text
+      );
+
+      if (socket) {
+
+        socket.emit(
+          "chat",
+          {
+            username:
+              state.username,
+
+            text
+          }
+        );
+      }
+
+      input.value =
+        "";
+    };
+
+  /*
+   * SOCKET
+   */
+
+  if (
+    socket &&
+    !socket.userDataChatReady
+  ) {
+
+    socket.userDataChatReady =
+      true;
 
     socket.on(
       "chat",
       data => {
 
-        if (!data) return;
+        if (!data) {
+          return;
+        }
 
         addChatMessage(
           data.username ||
             "Jugador",
+
           data.text ||
             ""
         );
@@ -4849,15 +6135,23 @@ function setupChat() {
 
     socket.on(
       "system",
-      text => {
+      message => {
 
         addChatMessage(
           "🌎 Sistema",
-          text
+          message
         );
       }
     );
   }
+
+  /*
+   * IMPORTANTE:
+   * El panel empieza cerrado,
+   * pero el botón 💬 queda visible.
+   */
+
+  closeChat();
 }
 
 function addChatMessage(
@@ -4868,15 +6162,23 @@ function addChatMessage(
   const container =
     $("chatMessages");
 
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
   const message =
     document.createElement(
       "div"
     );
 
-  message.className =
-    "chat-message";
+  message.style.padding =
+    "8px 5px";
+
+  message.style.marginBottom =
+    "5px";
+
+  message.style.borderBottom =
+    "1px solid rgba(255,255,255,.08)";
 
   const name =
     document.createElement(
@@ -4911,132 +6213,201 @@ function addChatMessage(
 }
 
 /* =========================================================
-   MAPA — APERTURA Y CIERRE FORZADOS
+   MAPA
 ========================================================= */
 
 function setupMap() {
 
-  const mapButton =
+  let button =
     $("mapButton");
 
-  let map =
-    $("sideMap") ||
-    $("map");
-
-  if (!mapButton) {
-
-    console.warn(
-      "⚠️ No existe #mapButton"
-    );
-
-    return;
-  }
-
   /*
-   * Si no existe el mapa,
-   * lo creamos automáticamente.
+   * Si el botón no existe,
+   * creamos uno.
    */
 
-  if (!map) {
+  if (!button) {
 
-    map =
+    button =
+      document.createElement(
+        "button"
+      );
+
+    button.id =
+      "mapButton";
+
+    button.type =
+      "button";
+
+    button.textContent =
+      "🗺️";
+
+    document.body.appendChild(
+      button
+    );
+  }
+
+  button.style.position =
+    "fixed";
+
+  button.style.right =
+    "20px";
+
+  button.style.top =
+    "20px";
+
+  button.style.zIndex =
+    "2147483630";
+
+  button.style.width =
+    "54px";
+
+  button.style.height =
+    "54px";
+
+  button.style.border =
+    "2px solid rgba(255,255,255,.55)";
+
+  button.style.borderRadius =
+    "50%";
+
+  button.style.background =
+    "rgba(35,40,75,.95)";
+
+  button.style.color =
+    "#fff";
+
+  button.style.fontSize =
+    "24px";
+
+  button.style.pointerEvents =
+    "auto";
+
+  button.style.touchAction =
+    "manipulation";
+
+  /*
+   * MUY IMPORTANTE:
+   * usamos un ID diferente al botón.
+   */
+
+  let panel =
+    $("mapPanel");
+
+  if (!panel) {
+
+    panel =
       document.createElement(
         "div"
       );
 
-    map.id =
-      "sideMap";
+    panel.id =
+      "mapPanel";
 
-    document.body.appendChild(
-      map
-    );
-
-    map.innerHTML = `
-      <div class="magic-map-header">
-        <strong>🗺️ MAPA DEL REINO</strong>
-        <button type="button"
-                class="magic-map-close">
+    panel.innerHTML = `
+      <div class="map-title">
+        🗺️ MAPA DEL REINO
+        <button
+          id="mapClose"
+          type="button">
           ×
         </button>
       </div>
 
-      <div class="magic-map-body">
-        <div class="magic-map-land">
-          <div class="magic-map-village">
-            🏘️
-          </div>
+      <div id="magicMap">
+        <div class="map-village">
+          🏘️
+        </div>
 
-          <div class="magic-map-castle">
-            🏰
-          </div>
+        <div class="map-castle">
+          🏰
+        </div>
 
-          <div class="magic-map-lake">
-            💧
-          </div>
+        <div class="map-water">
+          💧
+        </div>
 
-          <div id="playerMarker">
-            🔵
-          </div>
+        <div id="mapPlayerMarker">
+          🔵
         </div>
       </div>
     `;
+
+    document.body.appendChild(
+      panel
+    );
   }
 
   /*
-   * Estilos directos para evitar
-   * problemas del CSS anterior.
+   * PANEL
    */
 
-  map.style.position =
+  panel.style.position =
     "fixed";
 
-  map.style.top =
+  panel.style.inset =
     "0";
 
-  map.style.right =
-    "0";
+  panel.style.zIndex =
+    "2147483640";
 
-  map.style.width =
-    "min(92vw, 420px)";
+  panel.style.background =
+    "rgba(12,18,30,.97)";
 
-  map.style.height =
-    "100vh";
-
-  map.style.background =
-    "rgba(18,23,38,.97)";
-
-  map.style.zIndex =
-    "999990";
-
-  map.style.boxSizing =
-    "border-box";
-
-  map.style.padding =
+  panel.style.padding =
     "18px";
 
-  map.style.overflow =
-    "hidden";
+  panel.style.boxSizing =
+    "border-box";
 
-  map.style.pointerEvents =
-    "auto";
-
-  map.style.touchAction =
-    "manipulation";
-
-  map.style.display =
+  panel.style.display =
     "none";
 
-  map.hidden =
-    true;
+  panel.style.pointerEvents =
+    "none";
+
+  panel.style.touchAction =
+    "manipulation";
 
   /*
-   * X del mapa.
+   * TÍTULO
+   */
+
+  const title =
+    panel.querySelector(
+      ".map-title"
+    );
+
+  if (title) {
+
+    title.style.height =
+      "60px";
+
+    title.style.display =
+      "flex";
+
+    title.style.alignItems =
+      "center";
+
+    title.style.justifyContent =
+      "space-between";
+
+    title.style.color =
+      "#fff";
+
+    title.style.fontSize =
+      "20px";
+
+    title.style.fontWeight =
+      "800";
+  }
+
+  /*
+   * X
    */
 
   let close =
-    map.querySelector(
-      ".magic-map-close"
-    );
+    $("mapClose");
 
   if (!close) {
 
@@ -5045,8 +6416,8 @@ function setupMap() {
         "button"
       );
 
-    close.className =
-      "magic-map-close";
+    close.id =
+      "mapClose";
 
     close.textContent =
       "×";
@@ -5054,28 +6425,16 @@ function setupMap() {
     close.type =
       "button";
 
-    map.prepend(
+    panel.appendChild(
       close
     );
   }
 
-  close.style.position =
-    "absolute";
-
-  close.style.top =
-    "12px";
-
-  close.style.right =
-    "12px";
-
-  close.style.zIndex =
-    "1000001";
-
   close.style.width =
-    "38px";
+    "42px";
 
   close.style.height =
-    "38px";
+    "42px";
 
   close.style.border =
     "0";
@@ -5084,81 +6443,232 @@ function setupMap() {
     "50%";
 
   close.style.background =
-    "rgba(0,0,0,.7)";
+    "rgba(0,0,0,.65)";
 
   close.style.color =
     "#fff";
 
   close.style.fontSize =
-    "28px";
+    "30px";
 
   close.style.pointerEvents =
     "auto";
 
+  close.style.touchAction =
+    "manipulation";
+
+  /*
+   * MAPA VISUAL
+   */
+
+  const map =
+    $("magicMap");
+
+  if (map) {
+
+    map.style.position =
+      "relative";
+
+    map.style.width =
+      "min(90vw, 650px)";
+
+    map.style.height =
+      "min(70vh, 600px)";
+
+    map.style.margin =
+      "30px auto";
+
+    map.style.borderRadius =
+      "30px";
+
+    map.style.overflow =
+      "hidden";
+
+    map.style.background =
+      "linear-gradient(145deg,#4f8c61,#78a866,#d1bd82)";
+
+    map.style.border =
+      "5px solid rgba(72,45,25,.7)";
+
+    map.style.boxShadow =
+      "inset 0 0 50px rgba(0,0,0,.25)";
+  }
+
+  /*
+   * LAGO
+   */
+
+  const lake =
+    panel.querySelector(
+      ".map-water"
+    );
+
+  if (lake) {
+
+    lake.style.position =
+      "absolute";
+
+    lake.style.width =
+      "180px";
+
+    lake.style.height =
+      "130px";
+
+    lake.style.left =
+      "12%";
+
+    lake.style.bottom =
+      "15%";
+
+    lake.style.borderRadius =
+      "50%";
+
+    lake.style.background =
+      "#338eb0";
+
+    lake.style.opacity =
+      ".9";
+  }
+
+  /*
+   * ALDEA
+   */
+
+  const village =
+    panel.querySelector(
+      ".map-village"
+    );
+
+  if (village) {
+
+    village.style.position =
+      "absolute";
+
+    village.style.left =
+      "48%";
+
+    village.style.top =
+      "48%";
+
+    village.style.fontSize =
+      "55px";
+  }
+
+  /*
+   * CASTILLO
+   */
+
+  const castle =
+    panel.querySelector(
+      ".map-castle"
+    );
+
+  if (castle) {
+
+    castle.style.position =
+      "absolute";
+
+    castle.style.right =
+      "12%";
+
+    castle.style.top =
+      "12%";
+
+    castle.style.fontSize =
+      "55px";
+  }
+
+  /*
+   * MARCADOR
+   */
+
+  const marker =
+    $("mapPlayerMarker");
+
+  if (marker) {
+
+    marker.style.position =
+      "absolute";
+
+    marker.style.left =
+      "50%";
+
+    marker.style.top =
+      "50%";
+
+    marker.style.fontSize =
+      "28px";
+
+    marker.style.transform =
+      "translate(-50%,-50%)";
+
+    marker.style.zIndex =
+      "5";
+  }
+
   function openMap() {
 
-    map.hidden =
-      false;
-
-    map.style.display =
+    panel.style.display =
       "block";
 
-    map.style.visibility =
+    panel.style.visibility =
       "visible";
 
-    map.style.opacity =
+    panel.style.opacity =
       "1";
 
-    map.style.pointerEvents =
+    panel.style.pointerEvents =
       "auto";
+
+    panel.hidden =
+      false;
 
     updateMapMarker();
   }
 
   function closeMap() {
 
-    map.hidden =
-      true;
-
-    map.style.display =
+    panel.style.display =
       "none";
 
-    map.style.visibility =
+    panel.style.visibility =
       "hidden";
 
-    map.style.opacity =
+    panel.style.opacity =
       "0";
 
-    map.style.pointerEvents =
+    panel.style.pointerEvents =
       "none";
+
+    panel.hidden =
+      true;
   }
 
-  function toggleMap(e) {
+  const toggleMap =
+    e => {
 
-    e?.preventDefault();
-    e?.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
-    const opened =
-      !map.hidden &&
-      map.style.display !==
-        "none";
+      if (
+        panel.style.display ===
+        "none"
+      ) {
 
-    if (opened) {
+        openMap();
 
-      closeMap();
+      } else {
 
-    } else {
+        closeMap();
+      }
+    };
 
-      openMap();
-    }
-  }
-
-  mapButton.addEventListener(
+  button.addEventListener(
     "click",
     toggleMap
   );
 
-  mapButton.addEventListener(
+  button.addEventListener(
     "touchend",
     toggleMap,
     {
@@ -5166,36 +6676,35 @@ function setupMap() {
     }
   );
 
-  close.addEventListener(
-    "click",
+  const closeMapEvent =
     e => {
 
       e.preventDefault();
       e.stopPropagation();
 
       closeMap();
-    }
+    };
+
+  close.addEventListener(
+    "click",
+    closeMapEvent
   );
 
   close.addEventListener(
     "touchend",
-    e => {
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      closeMap();
-    },
+    closeMapEvent,
     {
       passive: false
     }
   );
+
+  closeMap();
 }
 
 function updateMapMarker() {
 
   const marker =
-    $("playerMarker");
+    $("mapPlayerMarker");
 
   if (
     !marker ||
@@ -5203,11 +6712,6 @@ function updateMapMarker() {
   ) {
     return;
   }
-
-  /*
-   * Convertimos la posición
-   * del mundo a un pequeño mapa.
-   */
 
   const x =
     THREE.MathUtils.clamp(
@@ -5227,24 +6731,15 @@ function updateMapMarker() {
       1
     );
 
-  marker.style.position =
-    "absolute";
-
   marker.style.left =
-    `${50 + x * 43}%`;
+    `${50 + x * 40}%`;
 
   marker.style.top =
-    `${50 + z * 43}%`;
-
-  marker.style.fontSize =
-    "24px";
-
-  marker.style.transform =
-    "translate(-50%, -50%)";
+    `${50 + z * 40}%`;
 }
 
 /* =========================================================
-   CREACIÓN DE PERSONAJE
+   SELECCIÓN DE RAZA
 ========================================================= */
 
 function setupCharacterCreator() {
@@ -5256,24 +6751,25 @@ function setupCharacterCreator() {
     .forEach(
       button => {
 
-        const selectRace =
+        const select =
           e => {
 
             e.preventDefault();
-
             e.stopPropagation();
 
             selectedRace =
-              button.dataset.race ||
-              "humano";
+              (
+                button.dataset.race ||
+                "humano"
+              ).toLowerCase();
 
             document
               .querySelectorAll(
                 ".race-button"
               )
               .forEach(
-                b =>
-                  b.classList.remove(
+                other =>
+                  other.classList.remove(
                     "selected"
                   )
               );
@@ -5282,21 +6778,30 @@ function setupCharacterCreator() {
               "selected"
             );
 
-            updateRacePreview();
+            /*
+             * Aplicamos inmediatamente
+             * la nueva raza.
+             */
+
+            updateRaceDetails();
+
+            updateHUDRace();
+
+            updateFlightButton();
 
             showToast(
-              `✨ Raza: ${selectedRace}`
+              `✨ Raza elegida: ${getRaceName(selectedRace)}`
             );
           };
 
         button.addEventListener(
           "click",
-          selectRace
+          select
         );
 
         button.addEventListener(
           "touchend",
-          selectRace,
+          select,
           {
             passive: false
           }
@@ -5311,7 +6816,7 @@ function setupCharacterCreator() {
 
   if (finish) {
 
-    const finishCharacter =
+    const finishEvent =
       e => {
 
         e.preventDefault();
@@ -5322,17 +6827,23 @@ function setupCharacterCreator() {
 
     finish.addEventListener(
       "click",
-      finishCharacter
+      finishEvent
     );
 
     finish.addEventListener(
       "touchend",
-      finishCharacter,
+      finishEvent,
       {
         passive: false
       }
     );
   }
+
+  /*
+   * Botón de vuelo.
+   */
+
+  createFlightButton();
 }
 
 /* =========================================================
@@ -5344,13 +6855,9 @@ function createAppearanceMenu() {
   const creator =
     $("characterCreator");
 
-  if (!creator) return;
-
-  /*
-   * Si ya existe un menú generado,
-   * lo eliminamos para evitar
-   * duplicados.
-   */
+  if (!creator) {
+    return;
+  }
 
   creator
     .querySelector(
@@ -5369,62 +6876,73 @@ function createAppearanceMenu() {
   menu.innerHTML = `
     <div class="appearance-menu-card">
 
-      <h3>💇 APARIENCIA</h3>
+      <h3>✨ PERSONALIZA TU PERSONAJE</h3>
 
       <div class="appearance-section">
-        <strong>Cabello</strong>
 
-        <div class="appearance-choice-grid"
-             data-type="cabello">
+        <strong>💇 Cabello</strong>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Corto">
-            💇 Corto
+        <div
+          class="appearance-choice-grid"
+          data-type="cabello">
+
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Corto">
+            Corto
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Largo">
-            💇 Largo
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Medio">
+            Medio
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Medio">
-            💇 Medio
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Largo">
+            Largo
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Rapado">
-            💇 Rapado
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Rapado">
+            Rapado
           </button>
 
         </div>
       </div>
 
       <div class="appearance-section">
-        <strong>Ropa</strong>
 
-        <div class="appearance-choice-grid"
-             data-type="ropa">
+        <strong>👕 Ropa</strong>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Guerrero">
+        <div
+          class="appearance-choice-grid"
+          data-type="ropa">
+
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Guerrero">
             ⚔️ Guerrero
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Mago">
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Mago">
             🔮 Mago
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Noble">
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Noble">
             👑 Noble
           </button>
 
@@ -5432,27 +6950,39 @@ function createAppearanceMenu() {
       </div>
 
       <div class="appearance-section">
-        <strong>Accesorios</strong>
 
-        <div class="appearance-choice-grid"
-             data-type="accesorios">
+        <strong>👑 Accesorios</strong>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Ninguno">
+        <div
+          class="appearance-choice-grid"
+          data-type="accesorios">
+
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Ninguno">
             ❌ Ninguno
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Capa">
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Capa">
             🧥 Capa
           </button>
 
-          <button type="button"
-                  class="appearance-choice"
-                  data-value="Corona">
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Corona">
             👑 Corona
+          </button>
+
+          <button
+            type="button"
+            class="appearance-choice"
+            data-value="Amuleto">
+            🔮 Amuleto
           </button>
 
         </div>
@@ -5466,11 +6996,7 @@ function createAppearanceMenu() {
   );
 
   /*
-   * ESTILOS DIRECTOS
-   *
-   * Esto es importante porque
-   * el CSS anterior no tenía
-   * todas estas clases.
+   * Estilos directos.
    */
 
   menu.style.position =
@@ -5492,11 +7018,14 @@ function createAppearanceMenu() {
 
   if (card) {
 
+    card.style.position =
+      "relative";
+
+    card.style.zIndex =
+      "1000000";
+
     card.style.pointerEvents =
       "auto";
-
-    card.style.touchAction =
-      "manipulation";
   }
 
   menu
@@ -5506,48 +7035,51 @@ function createAppearanceMenu() {
     .forEach(
       button => {
 
+        button.style.position =
+          "relative";
+
+        button.style.zIndex =
+          "1000001";
+
         button.style.pointerEvents =
           "auto";
 
         button.style.touchAction =
           "manipulation";
 
-        button.style.cursor =
-          "pointer";
+        const grid =
+          button.parentElement;
 
         const type =
-          button
-            .parentElement
-            ?.dataset
-            ?.type;
+          grid?.dataset?.type;
 
         const value =
           button.dataset.value;
 
-        const select =
+        const choose =
           e => {
 
             e.preventDefault();
-
             e.stopPropagation();
 
             if (
-              type &&
-              value
+              !type ||
+              !value
             ) {
-
-              selectedAppearance[
-                type
-              ] = value;
+              return;
             }
+
+            selectedAppearance[
+              type
+            ] = value;
 
             menu
               .querySelectorAll(
                 `.appearance-choice-grid[data-type="${type}"] .appearance-choice`
               )
               .forEach(
-                b =>
-                  b.classList.remove(
+                other =>
+                  other.classList.remove(
                     "selected"
                   )
               );
@@ -5556,7 +7088,12 @@ function createAppearanceMenu() {
               "selected"
             );
 
-            updateAppearancePreview();
+            /*
+             * Aplicamos inmediatamente
+             * el cambio.
+             */
+
+            applyAppearance();
 
             showToast(
               `${type}: ${value}`
@@ -5565,12 +7102,12 @@ function createAppearanceMenu() {
 
         button.addEventListener(
           "click",
-          select
+          choose
         );
 
         button.addEventListener(
           "touchend",
-          select,
+          choose,
           {
             passive: false
           }
@@ -5580,6 +7117,10 @@ function createAppearanceMenu() {
 
   updateAppearanceButtons();
 }
+
+/* =========================================================
+   APARIENCIA
+========================================================= */
 
 function updateAppearanceButtons() {
 
@@ -5591,13 +7132,14 @@ function updateAppearanceButtons() {
       button => {
 
         const type =
-          button
-            .parentElement
+          button.parentElement
             ?.dataset
             ?.type;
 
         if (
-          selectedAppearance[type] ===
+          selectedAppearance[
+            type
+          ] ===
           button.dataset.value
         ) {
 
@@ -5615,110 +7157,196 @@ function updateAppearanceButtons() {
     );
 }
 
-/* =========================================================
-   PREVISUALIZACIÓN
-========================================================= */
+function applyAppearance() {
 
-function updateRacePreview() {
-
-  updateRaceDetails();
-
-  updateHUDRace();
-}
-
-function updateAppearancePreview() {
-
-  updateAppearanceButtons();
-
-  applyClothingVisuals();
-}
-
-function applyClothingVisuals() {
-
-  if (!player) return;
-
-  /*
-   * No reemplazamos el modelo entero.
-   * Cambiamos materiales y añadimos
-   * detalles visuales.
-   */
-
-  const clothing =
-    selectedAppearance.ropa;
-
-  let clothingColor =
-    0x3f5c83;
-
-  if (
-    clothing ===
-    "Mago"
-  ) {
-
-    clothingColor =
-      0x573f86;
-
-  } else if (
-    clothing ===
-    "Noble"
-  ) {
-
-    clothingColor =
-      0x9a7937;
+  if (!player) {
+    return;
   }
 
-  player.traverse(
-    object => {
+  updateHair();
 
-      if (
-        !object.isMesh ||
-        !object.material
-      ) {
-        return;
-      }
+  updateClothes();
 
-      const name =
-        (
-          object.name ||
-          ""
-        ).toLowerCase();
-
-      /*
-       * Solamente intentamos
-       * colorear partes que parecen
-       * pertenecer a la ropa.
-       */
-
-      if (
-        name.includes("cloth") ||
-        name.includes("shirt") ||
-        name.includes("armor") ||
-        name.includes("outfit") ||
-        name.includes("torso") ||
-        name.includes("chest") ||
-        name.includes("pants") ||
-        name.includes("boot")
-      ) {
-
-        object.material =
-          object.material.clone();
-
-        object.material.color.setHex(
-          clothingColor
-        );
-      }
-    }
-  );
-
-  updateAccessoryDetails();
+  updateAccessories();
 }
 
-function updateAccessoryDetails() {
+/* =========================================================
+   CABELLO
+========================================================= */
 
-  if (!player) return;
+function updateHair() {
+
+  if (!player) {
+    return;
+  }
+
+  let hairGroup =
+    player.getObjectByName(
+      "customHair"
+    );
+
+  if (!hairGroup) {
+
+    hairGroup =
+      new THREE.Group();
+
+    hairGroup.name =
+      "customHair";
+
+    player.add(
+      hairGroup
+    );
+  }
+
+  while (
+    hairGroup.children.length
+  ) {
+
+    const child =
+      hairGroup.children[0];
+
+    hairGroup.remove(
+      child
+    );
+
+    disposeObject(
+      child
+    );
+  }
+
+  const style =
+    selectedAppearance.cabello;
+
+  if (
+    style ===
+    "Rapado"
+  ) {
+
+    return;
+  }
+
+  const hairMaterial =
+    new THREE.MeshStandardMaterial({
+      color:
+        0x4b3024,
+
+      roughness:
+        0.8
+    });
+
+  let scale =
+    0.85;
+
+  if (
+    style ===
+    "Medio"
+  ) {
+
+    scale =
+      1.0;
+
+  } else if (
+    style ===
+    "Largo"
+  ) {
+
+    scale =
+      1.25;
+  }
+
+  const hair =
+    new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        0.72,
+        20,
+        16
+      ),
+
+      hairMaterial
+    )
+  ;
+
+  hair.scale.set(
+    scale,
+    0.72 * scale,
+    scale
+  );
+
+  hair.position.set(
+    0,
+    3.1,
+    -0.04
+  );
+
+  hairGroup.add(
+    hair
+  );
+
+  /*
+   * Mechones.
+   */
+
+  if (
+    style ===
+      "Medio" ||
+    style ===
+      "Largo"
+  ) {
+
+    for (
+      let i = -2;
+      i <= 2;
+      i++
+    ) {
+
+      const lock =
+        new THREE.Mesh(
+
+          new THREE.CapsuleGeometry(
+            0.12,
+            style ===
+              "Largo"
+              ? 1.25
+              : 0.75,
+
+            6,
+            10
+          ),
+
+          hairMaterial
+        );
+
+      lock.position.set(
+        i * 0.23,
+        style ===
+          "Largo"
+          ? 2.35
+          : 2.55,
+
+        -0.25
+      );
+
+      hairGroup.add(
+        lock
+      );
+    }
+  }
+}
+
+/* =========================================================
+   ROPA
+========================================================= */
+
+function updateClothes() {
+
+  if (!player) {
+    return;
+  }
 
   let group =
     player.getObjectByName(
-      "appearanceDetails"
+      "customClothes"
     );
 
   if (!group) {
@@ -5727,7 +7355,7 @@ function updateAccessoryDetails() {
       new THREE.Group();
 
     group.name =
-      "appearanceDetails";
+      "customClothes";
 
     player.add(
       group
@@ -5738,42 +7366,193 @@ function updateAccessoryDetails() {
     group.children.length
   ) {
 
+    const child =
+      group.children[0];
+
     group.remove(
-      group.children[0]
+      child
+    );
+
+    disposeObject(
+      child
     );
   }
+
+  let color =
+    0x42658f;
+
+  if (
+    selectedAppearance.ropa ===
+    "Mago"
+  ) {
+
+    color =
+      0x65439b;
+
+  } else if (
+    selectedAppearance.ropa ===
+    "Noble"
+  ) {
+
+    color =
+      0xb58a32;
+  }
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color,
+      roughness:
+        0.72
+    });
+
+  /*
+   * Túnica/armadura visual.
+   */
+
+  const torso =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        1.55,
+        1.65,
+        0.75
+      ),
+
+      material
+    );
+
+  torso.position.set(
+    0,
+    1.85,
+    0
+  );
+
+  torso.castShadow =
+    true;
+
+  group.add(
+    torso
+  );
+
+  /*
+   * Cinturón.
+   */
+
+  const belt =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        1.65,
+        0.22,
+        0.82
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:
+          0x3d281c,
+
+        roughness:
+          0.8
+      })
+    );
+
+  belt.position.set(
+    0,
+    1.35,
+    0
+  );
+
+  group.add(
+    belt
+  );
+}
+
+/* =========================================================
+   ACCESORIOS
+========================================================= */
+
+function updateAccessories() {
+
+  if (!player) {
+    return;
+  }
+
+  let group =
+    player.getObjectByName(
+      "customAccessories"
+    );
+
+  if (!group) {
+
+    group =
+      new THREE.Group();
+
+    group.name =
+      "customAccessories";
+
+    player.add(
+      group
+    );
+  }
+
+  while (
+    group.children.length
+  ) {
+
+    const child =
+      group.children[0];
+
+    group.remove(
+      child
+    );
+
+    disposeObject(
+      child
+    );
+  }
+
+  const accessory =
+    selectedAppearance
+      .accesorios;
 
   /*
    * CAPA
    */
 
   if (
-    selectedAppearance.accesorios ===
+    accessory ===
     "Capa"
   ) {
 
     const cape =
       new THREE.Mesh(
+
         new THREE.PlaneGeometry(
-          1.8,
-          2.8
+          2.1,
+          3.2
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0x4c1d5c,
-          side: THREE.DoubleSide,
-          roughness: 0.8
+
+          color:
+            0x54275e,
+
+          side:
+            THREE.DoubleSide,
+
+          roughness:
+            0.82
         })
       );
 
     cape.position.set(
       0,
-      1.9,
-      0.45
+      2,
+      0.48
     );
 
     cape.rotation.x =
-      -0.05;
+      0.04;
 
     group.add(
       cape
@@ -5785,29 +7564,36 @@ function updateAccessoryDetails() {
    */
 
   if (
-    selectedAppearance.accesorios ===
+    accessory ===
     "Corona"
   ) {
 
     const crown =
       new THREE.Mesh(
+
         new THREE.CylinderGeometry(
-          0.5,
-          0.62,
-          0.45,
+          0.52,
+          0.68,
+          0.42,
           6
         ),
 
         new THREE.MeshStandardMaterial({
-          color: 0xd9aa32,
-          metalness: 0.7,
-          roughness: 0.3
+
+          color:
+            0xd7a72d,
+
+          metalness:
+            0.75,
+
+          roughness:
+            0.28
         })
       );
 
     crown.position.set(
       0,
-      3.45,
+      3.55,
       0
     );
 
@@ -5821,16 +7607,25 @@ function updateAccessoryDetails() {
       i++
     ) {
 
-      const jewel =
+      const point =
         new THREE.Mesh(
-          new THREE.SphereGeometry(
+
+          new THREE.ConeGeometry(
             0.08,
-            10,
-            10
+            0.45,
+            6
           ),
 
-          new THREE.MeshBasicMaterial({
-            color: 0x8ee8ff
+          new THREE.MeshStandardMaterial({
+
+            color:
+              0xf0c84c,
+
+            metalness:
+              0.75,
+
+            roughness:
+              0.25
           })
         );
 
@@ -5840,81 +7635,114 @@ function updateAccessoryDetails() {
         Math.PI *
         2;
 
-      jewel.position.set(
-        Math.cos(angle) *
-          0.42,
+      point.position.set(
 
-        3.7,
+        Math.cos(angle) *
+          0.45,
+
+        3.85,
 
         Math.sin(angle) *
-          0.42
+          0.45
       );
 
       group.add(
-        jewel
+        point
       );
     }
+  }
+
+  /*
+   * AMULETO
+   */
+
+  if (
+    accessory ===
+    "Amuleto"
+  ) {
+
+    const chain =
+      new THREE.Mesh(
+
+        new THREE.TorusGeometry(
+          0.28,
+          0.04,
+          8,
+          24
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0xd5b45b,
+
+          metalness:
+            0.75,
+
+          roughness:
+            0.3
+        })
+      );
+
+    chain.position.set(
+      0,
+      2.25,
+      -0.48
+    );
+
+    chain.rotation.x =
+      Math.PI / 2;
+
+    group.add(
+      chain
+    );
+
+    const gem =
+      new THREE.Mesh(
+
+        new THREE.OctahedronGeometry(
+          0.25
+        ),
+
+        new THREE.MeshPhysicalMaterial({
+
+          color:
+            0x62d9ff,
+
+          emissive:
+            0x257da0,
+
+          emissiveIntensity:
+            0.7,
+
+          roughness:
+            0.2,
+
+          metalness:
+            0.15
+        })
+      );
+
+    gem.position.set(
+      0,
+      1.85,
+      -0.55
+    );
+
+    group.add(
+      gem
+    );
   }
 }
 
 /* =========================================================
-   CREATOR
+   GUARDAR PERSONAJE
 ========================================================= */
-
-function openCharacterCreator(
-  savedCharacter
-) {
-
-  const creator =
-    $("characterCreator");
-
-  if (!creator) {
-    return;
-  }
-
-  if (
-    savedCharacter
-  ) {
-
-    state.character =
-      savedCharacter;
-
-    selectedRace =
-      savedCharacter.race ||
-      "humano";
-
-    selectedAppearance =
-      {
-        ...selectedAppearance,
-
-        ...(savedCharacter.appearance ||
-          {})
-      };
-
-    creator.hidden =
-      true;
-
-    applyCharacterVisuals();
-    applyClothingVisuals();
-
-    updateHUDRace();
-
-    return;
-  }
-
-  creator.hidden =
-    false;
-
-  creator.style.display =
-    "block";
-
-  updateRacePreview();
-  updateAppearancePreview();
-}
 
 function saveCharacter() {
 
   const character = {
+
     race:
       selectedRace,
 
@@ -5937,34 +7765,35 @@ function saveCharacter() {
   fetch(
     "/api/character",
     {
-      method: "POST",
+      method:
+        "POST",
 
-      headers: {
-        "Content-Type":
-          "application/json"
-      },
+      headers:
+        {
+          "Content-Type":
+            "application/json"
+        },
 
-      body: JSON.stringify({
-        username:
-          state.username,
+      body:
+        JSON.stringify({
+          username:
+            state.username,
 
-        character
-      })
+          character
+        })
     }
   )
     .catch(
       error =>
         console.warn(
-          "No se pudo guardar en servidor:",
+          "No se pudo guardar personaje:",
           error
         )
     );
 
-  if (player) {
+  applyCharacterVisuals();
 
-    applyCharacterVisuals();
-    applyClothingVisuals();
-  }
+  applyAppearance();
 
   const creator =
     $("characterCreator");
@@ -5980,32 +7809,132 @@ function saveCharacter() {
 
   updateHUDRace();
 
+  updateFlightButton();
+
   showToast(
-    "✨ Tu personaje ha sido creado"
+    "✨ Personaje guardado"
   );
+}
+
+/* =========================================================
+   ABRIR CREATOR
+========================================================= */
+
+function openCharacterCreator(
+  savedCharacter
+) {
+
+  const creator =
+    $("characterCreator");
+
+  if (!creator) {
+    return;
+  }
+
+  if (
+    savedCharacter
+  ) {
+
+    state.character =
+      savedCharacter;
+
+    selectedRace =
+      (
+        savedCharacter.race ||
+        "humano"
+      ).toLowerCase();
+
+    selectedAppearance =
+      {
+        ...selectedAppearance,
+
+        ...(savedCharacter.appearance ||
+          {})
+      };
+
+    creator.hidden =
+      true;
+
+    creator.style.display =
+      "none";
+
+    updateRaceDetails();
+
+    applyAppearance();
+
+    updateHUDRace();
+
+    updateFlightButton();
+
+    return;
+  }
+
+  creator.hidden =
+    false;
+
+  creator.style.display =
+    "block";
+
+  updateRaceDetails();
+
+  updateAppearanceButtons();
+
+  updateFlightButton();
 }
 
 /* =========================================================
    HUD
 ========================================================= */
 
+function getRaceName(
+  race
+) {
+
+  const names = {
+
+    humano:
+      "Humano",
+
+    hada:
+      "Hada",
+
+    elfo:
+      "Elfo",
+
+    demonio:
+      "Demonio"
+  };
+
+  return (
+    names[race] ||
+    race
+  );
+}
+
 function updateHUDRace() {
 
   const race =
     $("playerRace");
 
-  if (!race) return;
-
-  const names = {
-    humano: "Humano",
-    hada: "Hada",
-    elfo: "Elfo",
-    demonio: "Demonio"
-  };
+  if (!race) {
+    return;
+  }
 
   race.textContent =
-    names[selectedRace] ||
-    selectedRace;
+    getRaceName(
+      selectedRace
+    );
+
+  const abilityRace =
+    $("abilityRace");
+
+  if (abilityRace) {
+
+    abilityRace.textContent =
+      getRaceName(
+        selectedRace
+      );
+  }
 }
 
 function updateBars() {
@@ -6042,6 +7971,150 @@ function updateBars() {
 }
 
 /* =========================================================
+   HABILIDADES
+========================================================= */
+
+function setupCombat() {
+
+  [
+    $("ability0"),
+    $("ability1"),
+    $("ability2")
+  ]
+    .forEach(
+      (button, index) => {
+
+        if (!button) {
+          return;
+        }
+
+        const cast =
+          e => {
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            castAbility(
+              index
+            );
+          };
+
+        button.addEventListener(
+          "click",
+          cast
+        );
+
+        button.addEventListener(
+          "touchend",
+          cast,
+          {
+            passive: false
+          }
+        );
+      }
+    );
+}
+
+function castAbility(
+  index
+) {
+
+  const costs =
+    [
+      15,
+      25,
+      40
+    ];
+
+  const cost =
+    costs[index] ||
+    15;
+
+  if (
+    mana <
+    cost
+  ) {
+
+    showToast(
+      "🔵 No tienes suficiente maná"
+    );
+
+    return;
+  }
+
+  mana -=
+    cost;
+
+  updateBars();
+
+  createSpellEffect(
+    index
+  );
+
+  showToast(
+    "✨ Hechizo lanzado"
+  );
+}
+
+function createSpellEffect(
+  index
+) {
+
+  if (!player) {
+    return;
+  }
+
+  const colors =
+    [
+      0x75bfff,
+      0xb777ff,
+      0xff83d0
+    ];
+
+  const effect =
+    new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        0.25 +
+          index * 0.12,
+
+        16,
+        16
+      ),
+
+      new THREE.MeshBasicMaterial({
+
+        color:
+          colors[index] ||
+          0xffffff,
+
+        transparent:
+          true,
+
+        opacity:
+          0.9
+      })
+    );
+
+  effect.position.copy(
+    player.position
+  );
+
+  effect.position.y +=
+    2.4;
+
+  effect.userData.life =
+    0.7;
+
+  effect.userData.magicEffect =
+    true;
+
+  scene.add(
+    effect
+  );
+}
+
+/* =========================================================
    TOAST
 ========================================================= */
 
@@ -6053,9 +8126,11 @@ function showToast(
     $("gameToast");
 
   if (!toast) {
+
     console.log(
       message
     );
+
     return;
   }
 
@@ -6088,16 +8163,188 @@ function showToast(
 }
 
 /* =========================================================
-   FÍSICA Y EFECTOS
+   JOYSTICK
+========================================================= */
+
+function setupJoystick() {
+
+  const joystick =
+    $("joystick");
+
+  if (!joystick) {
+    return;
+  }
+
+  const stick =
+    joystick.querySelector(
+      ".stick"
+    );
+
+  if (!stick) {
+    return;
+  }
+
+  let active =
+    false;
+
+  function moveStick(
+    x,
+    y
+  ) {
+
+    const rect =
+      joystick.getBoundingClientRect();
+
+    const centerX =
+      rect.left +
+      rect.width / 2;
+
+    const centerY =
+      rect.top +
+      rect.height / 2;
+
+    let dx =
+      x -
+      centerX;
+
+    let dy =
+      y -
+      centerY;
+
+    const max =
+      rect.width *
+      0.32;
+
+    const distance =
+      Math.hypot(
+        dx,
+        dy
+      );
+
+    if (
+      distance >
+      max
+    ) {
+
+      dx =
+        dx /
+        distance *
+        max;
+
+      dy =
+        dy /
+        distance *
+        max;
+    }
+
+    moveX =
+      dx /
+      max;
+
+    moveY =
+      -dy /
+      max;
+
+    stick.style.transform =
+      `translate(${dx}px,${dy}px)`;
+  }
+
+  function reset() {
+
+    active =
+      false;
+
+    moveX =
+      0;
+
+    moveY =
+      0;
+
+    stick.style.transform =
+      "translate(0,0)";
+  }
+
+  joystick.addEventListener(
+    "touchstart",
+    e => {
+
+      e.preventDefault();
+
+      active =
+        true;
+
+      moveStick(
+        e.touches[0]
+          .clientX,
+
+        e.touches[0]
+          .clientY
+      );
+    },
+    {
+      passive:
+        false
+    }
+  );
+
+  joystick.addEventListener(
+    "touchmove",
+    e => {
+
+      if (!active) {
+        return;
+      }
+
+      e.preventDefault();
+
+      moveStick(
+        e.touches[0]
+          .clientX,
+
+        e.touches[0]
+          .clientY
+      );
+    },
+    {
+      passive:
+        false
+    }
+  );
+
+  joystick.addEventListener(
+    "touchend",
+    e => {
+
+      e.preventDefault();
+
+      reset();
+    },
+    {
+      passive:
+        false
+    }
+  );
+
+  joystick.addEventListener(
+    "touchcancel",
+    reset
+  );
+}
+
+/* =========================================================
+   EFECTOS
 ========================================================= */
 
 function updateEffects(
   delta
 ) {
 
-  if (!scene) return;
+  if (!scene) {
+    return;
+  }
 
-  const remove = [];
+  const remove =
+    [];
 
   scene.traverse(
     object => {
@@ -6110,32 +8357,23 @@ function updateEffects(
         object.userData.life -=
           delta;
 
-        if (
-          object.userData
-            .velocity
-        ) {
-
-          object.position.addScaledVector(
-            object.userData
-              .velocity,
-
-            delta
-          );
-
-          object.userData
-            .velocity.y -=
-            5 * delta;
-        }
-
         object.scale.multiplyScalar(
-          1 + delta * 1.8
+          1 +
+          delta *
+          1.5
         );
 
-        object.material.opacity =
-          Math.max(
-            0,
-            object.userData.life
-          );
+        if (
+          object.material
+        ) {
+
+          object.material.opacity =
+            Math.max(
+              0,
+              object.userData
+                .life
+            );
+        }
 
         if (
           object.userData.life <=
@@ -6150,6 +8388,56 @@ function updateEffects(
 
       if (
         object.userData
+          ?.fairyWing
+      ) {
+
+        const t =
+          performance.now() *
+          0.004;
+
+        const side =
+          object.position.x <
+          0
+            ? -1
+            : 1;
+
+        object.rotation.z =
+          side *
+          (
+            0.28 +
+            Math.sin(
+              t +
+              object.userData
+                .wingIndex
+            ) *
+            0.12
+          );
+
+        object.rotation.y =
+          Math.sin(
+            t * 0.8 +
+            object.userData
+              .wingIndex
+          ) *
+          0.15;
+      }
+
+      if (
+        object.userData
+          ?.fairyLight
+      ) {
+
+        object.intensity =
+          0.65 +
+          Math.sin(
+            performance.now() *
+            0.006
+          ) *
+          0.25;
+      }
+
+      if (
+        object.userData
           ?.fire
       ) {
 
@@ -6157,16 +8445,14 @@ function updateEffects(
           1 +
           Math.sin(
             performance.now() *
-              0.012
+            0.018
           ) *
-          0.12;
+          0.15;
 
         object.scale.set(
           pulse,
           pulse *
-            (0.9 +
-              Math.random() *
-              0.12),
+            1.25,
           pulse
         );
       }
@@ -6180,7 +8466,7 @@ function updateEffects(
           1 +
           Math.sin(
             performance.now() *
-              0.018
+            0.02
           ) *
           0.18;
 
@@ -6200,7 +8486,7 @@ function updateEffects(
           2.5 +
           Math.sin(
             performance.now() *
-              0.014
+            0.015
           ) *
           0.5;
       }
@@ -6214,7 +8500,7 @@ function updateEffects(
           0.6 +
           Math.sin(
             performance.now() *
-              0.02
+            0.018
           ) *
           0.15;
       }
@@ -6228,78 +8514,15 @@ function updateEffects(
         object
       );
 
-      object.geometry
-        ?.dispose();
-
-      object.material
-        ?.dispose();
+      disposeObject(
+        object
+      );
     }
   );
 }
 
 /* =========================================================
-   ALAS DE HADA — ANIMACIÓN
-========================================================= */
-
-function animateFairyWings() {
-
-  if (
-    !player ||
-    selectedRace !==
-      "hada"
-  ) {
-    return;
-  }
-
-  const details =
-    player.getObjectByName(
-      "raceDetails"
-    );
-
-  if (!details) return;
-
-  const time =
-    performance.now() *
-    0.004;
-
-  details.children
-    .forEach(
-      (wing, index) => {
-
-        if (
-          wing.isMesh
-        ) {
-
-          const direction =
-            wing.position.x <
-            0
-              ? -1
-              : 1;
-
-          wing.rotation.z =
-            direction *
-            (
-              0.28 +
-              Math.sin(
-                time +
-                  index
-              ) *
-              0.08
-            );
-
-          wing.rotation.y =
-            Math.sin(
-              time * 0.7 +
-                index
-            ) *
-            0.12;
-        }
-      }
-    );
-}
-
-/* =========================================================
-   MOVIMIENTO DE ÁRBOLES
+   ANIMACIÓN DE ÁRBOLES
 ========================================================= */
 
 function animateTrees() {
@@ -6317,15 +8540,17 @@ function animateTrees() {
 
       tree.rotation.z =
         Math.sin(
-          time * 0.7 +
-            phase
+          time *
+          0.7 +
+          phase
         ) *
         0.018;
 
       tree.rotation.x =
         Math.cos(
-          time * 0.55 +
-            phase
+          time *
+          0.55 +
+          phase
         ) *
         0.012;
     }
@@ -6333,127 +8558,7 @@ function animateTrees() {
 }
 
 /* =========================================================
-   ACTUALIZAR CÁMARA DENTRO DE CASA
-========================================================= */
-
-function updateInteriorCamera() {
-
-  if (
-    !state.insideHouse ||
-    !interior ||
-    !player
-  ) {
-    return;
-  }
-
-  /*
-   * Limitar la posición del jugador.
-   */
-
-  const minX =
-    interior.worldX -
-    interior.width / 2 +
-    1.4;
-
-  const maxX =
-    interior.worldX +
-    interior.width / 2 -
-    1.4;
-
-  const minZ =
-    interior.worldZ -
-    interior.depth / 2 +
-    1.4;
-
-  const maxZ =
-    interior.worldZ +
-    interior.depth / 2 -
-    1.4;
-
-  player.position.x =
-    THREE.MathUtils.clamp(
-      player.position.x,
-      minX,
-      maxX
-    );
-
-  player.position.z =
-    THREE.MathUtils.clamp(
-      player.position.z,
-      minZ,
-      maxZ
-    );
-
-  /*
-   * Cámara todavía más controlada
-   * para que el exterior nunca
-   * aparezca.
-   */
-
-  const distance =
-    6.5;
-
-  const cameraHeight =
-    3.4;
-
-  const offset =
-    new THREE.Vector3(
-      Math.sin(yaw) *
-        distance,
-
-      cameraHeight,
-
-      Math.cos(yaw) *
-        distance
-    );
-
-  const target =
-    player.position.clone();
-
-  target.y += 2.3;
-
-  const desired =
-    target.clone()
-      .add(offset);
-
-  /*
-   * Limitamos la cámara a las
-   * dimensiones del interior.
-   */
-
-  desired.x =
-    THREE.MathUtils.clamp(
-      desired.x,
-      minX + 0.5,
-      maxX - 0.5
-    );
-
-  desired.z =
-    THREE.MathUtils.clamp(
-      desired.z,
-      minZ + 0.5,
-      maxZ - 0.5
-    );
-
-  desired.y =
-    THREE.MathUtils.clamp(
-      desired.y,
-      1.5,
-      interior.height - 0.8
-    );
-
-  camera.position.lerp(
-    desired,
-    0.22
-  );
-
-  camera.lookAt(
-    target
-  );
-}
-
-/* =========================================================
-   LOOP PRINCIPAL
+   LOOP
 ========================================================= */
 
 function animate() {
@@ -6462,7 +8567,11 @@ function animate() {
     animate
   );
 
-  if (!renderer || !scene) {
+  if (
+    !renderer ||
+    !scene
+  ) {
+
     return;
   }
 
@@ -6491,54 +8600,40 @@ function animate() {
     delta
   );
 
-  animateFairyWings();
-
   animateTrees();
 
   updateMapMarker();
 
   /*
-   * Regeneración suave de maná.
+   * Regeneración de maná.
    */
 
   if (
-    mana < 100
+    mana <
+    100
   ) {
 
     mana =
       Math.min(
         100,
         mana +
-          delta * 3
+        delta *
+        3
       );
 
     updateBars();
   }
 
   /*
-   * Agua animada.
+   * Animaciones.
    */
 
-  if (scene) {
+  if (
+    mixer
+  ) {
 
-    scene.traverse(
-      object => {
-
-        if (
-          object.isMesh &&
-          object.material &&
-          object.material
-            .isMeshPhysicalMaterial &&
-          object.geometry &&
-          object.geometry
-            .type ===
-            "CircleGeometry"
-        ) {
-
-          object.rotation.z +=
-            delta * 0.015;
-        }
-      }
+    mixer.update(
+      delta
     );
   }
 
@@ -6549,11 +8644,11 @@ function animate() {
 }
 
 /* =========================================================
-   INICIALIZACIÓN EXTRA
+   INICIALIZACIÓN
 ========================================================= */
 
 updateBars();
 
 console.log(
-  "🌎 UNIVERSO MÁGICO — SISTEMA COMPLETO CARGADO"
+  "🌎 UNIVERSO MÁGICO — GAME.JS COMPLETO"
 );
