@@ -3986,3 +3986,592 @@ function openAppearanceMenu(
     );
 
 }
+/* =========================================
+   APARIENCIA 3D — ROPA Y CABELLO
+========================================= */
+
+function createCharacterAppearance() {
+
+  if (!player) return;
+
+  /* Evitar duplicar la apariencia */
+
+  const old =
+    player.getObjectByName(
+      "customAppearance"
+    );
+
+  if (old) {
+    player.remove(old);
+  }
+
+  const appearance =
+    new THREE.Group();
+
+  appearance.name =
+    "customAppearance";
+
+
+  /* =====================================
+     CUERPO
+  ===================================== */
+
+  const torso =
+    new THREE.Mesh(
+
+      new THREE.CylinderGeometry(
+        0.48,
+        0.58,
+        1.35,
+        16
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x263b50,
+        roughness: 0.85
+      })
+
+    );
+
+  torso.position.y =
+    2.35;
+
+  torso.scale.z =
+    0.55;
+
+  torso.castShadow = true;
+
+  appearance.add(
+    torso
+  );
+
+
+  /* =====================================
+     CINTURÓN
+  ===================================== */
+
+  const belt =
+    new THREE.Mesh(
+
+      new THREE.TorusGeometry(
+        0.48,
+        0.07,
+        8,
+        20
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x4b2f1c,
+        roughness: 0.9
+      })
+
+    );
+
+  belt.rotation.x =
+    Math.PI / 2;
+
+  belt.position.y =
+    1.82;
+
+  belt.scale.z =
+    0.7;
+
+  belt.castShadow = true;
+
+  appearance.add(
+    belt
+  );
+
+
+  /* =====================================
+     CAPA
+  ===================================== */
+
+  const cape =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        1.25,
+        1.9,
+        0.08
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x34264f,
+        roughness: 0.9,
+        side: THREE.DoubleSide
+      })
+
+    );
+
+  cape.position.set(
+    0,
+    2.25,
+    0.38
+  );
+
+  cape.rotation.x =
+    0.04;
+
+  cape.castShadow = true;
+
+  appearance.add(
+    cape
+  );
+
+
+  /* =====================================
+     PELO
+  ===================================== */
+
+  const hair =
+    new THREE.Mesh(
+
+      new THREE.SphereGeometry(
+        0.62,
+        16,
+        12,
+        0,
+        Math.PI * 2,
+        0,
+        Math.PI * 0.62
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x3a2418,
+        roughness: 0.9
+      })
+
+    );
+
+  hair.position.set(
+    0,
+    3.55,
+    0
+  );
+
+  hair.scale.set(
+    1,
+    0.85,
+    0.95
+  );
+
+  hair.castShadow = true;
+
+  appearance.add(
+    hair
+  );
+
+
+  /* =====================================
+     MECHONES
+  ===================================== */
+
+  for (
+    let i = 0;
+    i < 7;
+    i++
+  ) {
+
+    const strand =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          0.18,
+          8,
+          8
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x3a2418,
+          roughness: 0.9
+        })
+
+      );
+
+    const angle =
+      (i / 7) *
+      Math.PI *
+      2;
+
+    strand.position.set(
+
+      Math.cos(angle) *
+      0.43,
+
+      3.38 +
+      Math.random() *
+      0.28,
+
+      Math.sin(angle) *
+      0.43
+
+    );
+
+    strand.scale.y =
+      1.5;
+
+    strand.castShadow = true;
+
+    appearance.add(
+      strand
+    );
+
+  }
+
+
+  /* =====================================
+     BOTAS
+  ===================================== */
+
+  for (
+    const side of [-1, 1]
+  ) {
+
+    const boot =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          0.38,
+          0.65,
+          0.55
+        ),
+
+        new THREE.MeshStandardMaterial({
+          color: 0x3b271b,
+          roughness: 1
+        })
+
+      );
+
+    boot.position.set(
+      side * 0.22,
+      0.35,
+      0.08
+    );
+
+    boot.castShadow = true;
+
+    appearance.add(
+      boot
+    );
+
+  }
+
+
+  player.add(
+    appearance
+  );
+
+}
+
+
+/* =========================================
+   APARIENCIA POR RAZA
+========================================= */
+
+function applyRaceAppearance(
+  race
+) {
+
+  if (!player) return;
+
+  state.race =
+    race || "Humano";
+
+
+  createCharacterAppearance();
+
+
+  const appearance =
+    player.getObjectByName(
+      "customAppearance"
+    );
+
+  if (!appearance)
+    return;
+
+
+  /* =====================================
+     ELFO
+  ===================================== */
+
+  if (race === "Elfo") {
+
+    const earMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0xd29c82,
+        roughness: 0.9
+      });
+
+
+    for (
+      const side of [-1, 1]
+    ) {
+
+      const ear =
+        new THREE.Mesh(
+
+          new THREE.ConeGeometry(
+            0.13,
+            0.65,
+            8
+          ),
+
+          earMaterial
+
+        );
+
+      ear.position.set(
+        side * 0.55,
+        3.25,
+        0
+      );
+
+      ear.rotation.z =
+        side *
+        -Math.PI / 2;
+
+      ear.castShadow = true;
+
+      appearance.add(
+        ear
+      );
+
+    }
+
+  }
+
+
+  /* =====================================
+     ORCO
+  ===================================== */
+
+  if (race === "Orco") {
+
+    const tuskMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0xf0e6c5,
+        roughness: 0.8
+      });
+
+
+    for (
+      const side of [-1, 1]
+    ) {
+
+      const tusk =
+        new THREE.Mesh(
+
+          new THREE.ConeGeometry(
+            0.09,
+            0.45,
+            8
+          ),
+
+          tuskMaterial
+
+        );
+
+      tusk.position.set(
+        side * 0.18,
+        3.03,
+        -0.42
+      );
+
+      tusk.rotation.x =
+        Math.PI;
+
+      tusk.castShadow = true;
+
+      appearance.add(
+        tusk
+      );
+
+    }
+
+  }
+
+
+  /* =====================================
+     DRACÓNIDO
+  ===================================== */
+
+  if (race === "Dracónido") {
+
+    const hornMaterial =
+      new THREE.MeshStandardMaterial({
+        color: 0x4b3b38,
+        roughness: 0.9
+      });
+
+
+    for (
+      const side of [-1, 1]
+    ) {
+
+      const horn =
+        new THREE.Mesh(
+
+          new THREE.ConeGeometry(
+            0.16,
+            0.75,
+            8
+          ),
+
+          hornMaterial
+
+        );
+
+      horn.position.set(
+        side * 0.32,
+        3.78,
+        0
+      );
+
+      horn.rotation.z =
+        side * 0.25;
+
+      horn.castShadow = true;
+
+      appearance.add(
+        horn
+      );
+
+    }
+
+  }
+
+
+  /* =====================================
+     HADA — ALAS
+  ===================================== */
+
+  if (race === "Hada") {
+
+    for (
+      const side of [-1, 1]
+    ) {
+
+      const wing =
+        new THREE.Mesh(
+
+          new THREE.CircleGeometry(
+            0.75,
+            24
+          ),
+
+          new THREE.MeshStandardMaterial({
+            color: 0xd9b8ff,
+            transparent: true,
+            opacity: 0.62,
+            side: THREE.DoubleSide
+          })
+
+        );
+
+      wing.position.set(
+        side * 0.62,
+        2.65,
+        0.15
+      );
+
+      wing.rotation.y =
+        side * 0.45;
+
+      wing.scale.y =
+        1.35;
+
+      appearance.add(
+        wing
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================================
+   ACTUALIZAR APARIENCIA AL CARGAR
+========================================= */
+
+const originalLoadPlayer =
+  loadPlayer;
+
+loadPlayer = function() {
+
+  originalLoadPlayer();
+
+  const waitForPlayer =
+    setInterval(
+      () => {
+
+        if (!player)
+          return;
+
+        clearInterval(
+          waitForPlayer
+        );
+
+        applyRaceAppearance(
+          state.race ||
+          "Humano"
+        );
+
+      },
+      100
+    );
+
+};
+
+
+/* =========================================
+   GUARDAR CAMBIOS DE APARIENCIA
+========================================= */
+
+function saveCharacterAppearance() {
+
+  if (!state.username)
+    return;
+
+
+  fetch(
+    "/api/character",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json"
+      },
+
+      body: JSON.stringify({
+
+        username:
+          state.username,
+
+        character:
+          state.character || {
+
+            race:
+              state.race ||
+              "Humano",
+
+            appearance: {
+              hair: "default",
+              clothes: "default",
+              accessory: "none"
+            }
+
+          }
+
+      })
+
+    }
+  ).catch(
+    console.warn
+  );
+
+}
