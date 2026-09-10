@@ -1,13 +1,15 @@
 {
   "name": "universo-magico-3d",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "start": "node server/index.js",
     "server": "node server/index.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1"
   }
 }
