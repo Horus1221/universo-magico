@@ -1835,3 +1835,1691 @@ function resize() {
   );
 
 }
+/* =========================================
+   CREADOR DE PERSONAJE
+========================================= */
+
+function openCharacterCreator(saved) {
+
+  const creator =
+    $("characterCreator");
+
+  if (!creator) {
+
+    /* Si todavía no existe el panel,
+       elegimos humano como base */
+
+    if (!state.race) {
+
+      state.race = "Humano";
+
+    }
+
+    updateRaceUI();
+
+    return;
+
+  }
+
+  creator.hidden = false;
+
+  setupRaceButtons();
+
+  if (saved?.race) {
+
+    state.race =
+      saved.race;
+
+  }
+
+  updateRaceUI();
+
+}
+
+
+/* =========================================
+   SELECCIÓN DE RAZA
+========================================= */
+
+function setupRaceButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-race]"
+    )
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        state.race =
+          button.dataset.race;
+
+        updateRaceUI();
+
+        applyRaceAppearance(
+          state.race
+        );
+
+      };
+
+    });
+
+}
+
+
+/* =========================================
+   ACTUALIZAR INTERFAZ DE RAZA
+========================================= */
+
+function updateRaceUI() {
+
+  const race =
+    state.race ||
+    "Humano";
+
+  const abilities =
+    RACES[race];
+
+  if ($("playerRace")) {
+
+    $("playerRace").textContent =
+      race;
+
+  }
+
+  if ($("abilityRace")) {
+
+    $("abilityRace").textContent =
+      race;
+
+  }
+
+
+  abilities.forEach(
+    (ability, index) => {
+
+      const button =
+        $(`ability${index}`);
+
+      if (!button) return;
+
+      button.textContent =
+        `${ability[0]} · ${costs[index]} MP`;
+
+      button.title =
+        ability[1];
+
+      button.onclick =
+        () => useAbility(index);
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   APARIENCIA SEGÚN RAZA
+========================================= */
+
+function applyRaceAppearance(
+  race
+) {
+
+  if (!player) return;
+
+
+  /* Guardamos la raza */
+
+  state.race =
+    race;
+
+
+  player.traverse(
+    object => {
+
+      if (!object.isMesh)
+        return;
+
+
+      const name =
+        (
+          object.name ||
+          ""
+        ).toLowerCase();
+
+
+      /* =========================
+         ELFOS
+      ========================= */
+
+      if (
+        race === "Elfo" &&
+        (
+          name.includes("ear") ||
+          name.includes("head")
+        )
+      ) {
+
+        object.scale.x *=
+          1.12;
+
+      }
+
+
+      /* =========================
+         ORCOS
+      ========================= */
+
+      if (
+        race === "Orco" &&
+        (
+          name.includes("head") ||
+          name.includes("face")
+        )
+      ) {
+
+        object.scale.multiplyScalar(
+          1.08
+        );
+
+      }
+
+
+      /* =========================
+         DRACÓNIDO
+      ========================= */
+
+      if (
+        race === "Dracónido" &&
+        (
+          name.includes("head") ||
+          name.includes("helmet")
+        )
+      ) {
+
+        object.scale.multiplyScalar(
+          1.05
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   PODERES
+========================================= */
+
+function useAbility(index) {
+
+  const race =
+    state.race ||
+    "Humano";
+
+  const ability =
+    RACES[race]?.[index];
+
+  if (!ability) return;
+
+
+  const cost =
+    costs[index];
+
+
+  if (mana < cost) {
+
+    toast(
+      "💧 No tenés suficiente maná"
+    );
+
+    return;
+
+  }
+
+
+  mana -= cost;
+
+  updateHUD();
+
+
+  ability[2]();
+
+}
+
+
+/* =========================================
+   VIDA
+========================================= */
+
+function restoreHP(
+  amount
+) {
+
+  hp =
+    Math.min(
+      100,
+      hp + amount
+    );
+
+  updateHUD();
+
+  toast(
+    `❤️ +${amount} vida`
+  );
+
+}
+
+
+/* =========================================
+   MANÁ
+========================================= */
+
+function restoreMana(
+  amount
+) {
+
+  mana =
+    Math.min(
+      100,
+      mana + amount
+    );
+
+  updateHUD();
+
+  toast(
+    `💧 +${amount} maná`
+  );
+
+}
+
+
+/* =========================================
+   REGENERACIÓN
+========================================= */
+
+function regen(
+  amount,
+  seconds
+) {
+
+  const interval =
+    setInterval(
+      () => {
+
+        restoreHP(
+          amount
+        );
+
+      },
+      1000
+    );
+
+
+  setTimeout(
+    () => {
+
+      clearInterval(
+        interval
+      );
+
+    },
+    seconds * 1000
+  );
+
+}
+
+
+/* =========================================
+   VELOCIDAD
+========================================= */
+
+function buffSpeed(
+  multiplier,
+  seconds
+) {
+
+  speedMultiplier =
+    multiplier;
+
+  toast(
+    "⚡ Velocidad aumentada"
+  );
+
+
+  setTimeout(
+    () => {
+
+      speedMultiplier =
+        1;
+
+    },
+    seconds * 1000
+  );
+
+}
+
+
+/* =========================================
+   DASH
+========================================= */
+
+function dash(
+  distance
+) {
+
+  if (!player) return;
+
+
+  const direction =
+    new THREE.Vector3(
+      0,
+      0,
+      -1
+    );
+
+  direction.applyAxisAngle(
+    new THREE.Vector3(
+      0,
+      1,
+      0
+    ),
+    player.rotation.y
+  );
+
+
+  player.position.addScaledVector(
+    direction,
+    distance
+  );
+
+
+  sparkle();
+
+}
+
+
+/* =========================================
+   EFECTO DE PARTÍCULAS
+========================================= */
+
+function sparkle() {
+
+  if (!player) return;
+
+
+  const group =
+    new THREE.Group();
+
+
+  for (
+    let i = 0;
+    i < 35;
+    i++
+  ) {
+
+    const particle =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          0.08,
+          6,
+          6
+        ),
+
+        new THREE.MeshBasicMaterial({
+          color: 0xd9a7ff
+        })
+
+      );
+
+
+    particle.position.set(
+
+      (Math.random() - 0.5) *
+      2,
+
+      Math.random() *
+      3,
+
+      (Math.random() - 0.5) *
+      2
+
+    );
+
+
+    group.add(
+      particle
+    );
+
+  }
+
+
+  group.position.copy(
+    player.position
+  );
+
+  scene.add(
+    group
+  );
+
+
+  const start =
+    performance.now();
+
+
+  function animateParticles(
+    time
+  ) {
+
+    const progress =
+      (time - start) /
+      900;
+
+
+    group.children.forEach(
+      particle => {
+
+        particle.position.y +=
+          0.015;
+
+        particle.scale.setScalar(
+          1 - progress
+        );
+
+      }
+    );
+
+
+    if (progress < 1) {
+
+      requestAnimationFrame(
+        animateParticles
+      );
+
+    } else {
+
+      scene.remove(
+        group
+      );
+
+    }
+
+  }
+
+
+  requestAnimationFrame(
+    animateParticles
+  );
+
+}
+
+
+/* =========================================
+   ONDA DE ENERGÍA
+========================================= */
+
+function shockwave() {
+
+  if (!player) return;
+
+
+  const ring =
+    new THREE.Mesh(
+
+      new THREE.RingGeometry(
+        0.4,
+        0.65,
+        40
+      ),
+
+      new THREE.MeshBasicMaterial({
+        color: 0xb58cff,
+        transparent: true,
+        side: THREE.DoubleSide
+      })
+
+    );
+
+
+  ring.rotation.x =
+    -Math.PI / 2;
+
+  ring.position.copy(
+    player.position
+  );
+
+  ring.position.y =
+    0.08;
+
+  scene.add(
+    ring
+  );
+
+
+  const start =
+    performance.now();
+
+
+  function animateRing(
+    time
+  ) {
+
+    const p =
+      (time - start) /
+      700;
+
+
+    ring.scale.setScalar(
+      1 + p * 10
+    );
+
+
+    ring.material.opacity =
+      1 - p;
+
+
+    if (p < 1) {
+
+      requestAnimationFrame(
+        animateRing
+      );
+
+    } else {
+
+      scene.remove(
+        ring
+      );
+
+    }
+
+  }
+
+
+  requestAnimationFrame(
+    animateRing
+  );
+
+}
+
+
+/* =========================================
+   ALIENTO DRACÓNICO
+========================================= */
+
+function breath() {
+
+  if (!player) return;
+
+
+  const group =
+    new THREE.Group();
+
+
+  for (
+    let i = 0;
+    i < 25;
+    i++
+  ) {
+
+    const fire =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          0.12 +
+          Math.random() * 0.15,
+          8,
+          8
+        ),
+
+        new THREE.MeshBasicMaterial({
+          color: 0xff8a38
+        })
+
+      );
+
+
+    fire.position.set(
+      0,
+      2,
+      -1
+    );
+
+
+    fire.userData.velocity =
+      new THREE.Vector3(
+        (Math.random() - 0.5) *
+        0.4,
+
+        (Math.random() - 0.5) *
+        0.3,
+
+        -0.8 -
+        Math.random()
+      );
+
+
+    group.add(
+      fire
+    );
+
+  }
+
+
+  group.position.copy(
+    player.position
+  );
+
+
+  group.rotation.y =
+    player.rotation.y;
+
+
+  scene.add(
+    group
+  );
+
+
+  const start =
+    performance.now();
+
+
+  function animateBreath(
+    time
+  ) {
+
+    const p =
+      (time - start) /
+      1000;
+
+
+    group.children.forEach(
+      particle => {
+
+        particle.position.add(
+          particle.userData.velocity
+        );
+
+        particle.scale.multiplyScalar(
+          0.97
+        );
+
+      }
+    );
+
+
+    if (p < 1) {
+
+      requestAnimationFrame(
+        animateBreath
+      );
+
+    } else {
+
+      scene.remove(
+        group
+      );
+
+    }
+
+  }
+
+
+  requestAnimationFrame(
+    animateBreath
+  );
+
+}
+
+
+/* =========================================
+   VISIÓN MÁGICA
+========================================= */
+
+function reveal() {
+
+  toast(
+    "👁️ La visión élfica revela el reino"
+  );
+
+  scene.fog.near =
+    10;
+
+  scene.fog.far =
+    260;
+
+
+  setTimeout(
+    () => {
+
+      scene.fog.near =
+        35;
+
+      scene.fog.far =
+        180;
+
+    },
+    5000
+  );
+
+}
+
+
+/* =========================================
+   HUD
+========================================= */
+
+function updateHUD() {
+
+  const hpBar =
+    $("hpBar");
+
+  const manaBar =
+    $("manaBar");
+
+
+  if (hpBar) {
+
+    hpBar.style.width =
+      `${hp}%`;
+
+  }
+
+
+  if (manaBar) {
+
+    manaBar.style.width =
+      `${mana}%`;
+
+  }
+
+}
+
+
+/* =========================================
+   TOAST
+========================================= */
+
+function toast(
+  message
+) {
+
+  let element =
+    $("gameToast");
+
+
+  if (!element) {
+
+    element =
+      document.createElement(
+        "div"
+      );
+
+    element.id =
+      "gameToast";
+
+    document.body.appendChild(
+      element
+    );
+
+  }
+
+
+  element.textContent =
+    message;
+
+  element.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    element._timer
+  );
+
+
+  element._timer =
+    setTimeout(
+      () => {
+
+        element.classList.remove(
+          "show"
+        );
+
+      },
+      2200
+    );
+
+}
+
+
+/* =========================================
+   CHAT
+========================================= */
+
+function setupChat() {
+
+  const form =
+    $("chatForm");
+
+  const input =
+    $("chatInput");
+
+
+  if (!form || !input)
+    return;
+
+
+  form.addEventListener(
+    "submit",
+    event => {
+
+      event.preventDefault();
+
+      const message =
+        input.value.trim();
+
+
+      if (!message)
+        return;
+
+
+      if (socket) {
+
+        socket.emit(
+          "chat",
+          {
+            username:
+              state.username,
+
+            message
+          }
+        );
+
+      }
+
+
+      input.value = "";
+
+    }
+  );
+
+
+  if (socket) {
+
+    socket.on(
+      "chat",
+      data => {
+
+        addChatMessage(
+          data
+        );
+
+      }
+    );
+
+
+    socket.on(
+      "system",
+      message => {
+
+        addChatMessage({
+          username:
+            "Sistema",
+
+          message
+        });
+
+      }
+    );
+
+  }
+
+
+  /* Botón para ocultar chat */
+
+  const toggle =
+    $("chatToggle");
+
+
+  toggle?.addEventListener(
+    "click",
+    () => {
+
+      const chat =
+        $("chat");
+
+
+      if (!chat) return;
+
+
+      chat.classList.toggle(
+        "chat-hidden"
+      );
+
+
+      toggle.textContent =
+        chat.classList.contains(
+          "chat-hidden"
+        )
+          ? "💬"
+          : "×";
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   MENSAJE DE CHAT
+========================================= */
+
+function addChatMessage(
+  data
+) {
+
+  const chatMessages =
+    $("chatMessages");
+
+
+  if (!chatMessages)
+    return;
+
+
+  const row =
+    document.createElement(
+      "div"
+    );
+
+
+  row.className =
+    "chat-message";
+
+
+  const username =
+    data?.username ||
+    "Jugador";
+
+
+  const message =
+    data?.message ||
+    "";
+
+
+  row.textContent =
+    `${username}: ${message}`;
+
+
+  chatMessages.appendChild(
+    row
+  );
+
+
+  while (
+    chatMessages.children.length >
+    40
+  ) {
+
+    chatMessages.firstChild
+      ?.remove();
+
+  }
+
+
+  chatMessages.scrollTop =
+    chatMessages.scrollHeight;
+
+}
+
+
+/* =========================================
+   MAPA
+========================================= */
+
+function setupMap() {
+
+  const button =
+    $("mapButton");
+
+  const map =
+    $("sideMap");
+
+
+  if (!button || !map)
+    return;
+
+
+  button.addEventListener(
+    "click",
+    () => {
+
+      map.classList.toggle(
+        "open"
+      );
+
+      updateMapMarker();
+
+    }
+  );
+
+}
+
+
+/* =========================================
+   MARCADOR DEL JUGADOR
+========================================= */
+
+function updateMapMarker() {
+
+  const marker =
+    $("playerMarker");
+
+
+  if (
+    !marker ||
+    !player
+  ) return;
+
+
+  const mapSize =
+    260;
+
+  const worldSize =
+    164;
+
+
+  const x =
+    (
+      player.position.x /
+      worldSize
+    ) *
+    mapSize;
+
+
+  const z =
+    (
+      player.position.z /
+      worldSize
+    ) *
+    mapSize;
+
+
+  marker.style.left =
+    `${50 + x}%`;
+
+
+  marker.style.top =
+    `${50 + z}%`;
+
+}
+
+
+/* =========================================
+   CASAS
+========================================= */
+
+function setupHouseControls() {
+
+  const enter =
+    $("enterHouse");
+
+  const exit =
+    $("exitHouse");
+
+
+  enter?.addEventListener(
+    "click",
+    enterNearestHouse
+  );
+
+
+  exit?.addEventListener(
+    "click",
+    exitHouse
+  );
+
+}
+
+
+function checkHouseProximity() {
+
+  if (
+    !player ||
+    inside
+  ) return;
+
+
+  nearHouse =
+    null;
+
+
+  let closest =
+    Infinity;
+
+
+  houses.forEach(
+    house => {
+
+      const distance =
+        player.position.distanceTo(
+          new THREE.Vector3(
+            house.x,
+            0,
+            house.z
+          )
+        );
+
+
+      if (
+        distance < 7 &&
+        distance < closest
+      ) {
+
+        closest =
+          distance;
+
+        nearHouse =
+          house;
+
+      }
+
+    }
+  );
+
+
+  const button =
+    $("enterHouse");
+
+
+  if (button) {
+
+    button.hidden =
+      !nearHouse;
+
+  }
+
+}
+
+
+/* =========================================
+   ENTRAR EN CASA
+========================================= */
+
+function enterNearestHouse() {
+
+  if (!nearHouse ||
+      !player)
+    return;
+
+
+  inside = true;
+
+
+  player.position.set(
+    0,
+    0,
+    0
+  );
+
+
+  createInterior(
+    nearHouse.name
+  );
+
+
+  $("enterHouse")?.setAttribute(
+    "hidden",
+    ""
+  );
+
+  $("exitHouse")?.removeAttribute(
+    "hidden"
+  );
+
+
+  toast(
+    `🏠 ${nearHouse.name}`
+  );
+
+}
+
+
+/* =========================================
+   INTERIOR
+========================================= */
+
+function createInterior(
+  name
+) {
+
+  /* Limpiamos solamente
+     decoraciones interiores
+     anteriores */
+
+  scene.traverse(
+    object => {
+
+      if (
+        object.userData &&
+        object.userData.interior
+      ) {
+
+        object.parent?.remove(
+          object
+        );
+
+      }
+
+    }
+  );
+
+
+  const interior =
+    new THREE.Group();
+
+
+  interior.userData.interior =
+    true;
+
+
+  /* Piso */
+
+  const floor =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        18,
+        0.2,
+        14
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x75533b,
+        roughness: 0.9
+      })
+
+    );
+
+
+  floor.position.y =
+    -0.1;
+
+  floor.receiveShadow = true;
+
+  interior.add(
+    floor
+  );
+
+
+  /* Paredes */
+
+  const wallMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0xb88c62,
+      roughness: 0.9
+    });
+
+
+  const wallBack =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        18,
+        5,
+        0.3
+      ),
+
+      wallMaterial
+
+    );
+
+
+  wallBack.position.set(
+    0,
+    2.5,
+    -7
+  );
+
+
+  wallBack.castShadow = true;
+
+  interior.add(
+    wallBack
+  );
+
+
+  const wallLeft =
+    wallBack.clone();
+
+
+  wallLeft.scale.set(
+    14 / 18,
+    1,
+    1
+  );
+
+
+  wallLeft.rotation.y =
+    Math.PI / 2;
+
+
+  wallLeft.position.set(
+    -9,
+    2.5,
+    0
+  );
+
+
+  interior.add(
+    wallLeft
+  );
+
+
+  const wallRight =
+    wallLeft.clone();
+
+
+  wallRight.position.x =
+    9;
+
+
+  interior.add(
+    wallRight
+  );
+
+
+  /* Cama */
+
+  const bed =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        3,
+        0.65,
+        5
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x6b4432
+      })
+
+    );
+
+
+  bed.position.set(
+    -4,
+    0.45,
+    -3
+  );
+
+
+  bed.castShadow = true;
+
+  interior.add(
+    bed
+  );
+
+
+  /* Cobertor */
+
+  const blanket =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        2.8,
+        0.18,
+        3.8
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x785f9e
+      })
+
+    );
+
+
+  blanket.position.set(
+    -4,
+    0.82,
+    -3
+  );
+
+
+  interior.add(
+    blanket
+  );
+
+
+  /* Mesa */
+
+  const table =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        3,
+        1.2,
+        1.8
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color: 0x593d2b
+      })
+
+    );
+
+
+  table.position.set(
+    3,
+    0.7,
+    -2
+  );
+
+
+  table.castShadow = true;
+
+  interior.add(
+    table
+  );
+
+
+  /* Lámpara */
+
+  const light =
+    new THREE.PointLight(
+      0xffc66d,
+      7,
+      16
+    );
+
+
+  light.position.set(
+    0,
+    4,
+    0
+  );
+
+
+  interior.add(
+    light
+  );
+
+
+  scene.add(
+    interior
+  );
+
+}
+
+
+/* =========================================
+   SALIR DE CASA
+========================================= */
+
+function exitHouse() {
+
+  if (!inside ||
+      !player)
+    return;
+
+
+  inside = false;
+
+
+  scene.traverse(
+    object => {
+
+      if (
+        object.userData &&
+        object.userData.interior
+      ) {
+
+        object.parent?.remove(
+          object
+        );
+
+      }
+
+    }
+  );
+
+
+  if (nearHouse) {
+
+    player.position.set(
+      nearHouse.x,
+      0,
+      nearHouse.z + 7
+    );
+
+  } else {
+
+    player.position.set(
+      0,
+      0,
+      18
+    );
+
+  }
+
+
+  $("exitHouse")?.setAttribute(
+    "hidden",
+    ""
+  );
+
+
+  toast(
+    "🌿 Has salido de la casa"
+  );
+
+}
+
+
+/* =========================================
+   COMBATE
+========================================= */
+
+function setupCombat() {
+
+  document
+    .querySelectorAll(
+      ".ability-button"
+    )
+    .forEach(
+      (button, index) => {
+
+        button.onclick =
+          () => useAbility(index);
+
+      }
+    );
+
+}
+
+
+/* =========================================
+   BUCLE PRINCIPAL
+========================================= */
+
+function animate() {
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  const dt =
+    Math.min(
+      clock.getDelta(),
+      0.05
+    );
+
+
+  updateMovement(
+    dt
+  );
+
+
+  if (mixer) {
+
+    mixer.update(
+      dt
+    );
+
+  }
+
+
+  updateCamera(
+    dt
+  );
+
+
+  checkHouseProximity();
+
+  updateMapMarker();
+
+
+  if (renderer &&
+      scene &&
+      camera) {
+
+    renderer.render(
+      scene,
+      camera
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   RECUPERACIÓN DE MANÁ
+========================================= */
+
+setInterval(
+  () => {
+
+    if (
+      game &&
+      !game.hidden &&
+      mana < 100
+    ) {
+
+      mana =
+        Math.min(
+          100,
+          mana + 1
+        );
+
+      updateHUD();
+
+    }
+
+  },
+  1000
+);
