@@ -2,311 +2,324 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#061018">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#05030d">
   <title>Universo Mágico — El Trono Caído</title>
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<section id="home">
-  <div class="homeCard">
+  <!-- ==============================
+       PANTALLA DE INICIO
+       ============================== -->
 
-    <div class="sigil">✦</div>
-    <small>EL TRONO CAÍDO</small>
+  <section id="home">
 
-    <h1>UNIVERSO<br><span>MÁGICO</span></h1>
+    <div class="magic-bg">
 
-    <p>Un reino vivo de magia, naturaleza y aventura.</p>
+      <div class="moon"></div>
 
-    <div class="authTabs">
-      <button id="tabLogin" class="active">INICIAR SESIÓN</button>
-      <button id="tabRegister">CREAR CUENTA</button>
+      <div class="magic-orb orb1"></div>
+      <div class="magic-orb orb2"></div>
+      <div class="magic-orb orb3"></div>
+
+      <!-- Partículas mágicas -->
+      <span class="spark s1">✦</span>
+      <span class="spark s2">✧</span>
+      <span class="spark s3">✦</span>
+      <span class="spark s4">✧</span>
+      <span class="spark s5">✦</span>
+      <span class="spark s6">✧</span>
+      <span class="spark s7">✦</span>
+      <span class="spark s8">✧</span>
+
+      <!-- Niebla -->
+      <div class="mist mist1"></div>
+      <div class="mist mist2"></div>
+      <div class="mist mist3"></div>
+
     </div>
 
-    <form id="authForm">
-      <input
-        id="username"
-        maxlength="24"
-        autocomplete="username"
-        placeholder="Nombre de usuario"
-        required
-      >
 
-      <input
-        id="password"
-        type="password"
-        minlength="6"
-        autocomplete="current-password"
-        placeholder="Contraseña"
-        required
-      >
+    <div class="home-content">
 
-      <button id="authSubmit">
-        ⚡ ENTRAR AL UNIVERSO
-      </button>
-    </form>
+      <!-- LOGO -->
 
-    <button id="how" class="secondary">
-      ✦ CÓMO JUGAR
-    </button>
+      <div class="logo">
 
-    <button id="guest" class="ghost">
-      Probar sin cuenta
-    </button>
+        <div class="logo-symbol">✦</div>
 
-    <b class="online">● MUNDO ONLINE</b>
-
-    <p id="authMsg" class="authMsg"></p>
-
-  </div>
-</section>
-
-
-<main id="game" hidden>
-
-  <div id="scene"></div>
-
-  <div class="top">
-
-    <div class="player">
-
-      <div class="avatar" id="avatar">A</div>
-
-      <div>
-        <b id="hudName">Aventurero</b>
-        <small>Nivel 1 · Mago</small>
-
-        <div class="bar hp">
-          <i id="hpbar"></i>
+        <div class="logo-small">
+          UNIVERSO
         </div>
 
-        <div class="bar mana">
-          <i id="manabar"></i>
+        <h1>
+          MÁGICO
+        </h1>
+
+        <div class="logo-line"></div>
+
+        <div class="trono">
+          EL TRONO CAÍDO
         </div>
 
-        <label>
-          ❤️ <span id="hp">100</span>
-          ·
-          💧 <span id="mana">100</span>
-        </label>
+      </div>
 
+
+      <!-- LOGIN -->
+
+      <div class="auth-card">
+
+        <div class="auth-tabs">
+
+          <button
+            id="tabLogin"
+            class="auth-tab active"
+            type="button">
+            INICIAR SESIÓN
+          </button>
+
+          <button
+            id="tabRegister"
+            class="auth-tab"
+            type="button">
+            CREAR CUENTA
+          </button>
+
+        </div>
+
+
+        <div class="auth-title">
+          <span>✦</span>
+          Bienvenido al Reino
+          <span>✦</span>
+        </div>
+
+        <p class="auth-description">
+          Tu historia comienza aquí
+        </p>
+
+
+        <form id="authForm">
+
+          <!-- NOMBRE -->
+
+          <div class="input-group">
+
+            <label>
+              NOMBRE
+            </label>
+
+            <input
+              id="username"
+              type="text"
+              placeholder="Escribe tu nombre"
+              autocomplete="username"
+              maxlength="20"
+              required>
+
+          </div>
+
+
+          <!-- CONTRASEÑA -->
+
+          <div class="input-group">
+
+            <label>
+              CONTRASEÑA
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              placeholder="Escribe tu contraseña"
+              autocomplete="current-password"
+              required>
+
+          </div>
+
+
+          <!-- MENSAJE DE ERROR -->
+
+          <div
+            id="authMsg"
+            class="auth-message">
+          </div>
+
+
+          <!-- ENTRAR -->
+
+          <button
+            id="authSubmit"
+            class="enter-button"
+            type="submit">
+
+            ✦ ENTRAR AL UNIVERSO ✦
+
+          </button>
+
+        </form>
+
+
+        <!-- ESTADO -->
+
+        <div class="realm-status">
+
+          <span></span>
+
+          REINO ONLINE
+
+        </div>
+
+      </div>
+
+
+      <div class="version">
+        EL TRONO CAÍDO · 1.0
       </div>
 
     </div>
 
-    <div class="zone" id="zone">
-      Aldea Central
-    </div>
-
-    <button id="mapBtn">
-      🗺️
-    </button>
-
-  </div>
+  </section>
 
 
-  <div class="quest">
 
-    <strong>✦ MISIÓN ACTIVA</strong>
+  <!-- ==============================
+       JUEGO
+       ============================== -->
 
-    <b>El cristal perdido</b>
-
-    <small>
-      Explorá el Bosque Norte y encontrá el Cristal Arcano.
-    </small>
-
-  </div>
-
-
-  <div class="side">
-
-    <button id="inventoryBtn">
-      🎒
-      <small>Inventario</small>
-    </button>
-
-    <button id="skillsBtn">
-      🔥
-      <small>Habilidades</small>
-    </button>
-
-    <button id="sideMap">
-      🧭
-      <small>Mapa</small>
-    </button>
-
-    <button id="settingsBtn">
-      ⚙️
-      <small>Ajustes</small>
-    </button>
-
-  </div>
-
-
-  <div id="joystick">
-    <div id="stick"></div>
-  </div>
-
-
-  <div class="combat">
-
-    <button data-spell="fire">🔥</button>
-
-    <button data-spell="water">💧</button>
-
-    <button data-spell="arcane">✦</button>
-
-    <button class="attack" data-spell="attack">
-      ⚔️
-    </button>
-
-  </div>
-
-
-  <div id="chat">
-
-    <button id="chatToggle" aria-label="Minimizar chat">
-      ⌄
-    </button>
+  <section id="game" hidden>
 
     <header>
-      💬 Universo
-      <span>● online</span>
-    </header>
 
-    <div id="msgs">
+      <strong>
+        ✦ UNIVERSO MÁGICO
+      </strong>
 
-      <p class="sys">
-        ✨ Bienvenido al Universo Mágico.
-      </p>
+      <span>
+        RONDA
+        <b id="round">1</b>
+      </span>
 
-      <p class="sys">
-        🌿 Explorá el mundo y entrá a las casas por sus puertas.
-      </p>
-
-    </div>
-
-    <form id="form">
-
-      <input
-        id="input"
-        maxlength="200"
-        placeholder="Escribí un mensaje..."
-      >
-
-      <button>➤</button>
-
-    </form>
-
-  </div>
-
-
-  <div id="enterHouse" hidden>
-    🚪 ENTRAR
-  </div>
-
-
-  <div id="map" hidden>
-
-    <div class="mapbox">
-
-      <button id="closeMap">
-        ×
+      <button id="menu">
+        ☰
       </button>
 
-      <h2>🗺️ Mapa del Reino</h2>
+    </header>
 
-      <div class="map">
 
-        <b style="left:10%;top:14%">
-          Bosque Norte
-        </b>
+    <main>
 
-        <b style="left:44%;top:44%">
-          Aldea Central
-        </b>
+      <aside>
 
-        <b style="left:74%;top:17%">
-          Ruinas
-        </b>
+        <h3>
+          TU TRONO
+        </h3>
 
-        <b style="left:68%;top:72%">
-          Lago Sagrado
-        </b>
+        <div class="card">
 
-        <b style="left:42%;top:12%">
-          Cristal Arcano
-        </b>
+          ♛
+          <b>
+            Guardián del Fuego
+          </b>
 
-        <b style="left:10%;top:76%">
-          Montañas
-        </b>
+        </div>
 
-        <b style="left:74%;top:46%">
-          Castillo
-        </b>
+        <p>
+          VIDA
+          <b id="hp">100</b>
+        </p>
+
+        <p>
+          ENERGÍA
+          <b id="energy">6</b>/10
+        </p>
+
+        <button id="end">
+          TERMINAR TURNO
+        </button>
+
+      </aside>
+
+
+      <div id="scene">
+
+        <div class="title">
+          VALLE DE LOS CUATRO ELEMENTOS
+        </div>
+
+        <div class="actions">
+
+          <button data-e="fire">
+            FUEGO
+          </button>
+
+          <button data-e="water">
+            AGUA
+          </button>
+
+          <button data-e="earth">
+            TIERRA
+          </button>
+
+          <button data-e="air">
+            AIRE
+          </button>
+
+        </div>
 
       </div>
 
-    </div>
 
-  </div>
+      <aside class="chat">
 
-</main>
+        <nav>
 
+          <b>
+            CHAT
+          </b>
 
-<div id="howModal" hidden>
+          <b>
+            EJÉRCITO
+          </b>
 
-  <div class="modal">
-
-    <button id="closeHow">
-      ×
-    </button>
-
-    <h2>
-      ✨ Cómo jugar
-    </h2>
-
-    <p>
-      🎮 Arrastrá el joystick para caminar.
-      En PC usá WASD o las flechas.
-    </p>
-
-    <p>
-      🚪 Acercate a una puerta para entrar a una casa.
-      Los interiores tienen muebles y objetos.
-    </p>
-
-    <p>
-      ⚔️ Usá magia y ataques;
-      cada hechizo consume maná.
-    </p>
-
-    <p>
-      💬 El chat se minimiza sin tapar las habilidades.
-    </p>
-
-    <p>
-      🌳 El mundo tiene clima, agua y vegetación animada.
-    </p>
-
-    <button id="okHow">
-      ENTENDIDO
-    </button>
-
-  </div>
-
-</div>
+        </nav>
 
 
-<div id="toast"></div>
+        <div id="msgs"></div>
 
 
-<script src="/socket.io/socket.io.js"></script>
+        <form id="form">
 
-<script type="module" src="/game.js"></script>
+          <input
+            id="input"
+            placeholder="Escribe al reino..."
+            maxlength="300">
+
+          <button>
+            ➤
+          </button>
+
+        </form>
+
+      </aside>
+
+    </main>
+
+  </section>
+
+
+  <!-- SOCKET.IO -->
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- JUEGO -->
+
+  <script
+    type="module"
+    src="game.js">
+  </script>
 
 </body>
 </html>
