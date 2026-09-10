@@ -1,645 +1,678 @@
 import * as THREE from "https://esm.sh/three@0.161.0";
-import { OrbitControls } from "https://esm.sh/three@0.161.0/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GLTFLoader.js";
 
-const socket = io();
+const socket = typeof io === "function" ? io() : null;
 
-const box = document.getElementById("scene");
+const $ = (id) => document.getElementById(id);
 
+const home = $("home");
+const game = $("game");
+const sceneEl = $("scene");
+
+let renderer;
 let scene;
 let camera;
-let renderer;
-let controls;
+let clock;
 let player;
+let mixer;
 
 let hp = 100;
 let mana = 100;
 
-let moving = {
-  x: 0,
-  z: 0
-};
+let moving = false;
+let moveX = 0;
+let moveY = 0;
+
+let joystickPointer = null;
 
 const keys = {};
 
-const clock = new THREE.Clock();
+const WORLD_SIZE = 700;
+
+const assets = {
+  tree: "/assets/vegetation/tree.glb",
+  tree2: "/assets/vegetation/tree_02.glb",
+  house: "/assets/buildings/house.glb",
+  houseInterior: "/assets/buildings/house_interior.glb",
+  character: "/assets/characters/player.glb",
+  rock: "/assets/environment/rock.glb",
+  bush: "/assets/vegetation/bush.glb",
+  flower: "/assets/vegetation/flower.glb"
+};
+
+const loader = new GLTFLoader();
+
+const loadedAssets = {};
+
+const state = {
+  username: "Aventurero",
+  registered: false,
+  insideHouse: false,
+  currentHouse: null,
+  lastZone: "Aldea Central"
+};
 
 
-// =====================================================
-// MATERIALES
-// =====================================================
+// --------------------------------------------------
+// AUTH
+// --------------------------------------------------
 
-function material(color, emissive = 0x000000) {
+let registerMode = false;
 
-  return new THREE.MeshStandardMaterial({
+$("tabLogin")?.addEventListener("click", () => {
+  registerMode = false;
 
-    color,
+  $("tabLogin").classList.add("active");
+  $("tabRegister").classList.remove("active");
 
-    emissive,
+  $("authSubmit").textContent = "⚡ ENTRAR AL UNIVERSO";
+  $("password").setAttribute("autocomplete", "current-password");
+});
 
-    emissiveIntensity:
-      emissive !== 0x000000 ? 1.2 : 0,
+$("tabRegister")?.addEventListener("click", () => {
+  registerMode = true;
 
-    roughness: .85,
+  $("tabRegister").classList.add("active");
+  $("tabLogin").classList.remove("active");
 
-    metalness: .05
+  $("authSubmit").textContent = "✨ CREAR PERSONAJE";
+  $("password").setAttribute("autocomplete", "new-password");
+});
 
+$("authForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const username = $("username").value.trim();
+  const password = $("password").value;
+
+  if (username.length < 3) {
+    showAuthMessage("El usuario debe tener al menos 3 caracteres.");
+    return;
+  }
+
+  if (password.length < 6) {
+    showAuthMessage("La contraseña debe tener al menos 6 caracteres.");
+    return;
+  }
+
+  $("authSubmit").disabled = true;
+  $("authSubmit").textContent = "CARGANDO...";
+
+  try {
+
+    const endpoint = registerMode ? "/api/register" : "/api/login";
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+
+      // Si todavía no existe la API, permitimos continuar
+      // para que el prototipo pueda probarse.
+      if (response.status === 404) {
+        startGame(username);
+        return;
+      }
+
+      throw new Error(data.error || "No se pudo iniciar sesión.");
+    }
+
+    localStorage.setItem(
+      "universo_magico_user",
+      JSON.stringify(data)
+    );
+
+    startGame(username);
+
+  } catch (error) {
+
+    showAuthMessage(
+      error.message || "No se pudo conectar con el servidor."
+    );
+
+  } finally {
+
+    $("authSubmit").disabled = false;
+
+    $("authSubmit").textContent =
+      registerMode
+        ? "✨ CREAR PERSONAJE"
+        : "⚡ ENTRAR AL UNIVERSO";
+  }
+});
+
+
+$("guest")?.addEventListener("click", () => {
+  startGame("Aventurero");
+});
+
+
+function showAuthMessage(message) {
+  const element = $("authMsg");
+
+  if (!element) return;
+
+  element.textContent = message;
+
+  setTimeout(() => {
+    element.textContent = "";
+  }, 4000);
+}
+
+
+// --------------------------------------------------
+// START
+// --------------------------------------------------
+
+function startGame(username) {
+
+  state.username = username || "Aventurero";
+
+  if ($("hudName")) {
+    $("hudName").textContent = state.username;
+  }
+
+  if ($("avatar")) {
+    $("avatar").textContent =
+      state.username.charAt(0).toUpperCase();
+  }
+
+  home.hidden = true;
+  game.hidden = false;
+
+  initWorld();
+}
+
+
+// --------------------------------------------------
+// THREE.JS
+// --------------------------------------------------
+
+function initWorld() {
+
+  if (renderer) return;
+
+  clock = new THREE.Clock();
+
+  scene = new THREE.Scene();
+
+  scene.background = new THREE.Color(0x86b7d5);
+
+  scene.fog = new THREE.FogExp2(
+    0x86b7d5,
+    0.0017
+  );
+
+
+  // CAMERA
+
+  camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1600
+  );
+
+  camera.position.set(
+    0,
+    30,
+    40
+  );
+
+
+  // RENDERER
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: false,
+    powerPreference: "high-performance"
   });
 
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 1.8)
+  );
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  renderer.shadowMap.enabled = true;
+
+  renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+  renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+  renderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+  renderer.toneMappingExposure = 1.1;
+
+  sceneEl.appendChild(renderer.domElement);
+
+
+  // LIGHT
+
+  const hemisphere = new THREE.HemisphereLight(
+    0xbfe5ff,
+    0x34472f,
+    1.8
+  );
+
+  scene.add(hemisphere);
+
+
+  const sun = new THREE.DirectionalLight(
+    0xfff2d2,
+    3.2
+  );
+
+  sun.position.set(
+    -120,
+    180,
+    80
+  );
+
+  sun.castShadow = true;
+
+  sun.shadow.mapSize.set(
+    2048,
+    2048
+  );
+
+  sun.shadow.camera.left = -250;
+  sun.shadow.camera.right = 250;
+  sun.shadow.camera.top = 250;
+  sun.shadow.camera.bottom = -250;
+
+  scene.add(sun);
+
+
+  // WORLD
+
+  createGround();
+
+  createSky();
+
+  createWater();
+
+  createWorldPaths();
+
+  createVillage();
+
+  createForest();
+
+  createMountains();
+
+  createRuins();
+
+  createCastle();
+
+  createCrystals();
+
+  createPlayer();
+
+
+  // CONTROLS
+
+  setupJoystick();
+
+  setupKeyboard();
+
+  setupCombat();
+
+  setupChat();
+
+  setupMap();
+
+  setupHowTo();
+
+  setupHouseButton();
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+
+  animate();
 }
 
 
-// =====================================================
-// AÑADIR OBJETO
-// =====================================================
-
-function add(object) {
-
-  scene.add(object);
-
-  return object;
-
-}
-
-
-// =====================================================
-// TERRENO
-// =====================================================
+// --------------------------------------------------
+// GROUND
+// --------------------------------------------------
 
 function createGround() {
 
   const geometry =
     new THREE.PlaneGeometry(
-      220,
-      220,
-      30,
-      30
+      WORLD_SIZE,
+      WORLD_SIZE,
+      100,
+      100
     );
 
-  const materialGround =
+  const material =
     new THREE.MeshStandardMaterial({
-
-      color: 0x285c3b,
-
+      color: 0x416f45,
       roughness: 1
-
     });
 
   const ground =
     new THREE.Mesh(
       geometry,
-      materialGround
+      material
     );
 
-  ground.rotation.x =
-    -Math.PI / 2;
+  ground.rotation.x = -Math.PI / 2;
 
   ground.receiveShadow = true;
 
-  add(ground);
+  scene.add(ground);
 
 
-  // pequeñas zonas de hierba
+  // Grass detail
 
-  for (let i = 0; i < 700; i++) {
+  const grassMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x5f914f,
+      roughness: 1
+    });
 
-    const grass =
-      new THREE.Mesh(
+  for (let i = 0; i < 1300; i++) {
 
-        new THREE.ConeGeometry(
-          .035,
-          .25 + Math.random() * .3,
-          3
-        ),
-
-        material(
-          0x397447
-        )
-
+    const x =
+      THREE.MathUtils.randFloat(
+        -WORLD_SIZE / 2,
+        WORLD_SIZE / 2
       );
 
-    grass.position.set(
+    const z =
+      THREE.MathUtils.randFloat(
+        -WORLD_SIZE / 2,
+        WORLD_SIZE / 2
+      );
 
-      (Math.random() - .5) * 210,
+    const blade =
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          0.5,
+          THREE.MathUtils.randFloat(
+            0.5,
+            1.5
+          )
+        ),
+        grassMaterial
+      );
 
-      .12,
-
-      (Math.random() - .5) * 210
-
+    blade.position.set(
+      x,
+      0.25,
+      z
     );
 
-    grass.rotation.y =
+    blade.rotation.y =
       Math.random() * Math.PI;
 
-    add(grass);
-
+    scene.add(blade);
   }
-
 }
 
 
-// =====================================================
-// ÁRBOLES
-// =====================================================
+// --------------------------------------------------
+// SKY
+// --------------------------------------------------
 
-function createTree(x, z, scale = 1) {
+function createSky() {
 
-  const tree =
-    new THREE.Group();
+  const skyGeometry =
+    new THREE.SphereGeometry(
+      1000,
+      32,
+      16
+    );
 
+  const skyMaterial =
+    new THREE.MeshBasicMaterial({
+      color: 0x78a9c9,
+      side: THREE.BackSide
+    });
 
-  const trunk =
+  const sky =
     new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        .35 * scale,
-        .6 * scale,
-        3 * scale,
-        8
-      ),
-
-      material(
-        0x5a3b24
-      )
-
+      skyGeometry,
+      skyMaterial
     );
 
-  trunk.position.y =
-    1.5 * scale;
+  scene.add(sky);
 
-  trunk.castShadow = true;
 
-  tree.add(trunk);
+  // Clouds
 
+  const cloudMaterial =
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5
+    });
 
-  const leaves1 =
-    new THREE.Mesh(
+  for (let i = 0; i < 20; i++) {
 
-      new THREE.ConeGeometry(
-        2.4 * scale,
-        4.5 * scale,
-        9
-      ),
-
-      material(
-        0x185a38
-      )
-
-    );
-
-  leaves1.position.y =
-    4 * scale;
-
-  leaves1.castShadow = true;
-
-  tree.add(leaves1);
-
-
-  const leaves2 =
-    new THREE.Mesh(
-
-      new THREE.ConeGeometry(
-        1.7 * scale,
-        3.4 * scale,
-        9
-      ),
-
-      material(
-        0x237047
-      )
-
-    );
-
-  leaves2.position.y =
-    5.5 * scale;
-
-  leaves2.castShadow = true;
-
-  tree.add(leaves2);
-
-
-  tree.position.set(
-    x,
-    0,
-    z
-  );
-
-  add(tree);
-
-}
-
-
-// =====================================================
-// BOSQUE
-// =====================================================
-
-function createForest() {
-
-  for (let i = 0; i < 150; i++) {
-
-    let x =
-      (Math.random() - .5) * 200;
-
-    let z =
-      (Math.random() - .5) * 200;
-
-
-    // deja libre la aldea central
-
-    if (
-      Math.abs(x) < 18 &&
-      Math.abs(z) < 18
-    ) {
-
-      i--;
-
-      continue;
-
-    }
-
-
-    createTree(
-      x,
-      z,
-      .65 + Math.random() * .75
-    );
-
-  }
-
-}
-
-
-// =====================================================
-// CASAS
-// =====================================================
-
-function createHouse(x, z) {
-
-  const house =
-    new THREE.Group();
-
-
-  const walls =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        5,
-        3.2,
-        4.5
-      ),
-
-      material(
-        0x806449
-      )
-
-    );
-
-  walls.position.y =
-    1.6;
-
-  walls.castShadow = true;
-
-  house.add(walls);
-
-
-  const roof =
-    new THREE.Mesh(
-
-      new THREE.ConeGeometry(
-        3.8,
-        2.5,
-        4
-      ),
-
-      material(
-        0x4b3024
-      )
-
-    );
-
-  roof.position.y =
-    4.3;
-
-  roof.rotation.y =
-    Math.PI / 4;
-
-  roof.castShadow = true;
-
-  house.add(roof);
-
-
-  // puerta
-
-  const door =
-    new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        .9,
-        1.8,
-        .15
-      ),
-
-      material(
-        0x2b1a13
-      )
-
-    );
-
-  door.position.set(
-    0,
-    .9,
-    2.3
-  );
-
-  house.add(door);
-
-
-  // ventanas
-
-  for (
-    const side of [-1, 1]
-  ) {
-
-    const window =
+    const cloud =
       new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-          .75,
-          .8,
-          .12
+        new THREE.SphereGeometry(
+          THREE.MathUtils.randFloat(
+            10,
+            25
+          ),
+          16,
+          8
         ),
-
-        new THREE.MeshStandardMaterial({
-
-          color: 0x82dfff,
-
-          emissive: 0x3bbfff,
-
-          emissiveIntensity: 1.5
-
-        })
-
+        cloudMaterial
       );
 
-    window.position.set(
-      side * 1.3,
-      1.8,
-      2.3
+    cloud.position.set(
+      THREE.MathUtils.randFloat(
+        -300,
+        300
+      ),
+      THREE.MathUtils.randFloat(
+        100,
+        180
+      ),
+      THREE.MathUtils.randFloat(
+        -300,
+        300
+      )
     );
 
-    house.add(window);
+    cloud.scale.y = 0.3;
 
+    scene.add(cloud);
   }
-
-
-  house.position.set(
-    x,
-    0,
-    z
-  );
-
-  add(house);
-
 }
 
 
-// =====================================================
-// ALDEA
-// =====================================================
+// --------------------------------------------------
+// WATER
+// --------------------------------------------------
+
+let water;
+
+function createWater() {
+
+  const geometry =
+    new THREE.CircleGeometry(
+      55,
+      80
+    );
+
+  const material =
+    new THREE.MeshPhysicalMaterial({
+      color: 0x237da0,
+      transparent: true,
+      opacity: 0.78,
+      roughness: 0.15,
+      metalness: 0.05
+    });
+
+  water =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  water.rotation.x =
+    -Math.PI / 2;
+
+  water.position.set(
+    100,
+    0.08,
+    70
+  );
+
+  scene.add(water);
+}
+
+
+// --------------------------------------------------
+// PATHS
+// --------------------------------------------------
+
+function createWorldPaths() {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x8d704d,
+      roughness: 1
+    });
+
+  const paths = [
+    [0, 0, 25, 520],
+    [0, 0, 520, 25],
+    [-120, -70, 350, 18],
+    [120, 110, 280, 16]
+  ];
+
+  for (const [x, z, w, h] of paths) {
+
+    const mesh =
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          w,
+          h
+        ),
+        material
+      );
+
+    mesh.rotation.x =
+      -Math.PI / 2;
+
+    mesh.position.set(
+      x,
+      0.03,
+      z
+    );
+
+    scene.add(mesh);
+  }
+}
+
+
+// --------------------------------------------------
+// VILLAGE
+// --------------------------------------------------
+
+const houses = [];
 
 function createVillage() {
 
   const positions = [
-
-    [-10, -9],
-    [0, -11],
-    [10, -9],
-    [-11, 4],
-    [11, 5],
-    [-7, 11],
-    [7, 11]
-
+    [-55, -45],
+    [-20, -50],
+    [20, -50],
+    [55, -42],
+    [-70, 0],
+    [65, 5],
+    [-45, 45],
+    [5, 45],
+    [55, 45],
+    [0, 85]
   ];
 
+  for (
+    let i = 0;
+    i < positions.length;
+    i++
+  ) {
 
-  positions.forEach(
-    p =>
-      createHouse(
-        p[0],
-        p[1]
-      )
-  );
+    const house =
+      createDetailedHouse(
+        positions[i][0],
+        positions[i][1],
+        i
+      );
+
+    houses.push(house);
+  }
 
 
-  // plaza
+  // Plaza
 
   const plaza =
     new THREE.Mesh(
-
-      new THREE.CircleGeometry(
-        8,
-        32
-      ),
-
-      material(
-        0x8c704e
-      )
-
-    );
-
-  plaza.rotation.x =
-    -Math.PI / 2;
-
-  plaza.position.y =
-    .025;
-
-  add(plaza);
-
-
-  // fuente
-
-  const fountain =
-    new THREE.Mesh(
-
       new THREE.CylinderGeometry(
-        2.3,
-        2.5,
-        .5,
-        24
-      ),
-
-      material(
-        0x737c86
-      )
-
-    );
-
-  fountain.position.y =
-    .25;
-
-  add(fountain);
-
-
-  const water =
-    new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        1.8,
-        1.8,
-        .1,
-        24
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0x39c8ef,
-
-        emissive: 0x147da0,
-
-        emissiveIntensity: 1
-
-      })
-
-    );
-
-  water.position.y =
-    .55;
-
-  add(water);
-
-}
-
-
-// =====================================================
-// LAGO
-// =====================================================
-
-function createLake() {
-
-  const lake =
-    new THREE.Mesh(
-
-      new THREE.CircleGeometry(
-        20,
+        42,
+        42,
+        0.5,
         64
       ),
-
       new THREE.MeshStandardMaterial({
-
-        color: 0x1c7190,
-
-        transparent: true,
-
-        opacity: .82,
-
-        roughness: .12,
-
-        metalness: .15
-
+        color: 0x9a8a70,
+        roughness: 0.9
       })
-
     );
 
-  lake.rotation.x =
-    -Math.PI / 2;
-
-  lake.position.set(
-    38,
-    .05,
-    30
+  plaza.position.set(
+    0,
+    0.25,
+    0
   );
 
-  add(lake);
+  plaza.receiveShadow = true;
+
+  scene.add(plaza);
 
 
-  // pequeñas islas
-
-  for (let i = 0; i < 8; i++) {
-
-    const rock =
-      new THREE.Mesh(
-
-        new THREE.DodecahedronGeometry(
-          1 + Math.random()
-        ),
-
-        material(
-          0x52665c
-        )
-
-      );
-
-    rock.position.set(
-
-      38 +
-      (Math.random() - .5) * 25,
-
-      .4,
-
-      30 +
-      (Math.random() - .5) * 25
-
-    );
-
-    add(rock);
-
-  }
-
+  createFountain();
 }
 
 
-// =====================================================
-// CRISTALES
-// =====================================================
+// --------------------------------------------------
+// HOUSE
+// --------------------------------------------------
 
-function createCrystal(x, z) {
+function createDetailedHouse(
+  x,
+  z,
+  index
+) {
 
   const group =
     new THREE.Group();
-
-
-  const crystal =
-    new THREE.Mesh(
-
-      new THREE.OctahedronGeometry(
-        1.15
-      ),
-
-      new THREE.MeshStandardMaterial({
-
-        color: 0xa66cff,
-
-        emissive: 0x6a2cff,
-
-        emissiveIntensity: 1.7,
-
-        roughness: .2,
-
-        metalness: .25
-
-      })
-
-    );
-
-  crystal.position.y =
-    1.15;
-
-  crystal.castShadow = true;
-
-  group.add(crystal);
-
-
-  const light =
-    new THREE.PointLight(
-      0x9b63ff,
-      2.5,
-      8
-    );
-
-  light.position.y =
-    1.5;
-
-  group.add(light);
-
 
   group.position.set(
     x,
@@ -647,502 +680,1237 @@ function createCrystal(x, z) {
     z
   );
 
-  group.userData.crystal =
-    true;
 
-  add(group);
+  const wallMaterial =
+    new THREE.MeshStandardMaterial({
+      color:
+        index % 2
+          ? 0x8f6042
+          : 0x9b6948,
+      roughness: 0.85
+    });
 
+
+  const roofMaterial =
+    new THREE.MeshStandardMaterial({
+      color:
+        index % 3 === 0
+          ? 0x4b3028
+          : 0x63382d,
+      roughness: 0.9
+    });
+
+
+  // Main building
+
+  const body =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        22,
+        10,
+        18
+      ),
+      wallMaterial
+    );
+
+  body.position.y = 5;
+
+  body.castShadow = true;
+  body.receiveShadow = true;
+
+  group.add(body);
+
+
+  // Roof
+
+  const roof =
+    new THREE.Mesh(
+      new THREE.ConeGeometry(
+        15,
+        9,
+        4
+      ),
+      roofMaterial
+    );
+
+  roof.rotation.y =
+    Math.PI / 4;
+
+  roof.position.y =
+    14;
+
+  roof.castShadow = true;
+
+  group.add(roof);
+
+
+  // Door
+
+  const door =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3.2,
+        5.5,
+        0.35
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x39251d,
+        roughness: 0.8
+      })
+    );
+
+  door.position.set(
+    0,
+    2.75,
+    9.15
+  );
+
+  group.add(door);
+
+
+  // Windows
+
+  for (const side of [-1, 1]) {
+
+    const window =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          4,
+          3,
+          0.3
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x82c8df,
+          emissive: 0x194b60,
+          emissiveIntensity: 0.5
+        })
+      );
+
+    window.position.set(
+      side * 7,
+      5.2,
+      9.15
+    );
+
+    group.add(window);
+  }
+
+
+  // Chimney
+
+  const chimney =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        3,
+        7,
+        3
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x5c514a
+      })
+    );
+
+  chimney.position.set(
+    6,
+    16,
+    -3
+  );
+
+  chimney.castShadow = true;
+
+  group.add(chimney);
+
+
+  // Fence
+
+  for (let i = -2; i <= 2; i++) {
+
+    const post =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.7,
+          2.2,
+          0.7
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x6d4930
+        })
+      );
+
+    post.position.set(
+      i * 3,
+      1.1,
+      12
+    );
+
+    group.add(post);
+  }
+
+
+  group.userData = {
+    type: "house",
+    index,
+    x,
+    z
+  };
+
+  scene.add(group);
+
+  return group;
 }
 
 
-// =====================================================
-// CRISTALES DEL REINO
-// =====================================================
+// --------------------------------------------------
+// FOUNTAIN
+// --------------------------------------------------
 
-function createCrystals() {
+function createFountain() {
 
-  for (let i = 0; i < 35; i++) {
+  const stone =
+    new THREE.MeshStandardMaterial({
+      color: 0x87909a,
+      roughness: 0.9
+    });
 
-    let x =
-      (Math.random() - .5) * 180;
+  const base =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        9,
+        10,
+        1.5,
+        40
+      ),
+      stone
+    );
 
-    let z =
-      (Math.random() - .5) * 180;
+  base.position.y =
+    0.75;
+
+  base.castShadow = true;
+
+  scene.add(base);
 
 
-    if (
-      Math.abs(x) < 20 &&
-      Math.abs(z) < 20
-    ) {
+  const water =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        7.8,
+        7.8,
+        0.3,
+        40
+      ),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x4bb8d9,
+        transparent: true,
+        opacity: 0.75
+      })
+    );
 
-      i--;
+  water.position.y =
+    1.5;
 
-      continue;
+  scene.add(water);
+}
 
-    }
+
+// --------------------------------------------------
+// FOREST
+// --------------------------------------------------
+
+const vegetation = [];
+
+function createForest() {
+
+  for (let i = 0; i < 230; i++) {
+
+    const angle =
+      Math.random() *
+      Math.PI *
+      2;
+
+    const radius =
+      THREE.MathUtils.randFloat(
+        130,
+        320
+      );
+
+    const x =
+      Math.cos(angle) *
+      radius;
+
+    const z =
+      Math.sin(angle) *
+      radius;
 
 
-    createCrystal(
+    const tree =
+      createNaturalTree();
+
+    tree.position.set(
       x,
+      0,
       z
     );
 
-  }
+    tree.scale.setScalar(
+      THREE.MathUtils.randFloat(
+        0.8,
+        1.5
+      )
+    );
 
+    scene.add(tree);
+
+    vegetation.push(tree);
+  }
 }
 
 
-// =====================================================
-// CASTILLO
-// =====================================================
+// --------------------------------------------------
+// NATURAL TREE
+// --------------------------------------------------
 
-function createCastle() {
+function createNaturalTree() {
 
-  const castle =
+  const group =
     new THREE.Group();
 
 
-  const main =
+  const trunk =
     new THREE.Mesh(
-
-      new THREE.BoxGeometry(
-        14,
-        8,
+      new THREE.CylinderGeometry(
+        0.7,
+        1.2,
+        9,
         10
       ),
-
-      material(
-        0x535966
-      )
-
+      new THREE.MeshStandardMaterial({
+        color: 0x62402a,
+        roughness: 1
+      })
     );
 
-  main.position.y =
-    4;
+  trunk.position.y =
+    4.5;
 
-  main.castShadow = true;
+  trunk.castShadow = true;
 
-  castle.add(main);
+  group.add(trunk);
 
 
-  for (
-    const x of [-7, 7]
-  ) {
+  const leavesMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x326f3d,
+      roughness: 1
+    });
 
-    for (
-      const z of [-5, 5]
-    ) {
 
-      const tower =
-        new THREE.Mesh(
+  // Irregular foliage instead of cones
 
-          new THREE.CylinderGeometry(
-            2,
-            2.3,
-            12,
-            10
+  for (let i = 0; i < 9; i++) {
+
+    const leaves =
+      new THREE.Mesh(
+        new THREE.IcosahedronGeometry(
+          THREE.MathUtils.randFloat(
+            2.5,
+            4.5
           ),
-
-          material(
-            0x444852
-          )
-
-        );
-
-      tower.position.set(
-        x,
-        6,
-        z
+          1
+        ),
+        leavesMaterial
       );
 
-      tower.castShadow = true;
+    leaves.position.set(
+      THREE.MathUtils.randFloat(
+        -2,
+        2
+      ),
+      THREE.MathUtils.randFloat(
+        7,
+        12
+      ),
+      THREE.MathUtils.randFloat(
+        -2,
+        2
+      )
+    );
 
-      castle.add(tower);
-
-
-      const roof =
-        new THREE.Mesh(
-
-          new THREE.ConeGeometry(
-            2.8,
-            3,
-            10
-          ),
-
-          material(
-            0x30253e
-          )
-
-        );
-
-      roof.position.set(
-        x,
-        13,
-        z
+    leaves.scale.y =
+      THREE.MathUtils.randFloat(
+        0.8,
+        1.4
       );
 
-      castle.add(roof);
+    leaves.castShadow = true;
 
-    }
-
+    group.add(leaves);
   }
 
 
-  castle.position.set(
-    65,
-    0,
-    -55
-  );
+  group.userData.wind =
+    Math.random() * Math.PI * 2;
 
-  add(castle);
-
+  return group;
 }
 
 
-// =====================================================
-// MONTAÑAS
-// =====================================================
+// --------------------------------------------------
+// MOUNTAINS
+// --------------------------------------------------
 
 function createMountains() {
 
-  for (let i = 0; i < 25; i++) {
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x45574e,
+      roughness: 1
+    });
+
+  for (let i = 0; i < 28; i++) {
+
+    const angle =
+      (i / 28) *
+      Math.PI *
+      2;
+
+    const radius = 325;
 
     const mountain =
       new THREE.Mesh(
-
         new THREE.ConeGeometry(
-          8 + Math.random() * 8,
-          15 + Math.random() * 20,
-          7
+          THREE.MathUtils.randFloat(
+            25,
+            45
+          ),
+          THREE.MathUtils.randFloat(
+            50,
+            100
+          ),
+          8
         ),
-
-        material(
-          0x35454a
-        )
-
+        material
       );
 
-    const angle =
-      Math.random() * Math.PI * 2;
-
-    const distance =
-      85 + Math.random() * 20;
-
     mountain.position.set(
-
-      Math.cos(angle) *
-      distance,
-
-      8,
-
-      Math.sin(angle) *
-      distance
-
+      Math.cos(angle) * radius,
+      25,
+      Math.sin(angle) * radius
     );
 
     mountain.castShadow = true;
 
-    add(mountain);
-
+    scene.add(mountain);
   }
-
 }
 
 
-// =====================================================
-// PERSONAJE
-// =====================================================
+// --------------------------------------------------
+// RUINS
+// --------------------------------------------------
+
+function createRuins() {
+
+  const group =
+    new THREE.Group();
+
+  group.position.set(
+    230,
+    0,
+    -170
+  );
+
+  const stoneMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x686d70,
+      roughness: 1
+    });
+
+  for (let i = 0; i < 12; i++) {
+
+    const pillar =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          5,
+          THREE.MathUtils.randFloat(
+            6,
+            14
+          ),
+          5
+        ),
+        stoneMaterial
+      );
+
+    pillar.position.set(
+      THREE.MathUtils.randFloat(
+        -35,
+        35
+      ),
+      pillar.geometry.parameters.height / 2,
+      THREE.MathUtils.randFloat(
+        -30,
+        30
+      )
+    );
+
+    pillar.rotation.y =
+      Math.random();
+
+    pillar.castShadow = true;
+
+    group.add(pillar);
+  }
+
+  scene.add(group);
+}
+
+
+// --------------------------------------------------
+// CASTLE
+// --------------------------------------------------
+
+function createCastle() {
+
+  const group =
+    new THREE.Group();
+
+  group.position.set(
+    250,
+    0,
+    230
+  );
+
+
+  const stone =
+    new THREE.MeshStandardMaterial({
+      color: 0x68737b,
+      roughness: 0.9
+    });
+
+
+  const wall =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        70,
+        28,
+        45
+      ),
+      stone
+    );
+
+  wall.position.y =
+    14;
+
+  wall.castShadow = true;
+
+  group.add(wall);
+
+
+  const towerPositions = [
+    [-35, -22],
+    [35, -22],
+    [-35, 22],
+    [35, 22]
+  ];
+
+  for (const [x, z] of towerPositions) {
+
+    const tower =
+      new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          9,
+          11,
+          42,
+          16
+        ),
+        stone
+      );
+
+    tower.position.set(
+      x,
+      21,
+      z
+    );
+
+    tower.castShadow = true;
+
+    group.add(tower);
+
+
+    const roof =
+      new THREE.Mesh(
+        new THREE.ConeGeometry(
+          12,
+          12,
+          8
+        ),
+        new THREE.MeshStandardMaterial({
+          color: 0x3e2933
+        })
+      );
+
+    roof.position.set(
+      x,
+      48,
+      z
+    );
+
+    group.add(roof);
+  }
+
+  scene.add(group);
+}
+
+
+// --------------------------------------------------
+// CRYSTALS
+// --------------------------------------------------
+
+function createCrystals() {
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0xb47cff,
+      emissive: 0x6d2eff,
+      emissiveIntensity: 2
+    });
+
+  for (let i = 0; i < 40; i++) {
+
+    const crystal =
+      new THREE.Mesh(
+        new THREE.OctahedronGeometry(
+          THREE.MathUtils.randFloat(
+            0.8,
+            2.4
+          )
+        ),
+        material
+      );
+
+    crystal.position.set(
+      THREE.MathUtils.randFloat(
+        -300,
+        300
+      ),
+      THREE.MathUtils.randFloat(
+        1,
+        3
+      ),
+      THREE.MathUtils.randFloat(
+        -300,
+        300
+      )
+    );
+
+    crystal.userData.phase =
+      Math.random() * Math.PI * 2;
+
+    scene.add(crystal);
+  }
+}
+
+
+// --------------------------------------------------
+// PLAYER
+// --------------------------------------------------
 
 function createPlayer() {
 
   player =
     new THREE.Group();
 
+  player.position.set(
+    0,
+    0,
+    25
+  );
 
-  // cuerpo
+
+  // Body
 
   const body =
     new THREE.Mesh(
-
-      new THREE.CylinderGeometry(
-        .7,
-        .95,
-        1.8,
-        10
+      new THREE.CapsuleGeometry(
+        1.7,
+        3.2,
+        6,
+        12
       ),
-
-      material(
-        0x5145a4
-      )
-
+      new THREE.MeshStandardMaterial({
+        color: 0x423b70,
+        roughness: 0.7
+      })
     );
 
   body.position.y =
-    1.25;
+    4.2;
 
   body.castShadow = true;
 
   player.add(body);
 
 
-  // cabeza
+  // Head
 
   const head =
     new THREE.Mesh(
-
       new THREE.SphereGeometry(
-        .65,
-        20,
+        1.65,
+        24,
         16
       ),
-
-      material(
-        0xd8a17d
-      )
-
+      new THREE.MeshStandardMaterial({
+        color: 0xc99578,
+        roughness: 0.7
+      })
     );
 
   head.position.y =
-    2.65;
+    7.4;
 
   head.castShadow = true;
 
   player.add(head);
 
 
-  // pelo
+  // Hair
 
   const hair =
     new THREE.Mesh(
-
       new THREE.SphereGeometry(
-        .68,
+        1.7,
         20,
         12,
         0,
         Math.PI * 2,
         0,
-        Math.PI / 2
+        Math.PI * 0.55
       ),
-
-      material(
-        0x493021
-      )
-
+      new THREE.MeshStandardMaterial({
+        color: 0x3b241d,
+        roughness: 0.8
+      })
     );
 
   hair.position.y =
-    2.85;
+    8.1;
+
+  hair.castShadow = true;
 
   player.add(hair);
 
 
-  // capa
+  // Arms
+
+  const armMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x332d59,
+      roughness: 0.75
+    });
+
+  const leftArm =
+    new THREE.Mesh(
+      new THREE.CapsuleGeometry(
+        0.45,
+        2.2,
+        5,
+        8
+      ),
+      armMaterial
+    );
+
+  const rightArm =
+    leftArm.clone();
+
+  leftArm.position.set(
+    -2,
+    4.7,
+    0
+  );
+
+  rightArm.position.set(
+    2,
+    4.7,
+    0
+  );
+
+  player.add(
+    leftArm,
+    rightArm
+  );
+
+
+  // Legs
+
+  const legMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x201e2d,
+      roughness: 0.85
+    });
+
+  const leftLeg =
+    new THREE.Mesh(
+      new THREE.CapsuleGeometry(
+        0.55,
+        2.4,
+        5,
+        8
+      ),
+      legMaterial
+    );
+
+  const rightLeg =
+    leftLeg.clone();
+
+  leftLeg.position.set(
+    -0.8,
+    1.6,
+    0
+  );
+
+  rightLeg.position.set(
+    0.8,
+    1.6,
+    0
+  );
+
+  player.add(
+    leftLeg,
+    rightLeg
+  );
+
+
+  // Cape
 
   const cape =
     new THREE.Mesh(
-
       new THREE.PlaneGeometry(
-        2,
-        3
+        3.5,
+        5
       ),
-
       new THREE.MeshStandardMaterial({
-
-        color: 0x17122c,
-
-        side:
-          THREE.DoubleSide
-
+        color: 0x542d75,
+        side: THREE.DoubleSide,
+        roughness: 0.8
       })
-
     );
 
   cape.position.set(
     0,
-    1.55,
-    .7
+    4.5,
+    -1.6
   );
 
   cape.rotation.x =
-    -.12;
+    0.08;
 
   player.add(cape);
 
 
-  // bastón
+  // Staff
 
   const staff =
     new THREE.Mesh(
-
       new THREE.CylinderGeometry(
-        .08,
-        .11,
-        3.4,
-        8
+        0.16,
+        0.22,
+        5.5,
+        10
       ),
-
-      material(
-        0x5a3823
-      )
-
+      new THREE.MeshStandardMaterial({
+        color: 0x6b452c,
+        roughness: 0.9
+      })
     );
 
   staff.position.set(
-    .9,
-    1.65,
+    2.8,
+    3.7,
     0
   );
-
-  staff.rotation.z =
-    -.15;
 
   player.add(staff);
 
 
-  // gema del bastón
-
   const gem =
     new THREE.Mesh(
-
-      new THREE.OctahedronGeometry(
-        .3
+      new THREE.IcosahedronGeometry(
+        0.65,
+        1
       ),
-
       new THREE.MeshStandardMaterial({
-
-        color: 0xb25cff,
-
-        emissive: 0x7225d8,
-
-        emissiveIntensity: 2
-
+        color: 0xb98cff,
+        emissive: 0x7e36ff,
+        emissiveIntensity: 3
       })
-
     );
 
   gem.position.set(
-    1.1,
-    3.25,
+    2.8,
+    6.5,
     0
   );
 
   player.add(gem);
 
 
-  player.position.set(
-    0,
-    0,
-    8
-  );
+  player.userData.parts = {
+    leftArm,
+    rightArm,
+    leftLeg,
+    rightLeg,
+    cape,
+    gem
+  };
 
 
-  player.userData.walkTime =
-    0;
-
-
-  add(player);
-
+  scene.add(player);
 }
 
 
-// =====================================================
-// LUCES
-// =====================================================
+// --------------------------------------------------
+// MOVEMENT
+// --------------------------------------------------
 
-function createLights() {
+function updateMovement(delta) {
 
-  const hemi =
-    new THREE.HemisphereLight(
+  if (!player) return;
 
-      0xaacbff,
-
-      0x183820,
-
-      2.3
-
-    );
-
-  add(hemi);
+  let x = moveX;
+  let y = moveY;
 
 
-  const sun =
-    new THREE.DirectionalLight(
-      0xffffff,
-      2.8
-    );
+  if (keys["w"] || keys["ArrowUp"])
+    y += 1;
 
-  sun.position.set(
-    -40,
-    70,
-    30
-  );
+  if (keys["s"] || keys["ArrowDown"])
+    y -= 1;
 
-  sun.castShadow = true;
+  if (keys["a"] || keys["ArrowLeft"])
+    x -= 1;
 
-  sun.shadow.mapSize.width =
-    2048;
-
-  sun.shadow.mapSize.height =
-    2048;
-
-  add(sun);
+  if (keys["d"] || keys["ArrowRight"])
+    x += 1;
 
 
-  // luna
-
-  const moon =
-    new THREE.PointLight(
-      0x657fff,
-      1.8,
-      120
-    );
-
-  moon.position.set(
-    -35,
-    25,
-    -45
-  );
-
-  add(moon);
-
-}
+  const length =
+    Math.hypot(x, y);
 
 
-// =====================================================
-// EFECTO DE ATAQUE
-// =====================================================
+  if (length > 0) {
 
-function spell(type) {
+    x /= length;
+    y /= length;
 
-  if (mana < 15) {
+    moving = true;
 
-    return;
+  } else {
 
+    moving = false;
   }
 
 
-  mana -= 15;
+  const speed =
+    moving ? 13 : 0;
 
 
-  updateStats();
+  player.position.x +=
+    x * speed * delta;
+
+  player.position.z -=
+    y * speed * delta;
 
 
-  const effect =
-    document.createElement(
-      "div"
+  const limit =
+    WORLD_SIZE / 2 - 15;
+
+  player.position.x =
+    THREE.MathUtils.clamp(
+      player.position.x,
+      -limit,
+      limit
+    );
+
+  player.position.z =
+    THREE.MathUtils.clamp(
+      player.position.z,
+      -limit,
+      limit
     );
 
 
-  effect.className =
-    "spellFX " +
-    type +
-    "FX";
+  if (moving) {
 
+    player.rotation.y =
+      Math.atan2(
+        x,
+        y
+      );
+
+
+    const walk =
+      Math.sin(
+        clock.elapsedTime * 9
+      );
+
+
+    const p =
+      player.userData.parts;
+
+
+    p.leftArm.rotation.x =
+      walk * 0.6;
+
+    p.rightArm.rotation.x =
+      -walk * 0.6;
+
+    p.leftLeg.rotation.x =
+      -walk * 0.5;
+
+    p.rightLeg.rotation.x =
+      walk * 0.5;
+
+    p.cape.rotation.z =
+      walk * 0.04;
+
+  }
+}
+
+
+// --------------------------------------------------
+// JOYSTICK
+// --------------------------------------------------
+
+function setupJoystick() {
+
+  const joystick =
+    $("joystick");
+
+  const stick =
+    $("stick");
+
+  if (!joystick || !stick)
+    return;
+
+
+  function move(event) {
+
+    const rect =
+      joystick.getBoundingClientRect();
+
+    const centerX =
+      rect.left +
+      rect.width / 2;
+
+    const centerY =
+      rect.top +
+      rect.height / 2;
+
+
+    let dx =
+      event.clientX -
+      centerX;
+
+    let dy =
+      event.clientY -
+      centerY;
+
+
+    const max =
+      rect.width / 2 -
+      stick.offsetWidth / 2 -
+      5;
+
+
+    const distance =
+      Math.hypot(dx, dy);
+
+
+    if (distance > max) {
+
+      dx =
+        dx / distance * max;
+
+      dy =
+        dy / distance * max;
+    }
+
+
+    stick.style.transform =
+      `translate(${dx}px,${dy}px)`;
+
+
+    moveX =
+      dx / max;
+
+    moveY =
+      -dy / max;
+  }
+
+
+  joystick.addEventListener(
+    "pointerdown",
+    event => {
+
+      joystickPointer =
+        event.pointerId;
+
+      joystick.setPointerCapture(
+        event.pointerId
+      );
+
+      move(event);
+    }
+  );
+
+
+  joystick.addEventListener(
+    "pointermove",
+    event => {
+
+      if (
+        event.pointerId !==
+        joystickPointer
+      ) return;
+
+      move(event);
+    }
+  );
+
+
+  function release() {
+
+    joystickPointer = null;
+
+    moveX = 0;
+    moveY = 0;
+
+    stick.style.transform =
+      "translate(0,0)";
+  }
+
+
+  joystick.addEventListener(
+    "pointerup",
+    release
+  );
+
+  joystick.addEventListener(
+    "pointercancel",
+    release
+  );
+
+  joystick.addEventListener(
+    "lostpointercapture",
+    release
+  );
+}
+
+
+// --------------------------------------------------
+// KEYBOARD
+// --------------------------------------------------
+
+function setupKeyboard() {
+
+  window.addEventListener(
+    "keydown",
+    event => {
+
+      keys[event.key] = true;
+
+    }
+  );
+
+
+  window.addEventListener(
+    "keyup",
+    event => {
+
+      keys[event.key] = false;
+
+    }
+  );
+}
+
+
+// --------------------------------------------------
+// COMBAT
+// --------------------------------------------------
+
+function setupCombat() {
 
   document
-    .getElementById("game")
-    .appendChild(effect);
+    .querySelectorAll(
+      ".combat button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          castSpell(
+            button.dataset.spell
+          );
+
+        }
+      );
+
+    });
+}
+
+
+function castSpell(type) {
+
+  const costs = {
+    fire: 20,
+    water: 20,
+    arcane: 30,
+    attack: 0
+  };
+
+  const cost =
+    costs[type] ?? 20;
+
+
+  if (mana < cost) {
+
+    showToast(
+      "💧 No tenés suficiente maná."
+    );
+
+    return;
+  }
+
+
+  mana -= cost;
+
+  updateBars();
+
+
+  const icons = {
+    fire: "🔥",
+    water: "💧",
+    arcane: "✦",
+    attack: "⚔️"
+  };
+
+
+  const effect =
+    document.createElement("div");
+
+  effect.className =
+    `spellFX ${type}FX`;
+
+  effect.textContent =
+    icons[type] || "✨";
+
+
+  document.body.appendChild(
+    effect
+  );
 
 
   setTimeout(
@@ -1151,764 +1919,578 @@ function spell(type) {
   );
 
 
-  // animación del personaje
+  const parts =
+    player?.userData.parts;
 
-  player.rotation.y +=
-    Math.PI * .4;
+  if (parts) {
 
+    player.rotation.y +=
+      0.35;
 
-  player.scale.set(
-    1.15,
-    1.15,
-    1.15
-  );
+    parts.rightArm.rotation.x =
+      -1.5;
 
-
-  setTimeout(
-    () => {
-
-      player.scale.set(
-        1,
-        1,
-        1
-      );
-
-    },
-    180
-  );
-
-
-  socket.emit(
-    "spell",
-    {
-      type
-    }
-  );
-
-}
-
-
-// =====================================================
-// STATS
-// =====================================================
-
-function updateStats() {
-
-  document
-    .getElementById("hp")
-    .textContent =
-      hp;
-
-
-  document
-    .getElementById("mana")
-    .textContent =
-      mana;
-
-
-  document
-    .getElementById("hpbar")
-    .style.width =
-      hp + "%";
-
-
-  document
-    .getElementById("manabar")
-    .style.width =
-      mana + "%";
-
-}
-
-
-// =====================================================
-// MOVIMIENTO
-// =====================================================
-
-function movePlayer(delta) {
-
-  let x =
-    moving.x;
-
-  let z =
-    moving.z;
-
-
-  if (
-    keys["w"] ||
-    keys["arrowup"]
-  ) {
-
-    z -= 1;
-
-  }
-
-
-  if (
-    keys["s"] ||
-    keys["arrowdown"]
-  ) {
-
-    z += 1;
-
-  }
-
-
-  if (
-    keys["a"] ||
-    keys["arrowleft"]
-  ) {
-
-    x -= 1;
-
-  }
-
-
-  if (
-    keys["d"] ||
-    keys["arrowright"]
-  ) {
-
-    x += 1;
-
-  }
-
-
-  const length =
-    Math.hypot(
-      x,
-      z
+    parts.gem.scale.setScalar(
+      1.8
     );
 
 
-  if (
-    length === 0
-  ) {
-
-    return;
-
-  }
-
-
-  x /= length;
-
-  z /= length;
-
-
-  const speed =
-    9 * delta;
-
-
-  player.position.x +=
-    x * speed;
-
-  player.position.z +=
-    z * speed;
-
-
-  // límites del mapa
-
-  player.position.x =
-    THREE.MathUtils.clamp(
-      player.position.x,
-      -100,
-      100
-    );
-
-
-  player.position.z =
-    THREE.MathUtils.clamp(
-      player.position.z,
-      -100,
-      100
-    );
-
-
-  player.rotation.y =
-    Math.atan2(
-      x,
-      z
-    );
-
-
-  // animación caminar
-
-  player.userData.walkTime +=
-    delta * 12;
-
-
-  const bounce =
-    Math.sin(
-      player.userData.walkTime
-    ) * .08;
-
-
-  player.position.y =
-    Math.abs(bounce);
-
-
-  // cámara sigue al jugador
-
-  controls.target.lerp(
-    player.position,
-    .12
-  );
-
-}
-
-
-// =====================================================
-// JOYSTICK
-// =====================================================
-
-function setupJoystick() {
-
-  const joystick =
-    document.getElementById(
-      "joystick"
-    );
-
-  const stick =
-    document.getElementById(
-      "stick"
-    );
-
-
-  let active = false;
-
-
-  function update(e) {
-
-    if (!active) {
-
-      return;
-
-    }
-
-
-    const rect =
-      joystick.getBoundingClientRect();
-
-
-    const point =
-      e.touches
-        ? e.touches[0]
-        : e;
-
-
-    let x =
-      point.clientX -
-      (
-        rect.left +
-        rect.width / 2
-      );
-
-
-    let y =
-      point.clientY -
-      (
-        rect.top +
-        rect.height / 2
-      );
-
-
-    const distance =
-      Math.hypot(
-        x,
-        y
-      );
-
-
-    const max =
-      48;
-
-
-    if (
-      distance > max
-    ) {
-
-      x =
-        x / distance * max;
-
-      y =
-        y / distance * max;
-
-    }
-
-
-    moving.x =
-      x / max;
-
-    moving.z =
-      y / max;
-
-
-    stick.style.transform =
-      `translate(${x}px,${y}px)`;
-
-  }
-
-
-  joystick.addEventListener(
-    "pointerdown",
-    e => {
-
-      active = true;
-
-      joystick.setPointerCapture(
-        e.pointerId
-      );
-
-      update(e);
-
-    }
-  );
-
-
-  joystick.addEventListener(
-    "pointermove",
-    update
-  );
-
-
-  joystick.addEventListener(
-    "pointerup",
-    () => {
-
-      active = false;
-
-      moving.x = 0;
-
-      moving.z = 0;
-
-      stick.style.transform =
-        "translate(0,0)";
-
-    }
-  );
-
-}
-
-
-// =====================================================
-// MAPA
-// =====================================================
-
-function setupMap() {
-
-  const map =
-    document.getElementById(
-      "map"
-    );
-
-
-  document
-    .getElementById("mapBtn")
-    .onclick =
+    setTimeout(
       () => {
 
-        map.hidden =
-          false;
+        parts.rightArm.rotation.x =
+          0;
 
-      };
+        parts.gem.scale.setScalar(
+          1
+        );
 
-
-  document
-    .getElementById("sideMap")
-    .onclick =
-      () => {
-
-        map.hidden =
-          false;
-
-      };
+      },
+      250
+    );
+  }
 
 
-  document
-    .getElementById("closeMap")
-    .onclick =
-      () => {
+  if (socket) {
 
-        map.hidden =
-          true;
-
-      };
-
+    socket.emit(
+      "spell",
+      {
+        type,
+        username:
+          state.username
+      }
+    );
+  }
 }
 
 
-// =====================================================
+// --------------------------------------------------
+// BARS
+// --------------------------------------------------
+
+function updateBars() {
+
+  if ($("hp")) {
+    $("hp").textContent =
+      Math.round(hp);
+  }
+
+  if ($("mana")) {
+    $("mana").textContent =
+      Math.round(mana);
+  }
+
+  if ($("hpbar")) {
+    $("hpbar").style.width =
+      `${hp}%`;
+  }
+
+  if ($("manabar")) {
+    $("manabar").style.width =
+      `${mana}%`;
+  }
+}
+
+
+// --------------------------------------------------
 // CHAT
-// =====================================================
+// --------------------------------------------------
 
 function setupChat() {
 
   const chat =
-    document.getElementById(
-      "chat"
-    );
+    $("chat");
 
+  const toggle =
+    $("chatToggle");
 
-  document
-    .getElementById(
-      "chatToggle"
-    )
-    .onclick =
+  const form =
+    $("form");
+
+  const input =
+    $("input");
+
+  if (toggle) {
+
+    toggle.addEventListener(
+      "click",
       () => {
 
         chat.classList.toggle(
           "chatMin"
         );
 
-      };
+      }
+    );
+  }
 
 
-  document
-    .getElementById(
-      "form"
-    )
-    .onsubmit =
-      e => {
+  form?.addEventListener(
+    "submit",
+    event => {
 
-        e.preventDefault();
+      event.preventDefault();
 
+      const message =
+        input.value.trim();
 
-        const input =
-          document.getElementById(
-            "input"
-          );
+      if (!message)
+        return;
 
 
-        const message =
-          input.value.trim();
-
-
-        if (!message) {
-
-          return;
-
-        }
-
+      if (socket) {
 
         socket.emit(
           "chat",
           message
         );
 
+      } else {
 
-        input.value =
-          "";
+        addChatMessage(
+          state.username,
+          message
+        );
+      }
 
-      };
 
-
-  socket.on(
-    "chat",
-    message => {
-
-      addChatMessage(
-        message,
-        false
-      );
-
+      input.value = "";
     }
   );
 
 
-  socket.on(
-    "system",
-    message => {
+  if (socket) {
 
-      addChatMessage(
-        message,
-        true
-      );
+    socket.on(
+      "chat",
+      message => {
 
-    }
-  );
+        addChatMessage(
+          "Jugador",
+          message
+        );
 
+      }
+    );
+
+
+    socket.on(
+      "system",
+      message => {
+
+        addSystemMessage(
+          message
+        );
+
+      }
+    );
+  }
 }
 
 
 function addChatMessage(
-  message,
-  system
+  username,
+  message
 ) {
 
-  const messages =
-    document.getElementById(
-      "msgs"
-    );
+  const msgs =
+    $("msgs");
+
+  if (!msgs)
+    return;
 
 
   const p =
-    document.createElement(
-      "p"
-    );
+    document.createElement("p");
+
+  p.className =
+    "msg";
+
+  const b =
+    document.createElement("b");
+
+  b.textContent =
+    username + ": ";
+
+  p.appendChild(b);
+
+  p.appendChild(
+    document.createTextNode(
+      message
+    )
+  );
+
+  msgs.appendChild(p);
+
+  msgs.scrollTop =
+    msgs.scrollHeight;
+}
 
 
-  if (system) {
+function addSystemMessage(
+  message
+) {
 
-    p.className =
-      "sys";
+  const msgs =
+    $("msgs");
 
-  }
+  if (!msgs)
+    return;
 
+
+  const p =
+    document.createElement("p");
+
+  p.className =
+    "sys";
 
   p.textContent =
     message;
 
+  msgs.appendChild(p);
 
-  messages.appendChild(
-    p
-  );
-
-
-  messages.scrollTop =
-    messages.scrollHeight;
-
+  msgs.scrollTop =
+    msgs.scrollHeight;
 }
 
 
-// =====================================================
-// MODALES
-// =====================================================
+// --------------------------------------------------
+// MAP
+// --------------------------------------------------
 
-function setupModals() {
+function setupMap() {
 
-  const modal =
-    document.getElementById(
-      "howModal"
-    );
+  $("mapBtn")?.addEventListener(
+    "click",
+    openMap
+  );
 
+  $("sideMap")?.addEventListener(
+    "click",
+    openMap
+  );
 
-  document
-    .getElementById("how")
-    .onclick =
-      () => {
+  $("closeMap")?.addEventListener(
+    "click",
+    () => {
 
-        modal.hidden =
-          false;
+      $("map").hidden = true;
 
-      };
-
-
-  document
-    .getElementById("closeHow")
-    .onclick =
-      () => {
-
-        modal.hidden =
-          true;
-
-      };
-
-
-  document
-    .getElementById("okHow")
-    .onclick =
-      () => {
-
-        modal.hidden =
-          true;
-
-      };
-
+    }
+  );
 }
 
 
-// =====================================================
-// INICIALIZACIÓN
-// =====================================================
+function openMap() {
 
-function init() {
-
-  scene =
-    new THREE.Scene();
+  $("map").hidden = false;
+}
 
 
-  scene.background =
-    new THREE.Color(
-      0x101b29
-    );
+// --------------------------------------------------
+// HOW TO PLAY
+// --------------------------------------------------
 
+function setupHowTo() {
 
-  scene.fog =
-    new THREE.Fog(
-      0x101b29,
-      45,
-      170
-    );
+  $("how")?.addEventListener(
+    "click",
+    () => {
 
+      $("howModal").hidden =
+        false;
 
-  camera =
-    new THREE.PerspectiveCamera(
-
-      55,
-
-      innerWidth /
-      innerHeight,
-
-      .1,
-
-      400
-
-    );
-
-
-  camera.position.set(
-    0,
-    16,
-    25
+    }
   );
 
 
-  renderer =
-    new THREE.WebGLRenderer({
+  $("closeHow")?.addEventListener(
+    "click",
+    () => {
 
-      antialias: true
+      $("howModal").hidden =
+        true;
 
+    }
+  );
+
+
+  $("okHow")?.addEventListener(
+    "click",
+    () => {
+
+      $("howModal").hidden =
+        true;
+
+    }
+  );
+}
+
+
+// --------------------------------------------------
+// HOUSES
+// --------------------------------------------------
+
+function setupHouseButton() {
+
+  $("enterHouse")?.addEventListener(
+    "click",
+    () => {
+
+      enterNearestHouse();
+
+    }
+  );
+}
+
+
+function checkHouseProximity() {
+
+  if (!player)
+    return;
+
+
+  let closest = null;
+  let closestDistance = 999;
+
+
+  for (const house of houses) {
+
+    const dx =
+      player.position.x -
+      house.position.x;
+
+    const dz =
+      player.position.z -
+      house.position.z;
+
+    const distance =
+      Math.hypot(dx, dz);
+
+
+    if (
+      distance < closestDistance
+    ) {
+
+      closestDistance =
+        distance;
+
+      closest =
+        house;
+    }
+  }
+
+
+  const button =
+    $("enterHouse");
+
+  if (
+    closest &&
+    closestDistance < 18 &&
+    !state.insideHouse
+  ) {
+
+    button.hidden = false;
+
+    state.currentHouse =
+      closest;
+
+  } else {
+
+    button.hidden = true;
+  }
+}
+
+
+function enterNearestHouse() {
+
+  if (!state.currentHouse)
+    return;
+
+
+  state.insideHouse = true;
+
+  $("enterHouse").hidden =
+    true;
+
+
+  // Simple interior scene
+
+  createInterior(
+    state.currentHouse
+  );
+
+
+  showToast(
+    "🏠 Entraste a la casa."
+  );
+}
+
+
+function createInterior(
+  house
+) {
+
+  const interior =
+    new THREE.Group();
+
+  interior.userData.isInterior =
+    true;
+
+
+  const floor =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        18,
+        0.4,
+        14
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x77583e
+      })
+    );
+
+  floor.position.y =
+    0.2;
+
+  interior.add(floor);
+
+
+  const furnitureMaterial =
+    new THREE.MeshStandardMaterial({
+      color: 0x5c3828
     });
 
 
-  renderer.setPixelRatio(
-    Math.min(
-      devicePixelRatio,
-      2
-    )
-  );
+  // Table
 
-
-  renderer.setSize(
-    innerWidth,
-    innerHeight
-  );
-
-
-  renderer.shadowMap.enabled =
-    true;
-
-
-  renderer.shadowMap.type =
-    THREE.PCFSoftShadowMap;
-
-
-  box.innerHTML =
-    "";
-
-
-  box.appendChild(
-    renderer.domElement
-  );
-
-
-  createLights();
-
-  createGround();
-
-  createForest();
-
-  createVillage();
-
-  createLake();
-
-  createCrystals();
-
-  createCastle();
-
-  createMountains();
-
-  createPlayer();
-
-
-  controls =
-    new OrbitControls(
-      camera,
-      renderer.domElement
+  const table =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        5,
+        0.6,
+        2.5
+      ),
+      furnitureMaterial
     );
 
-
-  controls.enableDamping =
-    true;
-
-  controls.enablePan =
-    false;
-
-  controls.maxPolarAngle =
-    1.45;
-
-  controls.minDistance =
-    7;
-
-  controls.maxDistance =
-    32;
-
-  controls.target.copy(
-    player.position
+  table.position.set(
+    0,
+    2.5,
+    0
   );
 
+  interior.add(table);
 
-  addEventListener(
-    "resize",
-    () => {
 
-      camera.aspect =
-        innerWidth /
-        innerHeight;
+  // Bed
 
-      camera.updateProjectionMatrix();
+  const bed =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        5,
+        1,
+        3
+      ),
+      furnitureMaterial
+    );
 
-      renderer.setSize(
-        innerWidth,
-        innerHeight
-      );
-
-    }
+  bed.position.set(
+    -5,
+    1,
+    -4
   );
 
-
-  addEventListener(
-    "keydown",
-    e => {
-
-      keys[
-        e.key.toLowerCase()
-      ] = true;
-
-    }
-  );
+  interior.add(bed);
 
 
-  addEventListener(
-    "keyup",
-    e => {
+  scene.add(interior);
 
-      keys[
-        e.key.toLowerCase()
-      ] = false;
-
-    }
-  );
-
-
-  setupJoystick();
-
-  setupMap();
-
-  setupChat();
-
-  setupModals();
-
-  updateStats();
-
-
-  animate();
-
+  state.currentInterior =
+    interior;
 }
 
 
-// =====================================================
-// ANIMACIÓN
-// =====================================================
+// --------------------------------------------------
+// ZONE
+// --------------------------------------------------
+
+function updateZone() {
+
+  if (!player)
+    return;
+
+
+  const x =
+    player.position.x;
+
+  const z =
+    player.position.z;
+
+
+  let zone =
+    "Aldea Central";
+
+
+  if (
+    Math.abs(x) > 120 ||
+    Math.abs(z) > 120
+  ) {
+
+    zone =
+      "Tierras Salvajes";
+  }
+
+
+  if (
+    x > 160 &&
+    z < -100
+  ) {
+
+    zone =
+      "Ruinas Antiguas";
+  }
+
+
+  if (
+    x > 170 &&
+    z > 150
+  ) {
+
+    zone =
+      "Castillo del Trono";
+  }
+
+
+  if (
+    x > 50 &&
+    z > 20 &&
+    x < 160 &&
+    z < 140
+  ) {
+
+    zone =
+      "Lago Sagrado";
+  }
+
+
+  if (
+    zone !== state.lastZone
+  ) {
+
+    state.lastZone =
+      zone;
+
+    $("zone").textContent =
+      zone;
+  }
+}
+
+
+// --------------------------------------------------
+// ANIMATION
+// --------------------------------------------------
 
 function animate() {
 
@@ -1920,11 +2502,142 @@ function animate() {
   const delta =
     Math.min(
       clock.getDelta(),
-      .05
+      0.05
     );
 
 
-  movePlayer(delta);
+  updateMovement(delta);
+
+  updateCamera(delta);
+
+  updateVegetation();
+
+  updateWater();
+
+  updateCrystals();
+
+  checkHouseProximity();
+
+  updateZone();
+
+  regenerateMana(delta);
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
+
+// --------------------------------------------------
+// CAMERA
+// --------------------------------------------------
+
+function updateCamera(delta) {
+
+  if (!player)
+    return;
+
+
+  const target =
+    new THREE.Vector3(
+      player.position.x,
+      4,
+      player.position.z
+    );
+
+
+  const desired =
+    new THREE.Vector3(
+      player.position.x,
+      28,
+      player.position.z + 38
+    );
+
+
+  camera.position.lerp(
+    desired,
+    1 -
+      Math.pow(
+        0.001,
+        delta
+      )
+  );
+
+
+  camera.lookAt(
+    target
+  );
+}
+
+
+// --------------------------------------------------
+// WIND
+// --------------------------------------------------
+
+function updateVegetation() {
+
+  const time =
+    clock.elapsedTime;
+
+
+  for (const tree of vegetation) {
+
+    const phase =
+      tree.userData.wind || 0;
+
+    tree.rotation.z =
+      Math.sin(
+        time * 1.2 +
+        phase
+      ) * 0.025;
+
+    tree.rotation.x =
+      Math.cos(
+        time * 0.9 +
+        phase
+      ) * 0.018;
+  }
+}
+
+
+// --------------------------------------------------
+// WATER ANIMATION
+// --------------------------------------------------
+
+function updateWater() {
+
+  if (!water)
+    return;
+
+
+  const time =
+    clock.elapsedTime;
+
+  water.scale.set(
+    1 +
+      Math.sin(time * 1.4) *
+      0.008,
+
+    1 +
+      Math.cos(time * 1.1) *
+      0.008,
+
+    1 +
+      Math.sin(time * 1.7) *
+      0.008
+  );
+}
+
+
+// --------------------------------------------------
+// CRYSTALS
+// --------------------------------------------------
+
+function updateCrystals() {
+
+  if (!scene)
+    return;
 
 
   scene.traverse(
@@ -1932,57 +2645,103 @@ function animate() {
 
       if (
         object.userData &&
-        object.userData.crystal
+        object.userData.phase !==
+          undefined
       ) {
 
         object.rotation.y +=
-          delta * .8;
+          0.01;
 
         object.position.y =
+          2 +
           Math.sin(
-            performance.now() * .002 +
-            object.position.x
-          ) * .15;
-
+            clock.elapsedTime * 2 +
+            object.userData.phase
+          ) *
+          0.4;
       }
 
     }
   );
-
-
-  controls.update();
-
-
-  renderer.render(
-    scene,
-    camera
-  );
-
 }
 
 
-// =====================================================
-// BOTÓN ENTRAR
-// =====================================================
+// --------------------------------------------------
+// MANA
+// --------------------------------------------------
 
-document
-  .getElementById("play")
-  .onclick =
-    () => {
+function regenerateMana(delta) {
 
-      document.getElementById(
-        "home"
-      ).hidden = true;
+  mana =
+    Math.min(
+      100,
+      mana + delta * 4
+    );
 
-
-      document.getElementById(
-        "game"
-      ).hidden = false;
+  updateBars();
+}
 
 
-      setTimeout(
-        init,
-        100
-      );
+// --------------------------------------------------
+// TOAST
+// --------------------------------------------------
 
-    };
+let toastTimer;
+
+function showToast(message) {
+
+  const toast =
+    $("toast");
+
+  if (!toast)
+    return;
+
+
+  toast.textContent =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    toastTimer
+  );
+
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          "show"
+        );
+
+      },
+      2200
+    );
+}
+
+
+// --------------------------------------------------
+// RESIZE
+// --------------------------------------------------
+
+function resize() {
+
+  if (!camera || !renderer)
+    return;
+
+
+  camera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+}
